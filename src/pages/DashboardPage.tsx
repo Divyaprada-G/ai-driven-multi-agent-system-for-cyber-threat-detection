@@ -81,6 +81,18 @@ import { EndToEndTraceabilityPanel } from '../components/dashboard/EndToEndTrace
 import { FutureN8nPlaceholder } from '../components/dashboard/FutureN8nPlaceholder';
 import { DemoScenarioModal } from '../components/dashboard/DemoScenarioModal';
 
+// Stage 12 Live Pipeline Components
+import { LivePipelineStatusCard } from '../components/livePipeline/LivePipelineStatusCard';
+import { LivePipelineControls } from '../components/livePipeline/LivePipelineControls';
+import { LiveEventStreamTable } from '../components/livePipeline/LiveEventStreamTable';
+import { AcademicPresentationView } from '../components/livePipeline/AcademicPresentationView';
+import { ModelInfoPanel } from '../components/livePipeline/ModelInfoPanel';
+import { EventQueueViewer } from '../components/livePipeline/EventQueueViewer';
+import { LiveTraceabilityModal } from '../components/livePipeline/LiveTraceabilityModal';
+import { ProjectDemoModal } from '../components/livePipeline/ProjectDemoModal';
+import { livePipelineService } from '../services/livePipelineService';
+import { LivePipelineStatus, LiveSecurityEvent, LiveSimulatorMode } from '../types/livePipeline';
+
 interface DashboardPageProps {
   metrics: DashboardMetrics;
   agents: AgentStatusInfo[];
@@ -94,7 +106,7 @@ interface DashboardPageProps {
   onToggleAgentStatus?: (agentId: string) => void;
 }
 
-type DashboardTab = 'OVERVIEW' | 'CORRELATIONS' | 'ALERTS_INCIDENTS' | 'TIMELINE' | 'TRACEABILITY' | 'N8N_PREVIEW';
+type DashboardTab = 'LIVE_PIPELINE' | 'OVERVIEW' | 'CORRELATIONS' | 'ALERTS_INCIDENTS' | 'TIMELINE' | 'TRACEABILITY' | 'N8N_PREVIEW';
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   metrics,
@@ -142,6 +154,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   // Demo Modal State
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+
+  // Stage 12: Live Pipeline & Local ML API State
+  const [liveStatus, setLiveStatus] = useState<LivePipelineStatus>(livePipelineService.getStatus());
+  const [liveEvents, setLiveEvents] = useState<LiveSecurityEvent[]>(livePipelineService.getEvents());
+  const [liveQueued, setLiveQueued] = useState<LiveSecurityEvent[]>(livePipelineService.getQueuedEvents());
+  const [selectedLiveEvent, setSelectedLiveEvent] = useState<LiveSecurityEvent | null>(null);
+  const [isProjectDemoOpen, setIsProjectDemoOpen] = useState<boolean>(false);
 
   // Load all analytics from unifiedAnalyticsService
   const loadDashboardData = useCallback(async () => {
@@ -193,7 +212,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     const unsubscribe = logRepository.subscribe(() => {
       loadDashboardData();
     });
-    return () => unsubscribe();
+    const unsubPipeline = livePipelineService.subscribe(() => {
+      setLiveStatus(livePipelineService.getStatus());
+      setLiveEvents(livePipelineService.getEvents());
+      setLiveQueued(livePipelineService.getQueuedEvents());
+    });
+    return () => {
+      unsubscribe();
+      unsubPipeline();
+    };
   }, [loadDashboardData]);
 
   // Handle Risk Status Update
@@ -311,6 +338,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* Primary Dashboard Navigation Tabs (Stage 10 Structural Architecture) */}
       <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 border-b border-slate-800 font-mono text-xs">
         <button
+          onClick={() => setActiveTab('LIVE_PIPELINE')}
+          className={`px-3.5 py-2 rounded-t-lg transition-colors flex items-center gap-2 font-bold whitespace-nowrap ${
+            activeTab === 'LIVE_PIPELINE'
+              ? 'bg-slate-900 text-emerald-400 border-t-2 border-emerald-400 border-x border-slate-800'
+              : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+          }`}
+        >
+          <Radio className="w-4 h-4 text-emerald-400" />
+          <span>Live Pipeline & ML API</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+            Live Stream
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('OVERVIEW')}
           className={`px-3.5 py-2 rounded-t-lg transition-colors flex items-center gap-2 font-bold whitespace-nowrap ${
             activeTab === 'OVERVIEW'
@@ -384,6 +426,46 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </div>
 
       {/* TAB CONTENT AREAS */}
+
+      {/* 0. LIVE PIPELINE & LOCAL ML API TAB */}
+      {activeTab === 'LIVE_PIPELINE' && (
+        <div className="space-y-6">
+          <LivePipelineStatusCard
+            status={liveStatus}
+            onRefresh={async () => {
+              await livePipelineService.checkBackendHealth();
+              setLiveStatus(livePipelineService.getStatus());
+            }}
+            onNavigateToTraining={() => onNavigate('datasets-ml')}
+          />
+
+          <LivePipelineControls
+            status={liveStatus}
+            onStartPipeline={() => livePipelineService.startPipeline()}
+            onStopPipeline={() => livePipelineService.stopPipeline()}
+            onStartSimulator={(rate, mode) => livePipelineService.startSimulator({ eventRate: rate, mode })}
+            onStopSimulator={() => livePipelineService.stopSimulator()}
+            onClearEvents={() => livePipelineService.clearEvents()}
+            onRefreshStatus={async () => {
+              await livePipelineService.checkBackendHealth();
+              setLiveStatus(livePipelineService.getStatus());
+            }}
+            onRunDemo={() => setIsProjectDemoOpen(true)}
+          />
+
+          <AcademicPresentationView status={liveStatus} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ModelInfoPanel onNavigateToTraining={() => onNavigate('datasets-ml')} />
+            <EventQueueViewer queuedEvents={liveQueued} status={liveStatus} />
+          </div>
+
+          <LiveEventStreamTable
+            events={liveEvents}
+            onSelectEvent={(evt) => setSelectedLiveEvent(evt)}
+          />
+        </div>
+      )}
 
       {/* 1. OVERVIEW & ANALYTICS TAB */}
       {activeTab === 'OVERVIEW' && (
@@ -520,6 +602,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           onUpdateStatus={handleUpdateRiskStatus}
         />
       )}
+
+      {/* Stage 12 Live Traceability Modal */}
+      <LiveTraceabilityModal
+        event={selectedLiveEvent}
+        onClose={() => setSelectedLiveEvent(null)}
+      />
+
+      {/* Stage 12 12-Step Guided Project Demo Modal */}
+      <ProjectDemoModal
+        isOpen={isProjectDemoOpen}
+        onClose={() => setIsProjectDemoOpen(false)}
+        status={liveStatus}
+        onNavigateToTraining={() => onNavigate('datasets-ml')}
+      />
     </div>
   );
 };

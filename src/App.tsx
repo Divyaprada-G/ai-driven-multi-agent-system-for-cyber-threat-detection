@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from './components/layout/Layout';
 import { NavPageId } from './components/layout/Sidebar';
 import { DashboardPage } from './pages/DashboardPage';
+import { LivePipelinePage } from './pages/LivePipelinePage';
 import { LogExplorerPage } from './pages/LogExplorerPage';
 import { NetworkAgentPage } from './pages/NetworkAgentPage';
 import { SystemAgentPage } from './pages/SystemAgentPage';
 import { ApplicationAgentPage } from './pages/ApplicationAgentPage';
 import { EventCorrelationPage } from './pages/EventCorrelationPage';
 import { ThreatDetectionPage } from './pages/ThreatDetectionPage';
+import { DatasetsMlTrainingPage } from './pages/DatasetsMlTrainingPage';
 import { RiskAnalysisPage } from './pages/RiskAnalysisPage';
 import { IncidentsPage } from './pages/IncidentsPage';
 import { AlertsPage } from './pages/AlertsPage';
@@ -167,6 +169,10 @@ export default function App() {
         />
       )}
 
+      {currentPage === 'live-pipeline' && (
+        <LivePipelinePage onNavigate={setCurrentPage} />
+      )}
+
       {currentPage === 'log-explorer' && (
         <LogExplorerPage
           files={logFiles}
@@ -193,6 +199,10 @@ export default function App() {
 
       {currentPage === 'threat-detection' && (
         <ThreatDetectionPage onNavigate={setCurrentPage} />
+      )}
+
+      {currentPage === 'datasets-ml' && (
+        <DatasetsMlTrainingPage onNavigate={setCurrentPage} />
       )}
 
       {currentPage === 'risk-analysis' && <RiskAnalysisPage />}

@@ -13,19 +13,23 @@ import {
   FileSpreadsheet,
   Settings,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  Database,
+  Radio
 } from 'lucide-react';
 import { alertManager } from '../../services/alertIncident/alertManager';
 import { incidentManager } from '../../services/alertIncident/incidentManager';
 
 export type NavPageId =
   | 'dashboard'
+  | 'live-pipeline'
   | 'log-explorer'
   | 'network-agent'
   | 'system-agent'
   | 'application-agent'
   | 'event-correlation'
   | 'threat-detection'
+  | 'datasets-ml'
   | 'risk-analysis'
   | 'incidents'
   | 'alerts'
@@ -73,12 +77,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'live-pipeline', label: 'Live Pipeline', icon: Radio, badge: 'Live API', badgeColor: 'bg-emerald-500/20 text-emerald-300' },
     { id: 'log-explorer', label: 'Log Explorer', icon: FileText, badge: 'Ingest' },
     { id: 'network-agent', label: 'Network Agent', icon: Network },
     { id: 'system-agent', label: 'System Agent', icon: Cpu },
     { id: 'application-agent', label: 'Application Agent', icon: Globe },
     { id: 'event-correlation', label: 'Event Correlation', icon: GitMerge, badge: 'AI' },
     { id: 'threat-detection', label: 'Threat Detection', icon: ShieldAlert, badge: 'ML' },
+    { id: 'datasets-ml', label: 'Datasets & ML', icon: Database, badge: 'Real ML' },
     { id: 'risk-analysis', label: 'Risk Analysis', icon: Activity },
     { id: 'incidents', label: 'Incidents', icon: AlertOctagon, badge: activeIncidents > 0 ? `${activeIncidents}` : undefined },
     { id: 'alerts', label: 'Alerts', icon: Bell, badge: unreadAlerts > 0 ? `${unreadAlerts} New` : 'Active' },

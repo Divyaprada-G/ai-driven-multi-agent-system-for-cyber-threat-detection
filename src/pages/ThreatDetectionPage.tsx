@@ -160,6 +160,16 @@ export const ThreatDetectionPage: React.FC<ThreatDetectionPageProps> = ({ onNavi
 
         {/* Live Actions */}
         <div className="flex flex-wrap items-center gap-2">
+          {onNavigate && (
+            <button
+              id="btn-navigate-datasets-ml"
+              onClick={() => onNavigate('datasets-ml')}
+              className="px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-mono font-bold text-xs flex items-center gap-1.5 transition-colors shadow-lg shadow-purple-600/20"
+            >
+              <Database className="w-3.5 h-3.5 text-purple-200" />
+              <span>Real Datasets & ML Engine</span>
+            </button>
+          )}
           <button
             id="btn-analyze-live-correlations"
             onClick={handleAnalyzeLiveCorrelations}

@@ -27,13 +27,19 @@ export type AuditActionType =
   | 'DEMO_SCENARIO_STARTED'
   | 'DEMO_SCENARIO_RESET'
   | 'SIMULATION_EXECUTED'
-  | 'CONFIG_UPDATED';
+  | 'CONFIG_UPDATED'
+  | 'TRAINING_STARTED'
+  | 'TRAINING_COMPLETED'
+  | 'TRAINING_FAILED'
+  | 'MODEL_SAVED'
+  | 'MODEL_LOADED'
+  | 'PREDICTION_EXECUTED';
 
 export interface AuditLogEntry {
   id: string;
   timestamp: string;
   action: AuditActionType;
-  entityType: 'ALERT' | 'INCIDENT' | 'RISK' | 'THREAT' | 'SYSTEM' | 'DEMO' | 'CONFIG';
+  entityType: 'ALERT' | 'INCIDENT' | 'RISK' | 'THREAT' | 'SYSTEM' | 'DEMO' | 'CONFIG' | 'MODEL' | 'DATASET';
   entityId: string;
   actor: string;
   details: string;

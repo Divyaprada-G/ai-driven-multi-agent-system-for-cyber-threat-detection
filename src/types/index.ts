@@ -19,6 +19,7 @@ export type ValidationStatus = 'VALID' | 'INVALID';
 
 export type NavPageId =
   | 'dashboard'
+  | 'live-pipeline'
   | 'log-explorer'
   | 'network-agent'
   | 'system-agent'
@@ -28,6 +29,7 @@ export type NavPageId =
   | 'risk-analysis'
   | 'incidents'
   | 'alerts'
+  | 'datasets-ml'
   | 'reports'
   | 'settings';
 
@@ -195,11 +197,12 @@ export interface AgentStatusInfo {
   uptime: string;
 }
 
-// Re-export threat detection types, risk scoring types, correlation types, and alert/incident types
+// Re-export threat detection types, risk scoring types, correlation types, alert/incident types, and dataset ML types
 export * from './threatDetection';
 export * from './correlation';
 export * from './riskScoring';
 export * from './alertIncident';
+export * from './datasetMl';
 
 /**
  * High-Level Dashboard SOC Metrics
