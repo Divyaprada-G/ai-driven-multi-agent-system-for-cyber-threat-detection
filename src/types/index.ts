@@ -17,6 +17,20 @@ export type LogFileFormat = 'JSON' | 'JSONL' | 'CSV' | 'SYSLOG' | 'PLAINTEXT' | 
 
 export type ValidationStatus = 'VALID' | 'INVALID';
 
+export type NavPageId =
+  | 'dashboard'
+  | 'log-explorer'
+  | 'network-agent'
+  | 'system-agent'
+  | 'application-agent'
+  | 'event-correlation'
+  | 'threat-detection'
+  | 'risk-analysis'
+  | 'incidents'
+  | 'alerts'
+  | 'reports'
+  | 'settings';
+
 export * from './correlation';
 
 export interface LogValidationResult {
