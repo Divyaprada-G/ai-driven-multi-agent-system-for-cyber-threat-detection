@@ -8,7 +8,8 @@ import {
   Server,
   Globe,
   TrendingUp,
-  Radio
+  Radio,
+  Cpu
 } from 'lucide-react';
 import { StatCard } from '../components/common/StatCard';
 import { AgentStatusCard } from '../components/common/AgentStatusCard';
@@ -289,35 +290,72 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </section>
 
-      {/* MULTI-AGENT CORRELATION ENGINE BANNER */}
-      <section aria-label="Event Correlation Quick Access" className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-cyan-950 border border-cyan-800 text-cyan-400 shrink-0">
-            <Radio className="w-5 h-5 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400">
-                Multi-Agent Event Correlation Engine
-              </span>
-              <span className="px-2 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-mono">
-                ACTIVE
-              </span>
+      {/* MULTI-AGENT CORRELATION & THREAT DETECTION ENGINES */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Correlation Engine Card */}
+        <section aria-label="Event Correlation Quick Access" className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-xl flex flex-col justify-between gap-3 shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-lg bg-cyan-950 border border-cyan-800 text-cyan-400 shrink-0">
+              <Radio className="w-5 h-5 animate-pulse" />
             </div>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Synthesizing temporal, IP, host, and multi-stage sequences across Network, System, and Application agents.
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400">
+                  Event Correlation Engine
+                </span>
+                <span className="px-2 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-mono">
+                  ACTIVE
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1">
+                Synthesizing temporal, IP, host, and multi-stage sequences across Network, System, and Application agents.
+              </p>
+            </div>
           </div>
-        </div>
 
-        <button
-          id="btn-dash-open-correlation"
-          onClick={() => onNavigate('correlation')}
-          className="px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-colors shadow-lg shadow-cyan-600/20 shrink-0 self-end sm:self-auto"
-        >
-          <span>Open Correlation Engine →</span>
-        </button>
-      </section>
+          <div className="flex justify-end pt-2 border-t border-slate-800/80">
+            <button
+              id="btn-dash-open-correlation"
+              onClick={() => onNavigate('correlation')}
+              className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <span>Correlation Engine →</span>
+            </button>
+          </div>
+        </section>
+
+        {/* AI/ML Threat Detection Card */}
+        <section aria-label="AI/ML Threat Detection Quick Access" className="p-4 bg-gradient-to-r from-slate-900 via-purple-950/40 to-slate-900 border border-purple-500/30 rounded-xl flex flex-col justify-between gap-3 shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-lg bg-purple-950 border border-purple-800 text-purple-400 shrink-0">
+              <Cpu className="w-5 h-5 text-purple-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-300">
+                  AI/ML Threat Detection Layer
+                </span>
+                <span className="px-2 py-0.2 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 text-[10px] font-mono">
+                  DEMO / NOT TRAINED
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1">
+                18-feature extraction, Min-Max normalization, candidate Random Forest & Isolation Forest with Explainable AI attribution.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2 border-t border-slate-800/80">
+            <button
+              id="btn-dash-open-threat-detection"
+              onClick={() => onNavigate('threat-detection')}
+              className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <span>Threat Detection Layer →</span>
+            </button>
+          </div>
+        </section>
+      </div>
 
       {/* 7. RECENT SECURITY EVENTS TABLE */}
       <section aria-label="Recent Security Events" id="section-recent-events">

@@ -185,22 +185,9 @@ export interface AgentStatusInfo {
   uptime: string;
 }
 
-/**
- * AI/ML Threat Detection Engine Result
- */
-export interface ThreatDetectionResult {
-  id: string;
-  timestamp: string;
-  threatDetected: boolean;
-  threatType: string;
-  category: string;
-  confidence: number;
-  evidence: string[];
-  model: string;
-  anomalyScore: number;
-  baselineDeviation: number;
-  predictedImpact: 'LOW' | 'MEDIUM' | 'HIGH' | 'CATASTROPHIC';
-}
+// Re-export threat detection types and unified ThreatDetectionResult
+export * from './threatDetection';
+export * from './correlation';
 
 /**
  * Risk Assessment Result

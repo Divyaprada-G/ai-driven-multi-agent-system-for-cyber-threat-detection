@@ -299,52 +299,177 @@ export const INITIAL_CORRELATIONS: CorrelatedEvent[] = [
 export const INITIAL_THREAT_DETECTIONS: ThreatDetectionResult[] = [
   {
     id: 'TD-401',
+    correlationId: 'CORR-2026-077',
     timestamp: '2026-09-11 22:58:30',
     threatDetected: true,
     threatType: 'Privilege Escalation via Service Exploitation',
     category: 'Privilege Escalation',
-    confidence: 96.2,
+    classification: 'PRIVILEGE_ESCALATION',
+    confidence: 0.962,
+    confidenceType: 'DEMO_DERIVED',
+    anomalyScore: 0.94,
+    anomalyScoreLabel: 'DEMO ANOMALY SCORE',
+    model: 'Rule-Based Demo Engine (Heuristic Simulator)',
+    modelType: 'RULE_BASED_DEMO',
+    modelStatus: 'DEMO',
+    severity: 'CRITICAL',
+    status: 'DETECTED',
     evidence: [
       'Unusual token impersonation by SYSTEM thread',
       'Execution of non-standard binary from C:\\Windows\\Temp',
       'Correlated parent process was w3wp.exe web service'
     ],
-    model: 'Ensemble Isolation Forest + XGBoost Threat Classifier v2.4',
-    anomalyScore: 0.94,
+    features: {
+      findingCount: 3,
+      participatingAgentsCount: 3,
+      correlationConfidence: 0.94,
+      correlationStrengthScore: 3,
+      eventDurationSeconds: 150,
+      uniqueSourceIpsCount: 1,
+      uniqueDestIpsCount: 1,
+      affectedHostsCount: 1,
+      affectedUsersCount: 1,
+      threatTypesCount: 3,
+      suspiciousEventsCount: 1,
+      highSeverityCount: 1,
+      criticalSeverityCount: 1,
+      networkInvolvement: 1,
+      systemInvolvement: 1,
+      applicationInvolvement: 1,
+      sequenceLength: 3,
+      timeSpanSeconds: 150
+    },
+    explanation: {
+      whyAnalyzed: 'Correlated event sequence spanned Network ingress, Web API exploit, and System token elevation.',
+      contributingFeatures: [
+        { feature: 'Participating Agents', value: '3 Agents', impact: 'HIGH' },
+        { feature: 'Critical Severity Findings', value: 1, impact: 'HIGH' }
+      ],
+      participatingAgents: ['NETWORK_AGENT', 'SYSTEM_AGENT', 'APPLICATION_AGENT'],
+      supportingEvidence: [
+        'Unusual token impersonation by SYSTEM thread',
+        'Execution of non-standard binary from C:\\Windows\\Temp'
+      ],
+      recommendedAction: 'Isolate host workstation-fin-04 and terminate spoolsv child process.'
+    },
+    recommendedAction: 'Isolate host workstation-fin-04 and terminate spoolsv child process.',
     baselineDeviation: 4.8,
     predictedImpact: 'CATASTROPHIC'
   },
   {
     id: 'TD-402',
+    correlationId: 'CORR-2026-078',
     timestamp: '2026-09-11 22:51:30',
     threatDetected: true,
     threatType: 'Blind SQL Injection via Union Query',
     category: 'Initial Access',
-    confidence: 92.5,
+    classification: 'WEB_THREAT',
+    confidence: 0.925,
+    confidenceType: 'DEMO_DERIVED',
+    anomalyScore: 0.89,
+    anomalyScoreLabel: 'DEMO ANOMALY SCORE',
+    model: 'Rule-Based Demo Engine (Heuristic Simulator)',
+    modelType: 'RULE_BASED_DEMO',
+    modelStatus: 'DEMO',
+    severity: 'HIGH',
+    status: 'DETECTED',
     evidence: [
       'Hex-encoded byte payloads in HTTP query string',
       'SQL syntax tokens: UNION, SELECT, INFORMATION_SCHEMA',
       'Web application returned 500 error code before sanitization'
     ],
-    model: 'NLP Transformer Payload Inspector v1.8',
-    anomalyScore: 0.89,
+    features: {
+      findingCount: 2,
+      participatingAgentsCount: 2,
+      correlationConfidence: 0.89,
+      correlationStrengthScore: 2,
+      eventDurationSeconds: 45,
+      uniqueSourceIpsCount: 1,
+      uniqueDestIpsCount: 1,
+      affectedHostsCount: 1,
+      affectedUsersCount: 1,
+      threatTypesCount: 2,
+      suspiciousEventsCount: 1,
+      highSeverityCount: 1,
+      criticalSeverityCount: 0,
+      networkInvolvement: 1,
+      systemInvolvement: 0,
+      applicationInvolvement: 1,
+      sequenceLength: 2,
+      timeSpanSeconds: 45
+    },
+    explanation: {
+      whyAnalyzed: 'Correlated HTTP injection query coincident with network traffic burst.',
+      contributingFeatures: [
+        { feature: 'Application Involvement', value: 1, impact: 'HIGH' },
+        { feature: 'Correlation Strength', value: 'MEDIUM', impact: 'MEDIUM' }
+      ],
+      participatingAgents: ['NETWORK_AGENT', 'APPLICATION_AGENT'],
+      supportingEvidence: [
+        'Hex-encoded byte payloads in HTTP query string',
+        'SQL syntax tokens: UNION, SELECT'
+      ],
+      recommendedAction: 'Block offending IP on WAF and inspect database logs.'
+    },
+    recommendedAction: 'Block offending IP on WAF and inspect database logs.',
     baselineDeviation: 3.9,
     predictedImpact: 'HIGH'
   },
   {
     id: 'TD-403',
+    correlationId: 'CORR-2026-079',
     timestamp: '2026-09-11 22:42:05',
     threatDetected: true,
     threatType: 'DNS Tunneling C2 Beaconing',
     category: 'Command and Control',
-    confidence: 88.0,
+    classification: 'NETWORK_THREAT',
+    confidence: 0.88,
+    confidenceType: 'DEMO_DERIVED',
+    anomalyScore: 0.86,
+    anomalyScoreLabel: 'DEMO ANOMALY SCORE',
+    model: 'Rule-Based Demo Engine (Heuristic Simulator)',
+    modelType: 'RULE_BASED_DEMO',
+    modelStatus: 'DEMO',
+    severity: 'MEDIUM',
+    status: 'DETECTED',
     evidence: [
       'Entropy score > 4.75 on TXT resource queries',
       'Query cadence matched jittered 30-second interval',
       'Domain created < 48 hours ago according to WHOIS cache'
     ],
-    model: 'Temporal Sequence LSTM Anomaly Detector v3.1',
-    anomalyScore: 0.86,
+    features: {
+      findingCount: 1,
+      participatingAgentsCount: 1,
+      correlationConfidence: 0.86,
+      correlationStrengthScore: 1,
+      eventDurationSeconds: 142,
+      uniqueSourceIpsCount: 1,
+      uniqueDestIpsCount: 1,
+      affectedHostsCount: 1,
+      affectedUsersCount: 0,
+      threatTypesCount: 1,
+      suspiciousEventsCount: 1,
+      highSeverityCount: 0,
+      criticalSeverityCount: 0,
+      networkInvolvement: 1,
+      systemInvolvement: 0,
+      applicationInvolvement: 0,
+      sequenceLength: 1,
+      timeSpanSeconds: 142
+    },
+    explanation: {
+      whyAnalyzed: 'Repetitive high entropy DNS TXT record queries.',
+      contributingFeatures: [
+        { feature: 'Network Involvement', value: 1, impact: 'HIGH' }
+      ],
+      participatingAgents: ['NETWORK_AGENT'],
+      supportingEvidence: [
+        'Entropy score > 4.75 on TXT resource queries',
+        'Query cadence matched jittered interval'
+      ],
+      recommendedAction: 'Sinkhole suspicious domain at internal DNS resolver.'
+    },
+    recommendedAction: 'Sinkhole suspicious domain at internal DNS resolver.',
     baselineDeviation: 3.2,
     predictedImpact: 'MEDIUM'
   }

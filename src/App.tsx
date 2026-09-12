@@ -177,7 +177,9 @@ export default function App() {
 
       {currentPage === 'correlation' && <EventCorrelationPage />}
 
-      {currentPage === 'threat-detection' && <ThreatDetectionPage />}
+      {currentPage === 'threat-detection' && (
+        <ThreatDetectionPage onNavigate={setCurrentPage} />
+      )}
 
       {currentPage === 'risk-analysis' && <RiskAnalysisPage />}
 
