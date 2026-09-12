@@ -1,0 +1,6 @@
+{
+  "name": "AI Driven Multi-Agent Cyber Threat Detection",
+  "description": "Real-time intelligent monitoring, correlation, and threat analysis Security Operations Center platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
