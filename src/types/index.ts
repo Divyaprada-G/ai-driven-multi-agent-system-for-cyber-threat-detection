@@ -11,10 +11,6 @@ export type AgentType = 'NETWORK_AGENT' | 'SYSTEM_AGENT' | 'APPLICATION_AGENT';
 
 export type AgentStatus = 'READY' | 'ACTIVE' | 'PROCESSING' | 'DEGRADED' | 'OFFLINE';
 
-export type IncidentStatus = 'NEW' | 'INVESTIGATING' | 'CONTAINED' | 'RESOLVED';
-
-export type AlertStatus = 'UNACKNOWLEDGED' | 'ACKNOWLEDGED' | 'RESOLVED' | 'SUPPRESSED';
-
 export type NotificationStatus = 'PENDING' | 'SENT' | 'FAILED' | 'DISPATCHED_N8N';
 
 export type LogFileFormat = 'JSON' | 'JSONL' | 'CSV' | 'SYSLOG' | 'PLAINTEXT' | 'KEY_VALUE';
@@ -185,70 +181,11 @@ export interface AgentStatusInfo {
   uptime: string;
 }
 
-// Re-export threat detection types and unified ThreatDetectionResult
+// Re-export threat detection types, risk scoring types, correlation types, and alert/incident types
 export * from './threatDetection';
 export * from './correlation';
-
-/**
- * Risk Assessment Result
- */
-export interface RiskAssessment {
-  id: string;
-  timestamp: string;
-  score: number; // 0 - 100
-  severity: SeverityLevel;
-  confidence: number; // 0 - 100
-  threatCategory: string;
-  affectedSource: string;
-  recommendedAction: string;
-  factors: {
-    assetCriticality: number;
-    exploitability: number;
-    lateralMovementPotential: number;
-    dataLossExposure: number;
-  };
-  remediationPlan: string[];
-}
-
-/**
- * Security Alert Notification
- */
-export interface SecurityAlert {
-  alertId: string;
-  timestamp: string;
-  threat: string;
-  severity: SeverityLevel;
-  source: string;
-  riskScore: number;
-  status: AlertStatus;
-  notificationStatus: NotificationStatus;
-  targetChannels: string[];
-  n8nWorkflowId?: string;
-  ruleTriggered: string;
-}
-
-/**
- * Security Incident Model
- */
-export interface Incident {
-  incidentId: string;
-  detectedAt: string;
-  threatType: string;
-  severity: SeverityLevel;
-  riskScore: number;
-  affectedSource: string;
-  status: IncidentStatus;
-  assignedTo: string;
-  summary: string;
-  timeline: {
-    time: string;
-    description: string;
-    actor: string;
-  }[];
-  mitreTactic: string;
-  mitreTechnique: string;
-  containmentRecommendation: string;
-}
+export * from './riskScoring';
+export * from './alertIncident';
 
 /**
  * High-Level Dashboard SOC Metrics

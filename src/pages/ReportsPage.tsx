@@ -20,7 +20,7 @@ export const ReportsPage: React.FC = () => {
   const handleExportCSV = () => {
     const records = INITIAL_INCIDENTS.map(i => ({
       incidentId: i.incidentId,
-      threatType: i.threatType,
+      threatType: i.threatType || (i.threatTypes && i.threatTypes[0]) || 'Security Incident',
       severity: i.severity,
       riskScore: i.riskScore,
       affectedSource: i.affectedSource,

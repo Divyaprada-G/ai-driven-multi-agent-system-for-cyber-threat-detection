@@ -37,6 +37,7 @@ import { RecentEventItem } from './components/tables/RecentEventsTable';
 export default function App() {
   const [currentPage, setCurrentPage] = useState<NavPageId>('dashboard');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [targetIncidentId, setTargetIncidentId] = useState<string | undefined>(undefined);
 
   // Core SOC State
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -48,6 +49,16 @@ export default function App() {
   const [threatCategories, setThreatCategories] = useState<ThreatCategoryPoint[]>([]);
   const [recentEvents, setRecentEvents] = useState<RecentEventItem[]>([]);
   const [logFiles, setLogFiles] = useState<LogFileRecord[]>([]);
+
+  // Inter-page cross-navigation handlers
+  const handleNavigateToIncident = (incidentId: string) => {
+    setTargetIncidentId(incidentId);
+    setCurrentPage('incidents');
+  };
+
+  const handleNavigateToAlert = (_alertId: string) => {
+    setCurrentPage('alerts');
+  };
 
   // Telemetry Fetcher
   const fetchTelemetry = useCallback(async () => {
@@ -138,6 +149,7 @@ export default function App() {
       onNavigate={setCurrentPage}
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
+      onNavigateToAlerts={() => setCurrentPage('alerts')}
     >
       {/* Page Routing */}
       {currentPage === 'dashboard' && metrics && (
@@ -175,7 +187,9 @@ export default function App() {
         <ApplicationAgentPage onNavigate={setCurrentPage} />
       )}
 
-      {currentPage === 'correlation' && <EventCorrelationPage />}
+      {(currentPage === 'correlation' || (currentPage as string) === 'event-correlation') && (
+        <EventCorrelationPage />
+      )}
 
       {currentPage === 'threat-detection' && (
         <ThreatDetectionPage onNavigate={setCurrentPage} />
@@ -183,9 +197,19 @@ export default function App() {
 
       {currentPage === 'risk-analysis' && <RiskAnalysisPage />}
 
-      {currentPage === 'incidents' && <IncidentsPage />}
+      {currentPage === 'incidents' && (
+        <IncidentsPage
+          initialIncidentId={targetIncidentId}
+          onNavigateToAlert={handleNavigateToAlert}
+        />
+      )}
 
-      {currentPage === 'alerts' && <AlertsPage />}
+      {currentPage === 'alerts' && (
+        <AlertsPage
+          onNavigate={setCurrentPage}
+          onNavigateToIncident={handleNavigateToIncident}
+        />
+      )}
 
       {currentPage === 'reports' && <ReportsPage />}
 

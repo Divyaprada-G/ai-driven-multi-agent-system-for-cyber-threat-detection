@@ -478,13 +478,40 @@ export const INITIAL_THREAT_DETECTIONS: ThreatDetectionResult[] = [
 export const INITIAL_RISK_ASSESSMENTS: RiskAssessment[] = [
   {
     id: 'RISK-501',
+    threatDetectionId: 'TD-401',
+    correlationId: 'CORR-301',
     timestamp: '2026-09-11 22:59:00',
+    riskScore: 96,
     score: 96,
     severity: 'CRITICAL',
+    priority: 'P1',
+    riskBand: 'CRITICAL',
     confidence: 95,
+    threatClassification: 'MULTI_STAGE_THREAT',
     threatCategory: 'Privilege Escalation / Lateral Movement',
     affectedSource: 'workstation-fin-04 (Finance Subnet)',
     recommendedAction: 'Immediate host isolation from network segment; revoke active Kerberos TGT tickets for admin_dev.',
+    explanation: 'Multi-stage lateral sequence observed from perimeter scan through privilege escalation on finance workstation.',
+    status: 'NEW',
+    participatingAgents: ['NETWORK_AGENT', 'SYSTEM_AGENT', 'APPLICATION_AGENT'],
+    evidenceVolume: 8,
+    affectedEntitiesCount: 4,
+    riskFactors: [
+      { name: 'threatSeverity', label: 'Threat Severity', rawScore: 100, weight: 0.30, weightedScore: 30.0, maxPossibleWeightedScore: 30, description: 'CRITICAL severity baseline', evidence: ['CRITICAL impact potential'] },
+      { name: 'mlConfidence', label: 'ML Model Confidence', rawScore: 95, weight: 0.20, weightedScore: 19.0, maxPossibleWeightedScore: 20, description: 'High model confidence', evidence: ['Confidence: 95%'] },
+      { name: 'correlationStrength', label: 'Correlation Strength', rawScore: 95, weight: 0.15, weightedScore: 14.2, maxPossibleWeightedScore: 15, description: 'Cross-agent cluster', evidence: ['Cluster CORR-301'] },
+      { name: 'attackComplexity', label: 'Attack Complexity', rawScore: 95, weight: 0.15, weightedScore: 14.2, maxPossibleWeightedScore: 15, description: 'Multi-stage chain', evidence: ['3 agents involved'] },
+      { name: 'agentInvolvement', label: 'Agent Diversity', rawScore: 100, weight: 0.10, weightedScore: 10.0, maxPossibleWeightedScore: 10, description: 'All 3 security agents', evidence: ['Network, System, App'] },
+      { name: 'evidenceVolume', label: 'Evidence Volume', rawScore: 80, weight: 0.05, weightedScore: 4.0, maxPossibleWeightedScore: 5, description: '8 correlated artifacts', evidence: ['8 events'] },
+      { name: 'affectedEntities', label: 'Impacted Entities Scope', rawScore: 95, weight: 0.05, weightedScore: 4.8, maxPossibleWeightedScore: 5, description: '4 critical assets', evidence: ['4 assets'] }
+    ],
+    auditTrail: {
+      calculatedAt: '2026-09-11T22:59:00.000Z',
+      modelUsed: 'Configurable Academic/Demo Risk Engine v1.0',
+      correlationStrength: 95,
+      mlAnomalyScore: 92,
+      weightsConfigVersion: '1.0.0'
+    },
     factors: {
       assetCriticality: 98,
       exploitability: 94,
@@ -500,13 +527,40 @@ export const INITIAL_RISK_ASSESSMENTS: RiskAssessment[] = [
   },
   {
     id: 'RISK-502',
+    threatDetectionId: 'TD-402',
+    correlationId: 'CORR-302',
     timestamp: '2026-09-11 22:52:00',
+    riskScore: 85,
     score: 85,
     severity: 'HIGH',
+    priority: 'P1',
+    riskBand: 'CRITICAL',
     confidence: 91,
+    threatClassification: 'WEB_THREAT',
     threatCategory: 'Web Application Exploitation',
     affectedSource: 'api.corp.internal/v2/checkout',
     recommendedAction: 'Deploy edge WAF filter rule blocking UNION/SELECT signatures; verify database query parameterization.',
+    explanation: 'Repetitive SQL injection vectors directed at checkout gateway with elevated volume.',
+    status: 'REVIEWING',
+    participatingAgents: ['APPLICATION_AGENT', 'NETWORK_AGENT'],
+    evidenceVolume: 6,
+    affectedEntitiesCount: 2,
+    riskFactors: [
+      { name: 'threatSeverity', label: 'Threat Severity', rawScore: 80, weight: 0.30, weightedScore: 24.0, maxPossibleWeightedScore: 30, description: 'HIGH severity baseline', evidence: ['HIGH potential'] },
+      { name: 'mlConfidence', label: 'ML Model Confidence', rawScore: 91, weight: 0.20, weightedScore: 18.2, maxPossibleWeightedScore: 20, description: 'Elevated confidence', evidence: ['Confidence: 91%'] },
+      { name: 'correlationStrength', label: 'Correlation Strength', rawScore: 85, weight: 0.15, weightedScore: 12.8, maxPossibleWeightedScore: 15, description: 'Application correlation', evidence: ['Cluster CORR-302'] },
+      { name: 'attackComplexity', label: 'Attack Complexity', rawScore: 75, weight: 0.15, weightedScore: 11.3, maxPossibleWeightedScore: 15, description: 'Injection sequence', evidence: ['2 agents involved'] },
+      { name: 'agentInvolvement', label: 'Agent Diversity', rawScore: 70, weight: 0.10, weightedScore: 7.0, maxPossibleWeightedScore: 10, description: '2 security agents', evidence: ['Network, App'] },
+      { name: 'evidenceVolume', label: 'Evidence Volume', rawScore: 70, weight: 0.05, weightedScore: 3.5, maxPossibleWeightedScore: 5, description: '6 events', evidence: ['6 events'] },
+      { name: 'affectedEntities', label: 'Impacted Entities Scope', rawScore: 65, weight: 0.05, weightedScore: 3.3, maxPossibleWeightedScore: 5, description: '2 assets', evidence: ['2 assets'] }
+    ],
+    auditTrail: {
+      calculatedAt: '2026-09-11T22:52:00.000Z',
+      modelUsed: 'Configurable Academic/Demo Risk Engine v1.0',
+      correlationStrength: 85,
+      mlAnomalyScore: 78,
+      weightsConfigVersion: '1.0.0'
+    },
     factors: {
       assetCriticality: 90,
       exploitability: 88,
@@ -521,13 +575,40 @@ export const INITIAL_RISK_ASSESSMENTS: RiskAssessment[] = [
   },
   {
     id: 'RISK-503',
+    threatDetectionId: 'TD-403',
+    correlationId: 'CORR-303',
     timestamp: '2026-09-11 22:45:00',
+    riskScore: 68,
     score: 68,
     severity: 'MEDIUM',
+    priority: 'P2',
+    riskBand: 'HIGH',
     confidence: 88,
+    threatClassification: 'AUTHENTICATION_THREAT',
     threatCategory: 'Credential Abuse / Brute Force',
     affectedSource: 'auth-gateway-srv-02',
     recommendedAction: 'Apply progressive delay throttle on IP CIDR 192.168.1.0/24; mandate biometric MFA prompt.',
+    explanation: 'Substantial burst of failed authentication attempts against single PAM service.',
+    status: 'ACKNOWLEDGED',
+    participatingAgents: ['SYSTEM_AGENT', 'APPLICATION_AGENT'],
+    evidenceVolume: 5,
+    affectedEntitiesCount: 2,
+    riskFactors: [
+      { name: 'threatSeverity', label: 'Threat Severity', rawScore: 50, weight: 0.30, weightedScore: 15.0, maxPossibleWeightedScore: 30, description: 'MEDIUM severity baseline', evidence: ['MEDIUM potential'] },
+      { name: 'mlConfidence', label: 'ML Model Confidence', rawScore: 88, weight: 0.20, weightedScore: 17.6, maxPossibleWeightedScore: 20, description: 'Auth anomaly confidence', evidence: ['Confidence: 88%'] },
+      { name: 'correlationStrength', label: 'Correlation Strength', rawScore: 75, weight: 0.15, weightedScore: 11.2, maxPossibleWeightedScore: 15, description: 'Time-window correlation', evidence: ['Cluster CORR-303'] },
+      { name: 'attackComplexity', label: 'Attack Complexity', rawScore: 60, weight: 0.15, weightedScore: 9.0, maxPossibleWeightedScore: 15, description: 'Credential burst', evidence: ['Repeated brute force'] },
+      { name: 'agentInvolvement', label: 'Agent Diversity', rawScore: 70, weight: 0.10, weightedScore: 7.0, maxPossibleWeightedScore: 10, description: '2 agents', evidence: ['System, App'] },
+      { name: 'evidenceVolume', label: 'Evidence Volume', rawScore: 50, weight: 0.05, weightedScore: 2.5, maxPossibleWeightedScore: 5, description: '5 events', evidence: ['5 events'] },
+      { name: 'affectedEntities', label: 'Impacted Entities Scope', rawScore: 65, weight: 0.05, weightedScore: 3.3, maxPossibleWeightedScore: 5, description: '2 assets', evidence: ['2 assets'] }
+    ],
+    auditTrail: {
+      calculatedAt: '2026-09-11T22:45:00.000Z',
+      modelUsed: 'Configurable Academic/Demo Risk Engine v1.0',
+      correlationStrength: 75,
+      mlAnomalyScore: 65,
+      weightsConfigVersion: '1.0.0'
+    },
     factors: {
       assetCriticality: 82,
       exploitability: 60,
@@ -541,13 +622,40 @@ export const INITIAL_RISK_ASSESSMENTS: RiskAssessment[] = [
   },
   {
     id: 'RISK-504',
+    threatDetectionId: 'TD-404',
+    correlationId: 'CORR-304',
     timestamp: '2026-09-11 22:15:00',
+    riskScore: 32,
     score: 32,
     severity: 'LOW',
+    priority: 'P3',
+    riskBand: 'MEDIUM',
     confidence: 82,
+    threatClassification: 'NETWORK_THREAT',
     threatCategory: 'Perimeter Reconnaissance',
     affectedSource: '192.168.1.105',
     recommendedAction: 'Log IP address into threat intelligence watch list; no active intervention required.',
+    explanation: 'Low-rate horizontal port probing detected by Network Agent on external perimeter.',
+    status: 'NEW',
+    participatingAgents: ['NETWORK_AGENT'],
+    evidenceVolume: 3,
+    affectedEntitiesCount: 1,
+    riskFactors: [
+      { name: 'threatSeverity', label: 'Threat Severity', rawScore: 20, weight: 0.30, weightedScore: 6.0, maxPossibleWeightedScore: 30, description: 'LOW severity baseline', evidence: ['LOW potential'] },
+      { name: 'mlConfidence', label: 'ML Model Confidence', rawScore: 82, weight: 0.20, weightedScore: 16.4, maxPossibleWeightedScore: 20, description: 'Recon classification', evidence: ['Confidence: 82%'] },
+      { name: 'correlationStrength', label: 'Correlation Strength', rawScore: 40, weight: 0.15, weightedScore: 6.0, maxPossibleWeightedScore: 15, description: 'Isolated scan', evidence: ['Cluster CORR-304'] },
+      { name: 'attackComplexity', label: 'Attack Complexity', rawScore: 25, weight: 0.15, weightedScore: 3.8, maxPossibleWeightedScore: 15, description: 'Single probe', evidence: ['1 agent involved'] },
+      { name: 'agentInvolvement', label: 'Agent Diversity', rawScore: 30, weight: 0.10, weightedScore: 3.0, maxPossibleWeightedScore: 10, description: '1 agent', evidence: ['Network'] },
+      { name: 'evidenceVolume', label: 'Evidence Volume', rawScore: 30, weight: 0.05, weightedScore: 1.5, maxPossibleWeightedScore: 5, description: '3 events', evidence: ['3 events'] },
+      { name: 'affectedEntities', label: 'Impacted Entities Scope', rawScore: 35, weight: 0.05, weightedScore: 1.8, maxPossibleWeightedScore: 5, description: '1 asset', evidence: ['1 asset'] }
+    ],
+    auditTrail: {
+      calculatedAt: '2026-09-11T22:15:00.000Z',
+      modelUsed: 'Configurable Academic/Demo Risk Engine v1.0',
+      correlationStrength: 40,
+      mlAnomalyScore: 28,
+      weightsConfigVersion: '1.0.0'
+    },
     factors: {
       assetCriticality: 40,
       exploitability: 35,
@@ -559,6 +667,20 @@ export const INITIAL_RISK_ASSESSMENTS: RiskAssessment[] = [
     ]
   }
 ];
+
+export interface InitialAlertRecord {
+  alertId: string;
+  timestamp: string;
+  threat: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  source: string;
+  riskScore: number;
+  status: string;
+  notificationStatus: string;
+  targetChannels: string[];
+  n8nWorkflowId?: string;
+  ruleTriggered: string;
+}
 
 export const INITIAL_INCIDENTS: Incident[] = [
   {
@@ -572,10 +694,10 @@ export const INITIAL_INCIDENTS: Incident[] = [
     assignedTo: 'Senior SOC Analyst (StudyCafe)',
     summary: 'Correlated event sequence starting with port scanning, followed by web API SQL injection injection attempt and local host token impersonation.',
     timeline: [
-      { time: '22:58:14', description: 'Port scan detected on DMZ boundary (Network Agent)', actor: 'External Attacker (192.168.1.105)' },
-      { time: '22:51:30', description: 'SQL injection payload on checkout API (Application Agent)', actor: 'External Attacker' },
-      { time: '22:47:19', description: 'Privilege escalation attempt via token impersonation (System Agent)', actor: 'Internal Service Account' },
-      { time: '22:58:30', description: 'Event Correlation Engine elevated sequence to Critical Incident', actor: 'Correlation Engine' }
+      { id: 'tl-42-1', time: '22:58:14', description: 'Port scan detected on DMZ boundary (Network Agent)', actor: 'External Attacker (192.168.1.105)' },
+      { id: 'tl-42-2', time: '22:51:30', description: 'SQL injection payload on checkout API (Application Agent)', actor: 'External Attacker' },
+      { id: 'tl-42-3', time: '22:47:19', description: 'Privilege escalation attempt via token impersonation (System Agent)', actor: 'Internal Service Account' },
+      { id: 'tl-42-4', time: '22:58:30', description: 'Event Correlation Engine elevated sequence to Critical Incident', actor: 'Correlation Engine' }
     ],
     mitreTactic: 'TA0004 - Privilege Escalation',
     mitreTechnique: 'T1068 - Exploitation for Privilege Escalation',
@@ -592,9 +714,9 @@ export const INITIAL_INCIDENTS: Incident[] = [
     assignedTo: 'Tier 2 SOC Incident Team',
     summary: 'High volume of credential spraying across corporate SSO and VPN gateway from rotating botnet exit nodes.',
     timeline: [
-      { time: '22:36:51', description: 'IKEv2 handshake brute force spike on VPN (Network Agent)', actor: 'Botnet Cluster' },
-      { time: '22:42:00', description: 'SSO login failures exceeded 500 threshold (Application Agent)', actor: 'Botnet Cluster' },
-      { time: '22:45:10', description: 'Adaptive rate-limiting triggered automatically', actor: 'Security Gateway' }
+      { id: 'tl-41-1', time: '22:36:51', description: 'IKEv2 handshake brute force spike on VPN (Network Agent)', actor: 'Botnet Cluster' },
+      { id: 'tl-41-2', time: '22:42:00', description: 'SSO login failures exceeded 500 threshold (Application Agent)', actor: 'Botnet Cluster' },
+      { id: 'tl-41-3', time: '22:45:10', description: 'Adaptive rate-limiting triggered automatically', actor: 'Security Gateway' }
     ],
     mitreTactic: 'TA0006 - Credential Access',
     mitreTechnique: 'T1110 - Brute Force',
@@ -611,9 +733,9 @@ export const INITIAL_INCIDENTS: Incident[] = [
     assignedTo: 'Network Defense Unit',
     summary: 'Periodic DNS TXT record tunneling transmitting high-entropy payload data to unclassified external domain.',
     timeline: [
-      { time: '21:15:00', description: 'Initial entropy spike observed in DNS resolver logs', actor: 'Host 10.240.12.88' },
-      { time: '21:30:00', description: 'Pattern classified as DNS beaconing by Network Agent', actor: 'Network Agent' },
-      { time: '21:45:00', description: 'Sinkholed domain at corporate DNS resolver', actor: 'Tier 1 Analyst' }
+      { id: 'tl-40-1', time: '21:15:00', description: 'Initial entropy spike observed in DNS resolver logs', actor: 'Host 10.240.12.88' },
+      { id: 'tl-40-2', time: '21:30:00', description: 'Pattern classified as DNS beaconing by Network Agent', actor: 'Network Agent' },
+      { id: 'tl-40-3', time: '21:45:00', description: 'Sinkholed domain at corporate DNS resolver', actor: 'Tier 1 Analyst' }
     ],
     mitreTactic: 'TA0010 - Exfiltration',
     mitreTechnique: 'T1071.004 - DNS Tunneling',
@@ -621,7 +743,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
   }
 ];
 
-export const INITIAL_ALERTS: SecurityAlert[] = [
+export const INITIAL_ALERTS: InitialAlertRecord[] = [
   {
     alertId: 'ALT-1099',
     timestamp: '2026-09-11 22:58:30',

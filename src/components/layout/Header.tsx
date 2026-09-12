@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, Activity, ShieldCheck, RefreshCw, Radio } from 'lucide-react';
 import { logRepository } from '../../services/logRepository';
+import { NotificationCenterDropdown } from '../alerts/NotificationCenterDropdown';
+import { SecurityAlert } from '../../types/alertIncident';
 
 interface HeaderProps {
   onOpenMobileMenu: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  onSelectAlert?: (alert: SecurityAlert) => void;
+  onNavigateToAlerts?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenMobileMenu,
   onRefresh,
-  isRefreshing = false
+  isRefreshing = false,
+  onSelectAlert,
+  onNavigateToAlerts
 }) => {
   const [hasRealData, setHasRealData] = useState(logRepository.hasRealData());
   const [totalEvents, setTotalEvents] = useState(logRepository.getStats().totalEvents);
@@ -58,6 +64,12 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: Telemetry Mode Badge & SOC Pipeline Status */}
         <div className="flex items-center gap-2.5 sm:gap-4">
+          {/* Notification Center */}
+          <NotificationCenterDropdown
+            onSelectAlert={onSelectAlert}
+            onNavigateToAlerts={onNavigateToAlerts}
+          />
+
           {hasRealData ? (
             <div
               id="badge-real-data"
@@ -102,3 +114,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+

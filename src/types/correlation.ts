@@ -64,6 +64,7 @@ export interface CorrelationSequenceStep {
   timestamp: string;
   agentId: AgentType;
   findingId: string;
+  eventId?: string; // Backward compatibility alias
   description: string;
   threatType: string;
   severity: SeverityLevel;
@@ -89,6 +90,7 @@ export interface CorrelatedEvent {
   findingIds: string[];
   eventIds: string[]; // Backward compatibility
   eventsCount: number; // Backward compatibility
+  eventCount?: number; // Backward compatibility alias
   participatingAgents: AgentType[];
   sources: string[]; // Backward compatibility
 
@@ -115,6 +117,7 @@ export interface CorrelatedEvent {
   evidence: string[];
   indicators: string[];
   explanation: string; // Detailed Causal "Why were these events connected?"
+  recommendedAction?: string; // Containment recommendation
 
   // Lifecycle status
   status: 'PENDING' | 'CORRELATED' | 'ESCALATED' | 'DISMISSED';

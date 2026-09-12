@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   FileText,
@@ -15,6 +15,8 @@ import {
   ShieldCheck,
   ChevronRight
 } from 'lucide-react';
+import { alertManager } from '../../services/alertIncident/alertManager';
+import { incidentManager } from '../../services/alertIncident/incidentManager';
 
 export type NavPageId =
   | 'dashboard'
@@ -38,21 +40,6 @@ interface NavItem {
   badgeColor?: string;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'log-explorer', label: 'Log Explorer', icon: FileText, badge: 'Ingest' },
-  { id: 'network-agent', label: 'Network Agent', icon: Network },
-  { id: 'system-agent', label: 'System Agent', icon: Cpu },
-  { id: 'application-agent', label: 'Application Agent', icon: Globe },
-  { id: 'event-correlation', label: 'Event Correlation', icon: GitMerge, badge: 'AI' },
-  { id: 'threat-detection', label: 'Threat Detection', icon: ShieldAlert, badge: 'ML' },
-  { id: 'risk-analysis', label: 'Risk Analysis', icon: Activity },
-  { id: 'incidents', label: 'Incidents', icon: AlertOctagon, badge: '4' },
-  { id: 'alerts', label: 'Alerts', icon: Bell, badge: 'Active' },
-  { id: 'reports', label: 'Reports', icon: FileSpreadsheet },
-  { id: 'settings', label: 'Settings', icon: Settings }
-];
-
 interface SidebarProps {
   currentPage: NavPageId;
   onNavigate: (page: NavPageId) => void;
@@ -66,6 +53,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   onCloseMobile
 }) => {
+  const [unreadAlerts, setUnreadAlerts] = useState(alertManager.getUnreadCount());
+  const [activeIncidents, setActiveIncidents] = useState(
+    incidentManager.getIncidents().filter(i => i.status !== 'RESOLVED').length
+  );
+
+  useEffect(() => {
+    const unsubAlerts = alertManager.subscribe(() => {
+      setUnreadAlerts(alertManager.getUnreadCount());
+    });
+    const unsubIncidents = incidentManager.subscribe(() => {
+      setActiveIncidents(incidentManager.getIncidents().filter(i => i.status !== 'RESOLVED').length);
+    });
+    return () => {
+      unsubAlerts();
+      unsubIncidents();
+    };
+  }, []);
+
+  const navItems: NavItem[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'log-explorer', label: 'Log Explorer', icon: FileText, badge: 'Ingest' },
+    { id: 'network-agent', label: 'Network Agent', icon: Network },
+    { id: 'system-agent', label: 'System Agent', icon: Cpu },
+    { id: 'application-agent', label: 'Application Agent', icon: Globe },
+    { id: 'event-correlation', label: 'Event Correlation', icon: GitMerge, badge: 'AI' },
+    { id: 'threat-detection', label: 'Threat Detection', icon: ShieldAlert, badge: 'ML' },
+    { id: 'risk-analysis', label: 'Risk Analysis', icon: Activity },
+    { id: 'incidents', label: 'Incidents', icon: AlertOctagon, badge: activeIncidents > 0 ? `${activeIncidents}` : undefined },
+    { id: 'alerts', label: 'Alerts', icon: Bell, badge: unreadAlerts > 0 ? `${unreadAlerts} New` : 'Active' },
+    { id: 'reports', label: 'Reports', icon: FileSpreadsheet },
+    { id: 'settings', label: 'Settings', icon: Settings }
+  ];
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -106,7 +126,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Operations Center
             </div>
 
-            {NAV_ITEMS.map(item => {
+            {navItems.map(item => {
               const Icon = item.icon;
               const isActive = currentPage === item.id;
               return (

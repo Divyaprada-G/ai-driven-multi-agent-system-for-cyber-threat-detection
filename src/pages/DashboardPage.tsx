@@ -1,4 +1,9 @@
-import React from 'react';
+/**
+ * AI DRIVEN MULTI-AGENT SYSTEM FOR CYBER THREAT DETECTION
+ * Stage 8: SOC Main Dashboard with Risk Scoring & Prioritization Layer
+ */
+
+import React, { useState, useEffect } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -9,7 +14,11 @@ import {
   Globe,
   TrendingUp,
   Radio,
-  Cpu
+  Cpu,
+  Layers,
+  ShieldCheck,
+  ChevronRight,
+  SlidersHorizontal
 } from 'lucide-react';
 import { StatCard } from '../components/common/StatCard';
 import { AgentStatusCard } from '../components/common/AgentStatusCard';
@@ -26,10 +35,17 @@ import {
   SeverityDistributionPoint,
   SourceDistributionPoint,
   AgentActivityPoint,
-  ThreatCategoryPoint
+  ThreatCategoryPoint,
+  RiskAssessment,
+  RiskStatus
 } from '../types';
 import { NavPageId } from '../components/layout/Sidebar';
 import { RecentEventItem } from '../components/tables/RecentEventsTable';
+import { riskService } from '../services/riskService';
+import { RiskOverviewCards } from '../components/riskScoring/RiskOverviewCards';
+import { RiskDistributionChart } from '../components/riskScoring/RiskDistributionChart';
+import { TopPriorityThreatsTable } from '../components/riskScoring/TopPriorityThreatsTable';
+import { RiskDetailModal } from '../components/riskScoring/RiskDetailModal';
 
 interface DashboardPageProps {
   metrics: DashboardMetrics;
@@ -56,6 +72,27 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigate,
   onToggleAgentStatus
 }) => {
+  const [assessments, setAssessments] = useState<RiskAssessment[]>([]);
+  const [selectedAssessment, setSelectedAssessment] = useState<RiskAssessment | null>(null);
+
+  useEffect(() => {
+    async function loadRisk() {
+      const data = await riskService.getRiskAssessments();
+      setAssessments(data);
+    }
+    loadRisk();
+  }, []);
+
+  const handleUpdateStatus = async (id: string, newStatus: RiskStatus) => {
+    await riskService.updateAssessmentStatus(id, newStatus);
+    const updated = await riskService.getRiskAssessments();
+    setAssessments(updated);
+    if (selectedAssessment && selectedAssessment.id === id) {
+      const refreshed = updated.find(a => a.id === id);
+      if (refreshed) setSelectedAssessment(refreshed);
+    }
+  };
+
   return (
     <div className="space-y-6" id="page-dashboard">
       {/* Top Banner Notice: Architecture Overview */}
@@ -75,7 +112,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-xs">
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
           <button
             id="btn-dash-log-explorer"
             onClick={() => onNavigate('log-explorer')}
@@ -84,24 +121,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             Upload New Log Stream
           </button>
           <button
-            id="btn-dash-incidents"
-            onClick={() => onNavigate('incidents')}
-            className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700"
-          >
-            View Active Incidents ({metrics.criticalIncidents})
-          </button>
-          <button
             id="btn-dash-correlation"
-            onClick={() => onNavigate('correlation')}
+            onClick={() => onNavigate('correlation' as any)}
             className="px-3 py-2 rounded-lg bg-indigo-950 hover:bg-indigo-900 text-indigo-200 transition-colors border border-indigo-700 flex items-center gap-1.5"
           >
             <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span>Event Correlation</span>
+            <span>Correlation Engine</span>
+          </button>
+          <button
+            id="btn-dash-risk"
+            onClick={() => onNavigate('risk-analysis')}
+            className="px-3 py-2 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-200 transition-colors border border-rose-700 flex items-center gap-1.5"
+          >
+            <Flame className="w-3.5 h-3.5 text-rose-400" />
+            <span>Risk Prioritization</span>
           </button>
         </div>
       </div>
 
-      {/* 4. DASHBOARD FOUNDATION - SUMMARY CARDS */}
+      {/* 1. DASHBOARD FOUNDATION - SUMMARY CARDS */}
       <section aria-label="Summary Metrics">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center gap-2">
@@ -180,7 +218,48 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </section>
 
-      {/* 6. AGENT STATUS SECTION */}
+      {/* 2. STAGE 8: RISK SCORING & THREAT PRIORITIZATION HIGHLIGHT (Prompt 08) */}
+      <section aria-label="Risk Scoring Overview" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2 font-mono">
+              <Flame className="w-4 h-4 text-rose-400 animate-pulse" />
+              STAGE 8: RISK SCORING & THREAT PRIORITIZATION
+            </h3>
+            <p className="text-xs text-slate-400">
+              Deterministic 0–100 risk scoring with weighted factors: Severity (30%), ML Confidence (20%), Correlation (15%), Complexity (15%), Agent Diversity (10%), Evidence (5%), Entities (5%).
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate('risk-analysis')}
+            className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+          >
+            <span>Full Risk Matrix →</span>
+          </button>
+        </div>
+
+        {/* Risk Overview Stat Cards */}
+        <RiskOverviewCards
+          assessments={assessments}
+          onSelectBand={() => onNavigate('risk-analysis')}
+        />
+
+        {/* Risk Distribution & Top Priority Threats Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-1">
+            <RiskDistributionChart assessments={assessments} height={220} />
+          </div>
+          <div className="lg:col-span-2">
+            <TopPriorityThreatsTable
+              assessments={assessments}
+              onSelectAssessment={item => setSelectedAssessment(item)}
+              onUpdateStatus={handleUpdateStatus}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 3. AGENT STATUS SECTION */}
       <section aria-label="Agent Status" id="section-agent-status">
         <div className="flex items-center justify-between mb-3">
           <div>
@@ -210,7 +289,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </section>
 
-      {/* 5. DASHBOARD VISUALIZATIONS */}
+      {/* 4. DASHBOARD VISUALIZATIONS */}
       <section aria-label="Visualizations" className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400">
@@ -250,15 +329,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
 
-        {/* Second Charts Row: Events by Source, Agent Activity, Threat Categories */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Middle Charts Row: Events by Source & Agent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
             <div className="mb-2">
               <h4 className="text-sm font-bold text-white font-mono">
-                3. Events by Source
+                3. Events by Log Source
               </h4>
               <p className="text-[11px] text-slate-400">
-                Log volume vs identified threat ratio per source.
+                Telemetry distribution across Network, Host, and Application layers.
               </p>
             </div>
             <EventsBySourceChart data={eventsBySource} height={240} />
@@ -267,36 +346,37 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
             <div className="mb-2">
               <h4 className="text-sm font-bold text-white font-mono">
-                4. Agent Activity
+                4. Agent Activity Distribution
               </h4>
               <p className="text-[11px] text-slate-400">
-                Processing rate (events/sec) per specialized agent.
+                Number of security rules evaluated by each specialized agent.
               </p>
             </div>
             <AgentActivityChart data={agentActivity} height={240} />
           </div>
+        </div>
 
-          <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
-            <div className="mb-2">
-              <h4 className="text-sm font-bold text-white font-mono">
-                5. Threat Categories
-              </h4>
-              <p className="text-[11px] text-slate-400">
-                Top MITRE ATT&CK tactic classification counts.
-              </p>
-            </div>
-            <ThreatCategoriesChart data={threatCategories} height={240} />
+        {/* Threat Categories Breakdown */}
+        <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+          <div className="mb-2">
+            <h4 className="text-sm font-bold text-white font-mono">
+              5. Flagged Threat Categories (MITRE ATT&CK Mapping)
+            </h4>
+            <p className="text-[11px] text-slate-400">
+              Aggregated threat behavior distribution aligned to standard tactical techniques.
+            </p>
           </div>
+          <ThreatCategoriesChart data={threatCategories} height={220} />
         </div>
       </section>
 
-      {/* MULTI-AGENT CORRELATION & THREAT DETECTION ENGINES */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Correlation Engine Card */}
-        <section aria-label="Event Correlation Quick Access" className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-xl flex flex-col justify-between gap-3 shadow-md">
+      {/* 5. QUICK ACCESS PIPELINE ARCHITECTURE */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Event Correlation Engine Card */}
+        <section aria-label="Event Correlation Engine Quick Access" className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-xl flex flex-col justify-between gap-3 shadow-md">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-lg bg-cyan-950 border border-cyan-800 text-cyan-400 shrink-0">
-              <Radio className="w-5 h-5 animate-pulse" />
+            <div className="p-2.5 rounded-lg bg-indigo-950 border border-indigo-800 text-cyan-400 shrink-0">
+              <Radio className="w-5 h-5 text-cyan-400 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -316,7 +396,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="flex justify-end pt-2 border-t border-slate-800/80">
             <button
               id="btn-dash-open-correlation"
-              onClick={() => onNavigate('correlation')}
+              onClick={() => onNavigate('correlation' as any)}
               className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <span>Correlation Engine →</span>
@@ -355,14 +435,46 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </button>
           </div>
         </section>
+
+        {/* Risk Scoring & Threat Prioritization Card */}
+        <section aria-label="Risk Scoring Quick Access" className="p-4 bg-gradient-to-r from-slate-900 via-rose-950/40 to-slate-900 border border-rose-500/30 rounded-xl flex flex-col justify-between gap-3 shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-lg bg-rose-950 border border-rose-800 text-rose-400 shrink-0">
+              <Flame className="w-5 h-5 text-rose-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-rose-300">
+                  Risk Scoring Engine
+                </span>
+                <span className="px-2 py-0.2 rounded bg-rose-950 text-rose-300 border border-rose-800 text-[10px] font-mono">
+                  STAGE 8
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1">
+                Quantitative risk matrix with configurable academic/demo weights and explainable factors.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2 border-t border-slate-800/80">
+            <button
+              id="btn-dash-open-risk"
+              onClick={() => onNavigate('risk-analysis')}
+              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <span>Risk Analysis & Prioritization →</span>
+            </button>
+          </div>
+        </section>
       </div>
 
-      {/* 7. RECENT SECURITY EVENTS TABLE */}
+      {/* 6. RECENT SECURITY EVENTS TABLE */}
       <section aria-label="Recent Security Events" id="section-recent-events">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2 font-mono">
-              6. RECENT SECURITY EVENTS
+              RECENT TELEMETRY EVENTS
             </h3>
             <p className="text-xs text-slate-400">
               Live chronological telemetry with severity, calculated risk score, and automated containment proposals.
@@ -378,6 +490,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         <RecentEventsTable events={recentEvents} />
       </section>
+
+      {/* Modal for Risk Detail */}
+      {selectedAssessment && (
+        <RiskDetailModal
+          assessment={selectedAssessment}
+          onClose={() => setSelectedAssessment(null)}
+          onUpdateStatus={handleUpdateStatus}
+        />
+      )}
     </div>
   );
 };
