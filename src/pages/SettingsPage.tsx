@@ -1,9 +1,29 @@
-import React, { useState } from 'react';
-import { Settings, Shield, Cpu, Bell, Sliders, Webhook, Save, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings, Shield, Cpu, Bell, Sliders, Webhook, Save, CheckCircle2, GitMerge } from 'lucide-react';
+import { correlationService } from '../services/correlationService';
+import { CorrelationStrength } from '../types';
 
 export const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'general' | 'detection' | 'agents' | 'alerts' | 'integration' | 'system'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'correlation' | 'detection' | 'agents' | 'alerts' | 'integration' | 'system'>('general');
   const [savedFeedback, setSavedFeedback] = useState(false);
+
+  // Correlation Config State
+  const [corrConfig, setCorrConfig] = useState({
+    timeWindowSeconds: 300,
+    minFindings: 2,
+    crossAgentRequired: false,
+    minCorrelationStrength: 'LOW' as CorrelationStrength
+  });
+
+  useEffect(() => {
+    const cfg = correlationService.getConfig();
+    setCorrConfig({
+      timeWindowSeconds: cfg.timeWindowSeconds,
+      minFindings: cfg.minFindings,
+      crossAgentRequired: cfg.crossAgentRequired,
+      minCorrelationStrength: cfg.minCorrelationStrength
+    });
+  }, []);
 
   // Settings State Form
   const [generalConfig, setGeneralConfig] = useState({
@@ -22,6 +42,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    correlationService.updateConfig(corrConfig);
     setSavedFeedback(true);
     setTimeout(() => setSavedFeedback(false), 3000);
   };
@@ -54,6 +75,7 @@ export const SettingsPage: React.FC = () => {
       <div className="flex flex-wrap gap-1.5 p-1 bg-slate-900/90 border border-slate-800 rounded-xl">
         {[
           { id: 'general', label: 'General', icon: Settings },
+          { id: 'correlation', label: 'Correlation Settings', icon: GitMerge },
           { id: 'detection', label: 'Detection', icon: Shield },
           { id: 'agents', label: 'Agents', icon: Cpu },
           { id: 'alerts', label: 'Alert Configuration', icon: Bell },
@@ -119,6 +141,99 @@ export const SettingsPage: React.FC = () => {
                 <label htmlFor="chk-auto-correlation" className="text-slate-300">
                   Enable Autonomous Cross-Agent Correlation Pipeline
                 </label>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Correlation Settings */}
+        {activeTab === 'correlation' && (
+          <div className="space-y-4" id="section-correlation-settings">
+            <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+              <GitMerge className="w-4 h-4 text-cyan-400" />
+              Event Correlation Engine Settings
+            </h3>
+            <p className="text-xs text-slate-400 max-w-xl">
+              Configure heuristic window thresholds and multi-agent synthesis constraints.
+            </p>
+
+            <div className="space-y-4 max-w-xl text-xs font-mono">
+              {/* Time Window */}
+              <div>
+                <label className="text-slate-300 block mb-1 font-semibold">
+                  Correlation Time Window
+                </label>
+                <select
+                  id="settings-corr-timewindow"
+                  value={corrConfig.timeWindowSeconds}
+                  onChange={e => setCorrConfig({ ...corrConfig, timeWindowSeconds: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-cyan-500 focus:outline-none"
+                >
+                  <option value={30}>30 Seconds (Fast burst attacks)</option>
+                  <option value={60}>60 Seconds (1 Minute)</option>
+                  <option value={300}>300 Seconds (5 Minutes - Recommended default)</option>
+                  <option value={900}>900 Seconds (15 Minutes - Low and slow)</option>
+                </select>
+                <span className="text-[11px] text-slate-500 mt-0.5 block">
+                  Maximum elapsed duration between earliest and latest correlated finding.
+                </span>
+              </div>
+
+              {/* Minimum Findings */}
+              <div>
+                <label className="text-slate-300 block mb-1 font-semibold">
+                  Minimum Findings per Cluster
+                </label>
+                <select
+                  id="settings-corr-minfindings"
+                  value={corrConfig.minFindings}
+                  onChange={e => setCorrConfig({ ...corrConfig, minFindings: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-cyan-500 focus:outline-none"
+                >
+                  <option value={2}>2 Findings (Standard)</option>
+                  <option value={3}>3 Findings (Triad Multi-Signal)</option>
+                  <option value={4}>4 Findings (Strict High-Assurance)</option>
+                </select>
+                <span className="text-[11px] text-slate-500 mt-0.5 block">
+                  Minimum number of security events required before forming a correlated incident.
+                </span>
+              </div>
+
+              {/* Cross-Agent Requirement */}
+              <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between">
+                <div>
+                  <span className="text-slate-200 font-semibold block">Require Cross-Agent Activity</span>
+                  <span className="text-[11px] text-slate-400">
+                    When enabled, clusters must contain findings from at least 2 distinct domain agents.
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  id="settings-corr-crossagent"
+                  checked={corrConfig.crossAgentRequired}
+                  onChange={e => setCorrConfig({ ...corrConfig, crossAgentRequired: e.target.checked })}
+                  className="accent-cyan-500 w-4 h-4 rounded cursor-pointer"
+                />
+              </div>
+
+              {/* Minimum Strength */}
+              <div>
+                <label className="text-slate-300 block mb-1 font-semibold">
+                  Minimum Correlation Strength Threshold
+                </label>
+                <select
+                  id="settings-corr-minstrength"
+                  value={corrConfig.minCorrelationStrength}
+                  onChange={e => setCorrConfig({ ...corrConfig, minCorrelationStrength: e.target.value as CorrelationStrength })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:border-cyan-500 focus:outline-none"
+                >
+                  <option value="LOW">LOW (Accept all valid correlations, confidence ≥ 15%)</option>
+                  <option value="MEDIUM">MEDIUM (Requires solid entity match or dual-agent, confidence ≥ 50%)</option>
+                  <option value="HIGH">HIGH (Requires high confidence and multi-stage sequence, confidence ≥ 75%)</option>
+                </select>
+                <span className="text-[11px] text-slate-500 mt-0.5 block">
+                  Filters out weak single-signal correlations to prevent SOC alert fatigue.
+                </span>
               </div>
             </div>
           </div>

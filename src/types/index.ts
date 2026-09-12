@@ -21,6 +21,8 @@ export type LogFileFormat = 'JSON' | 'JSONL' | 'CSV' | 'SYSLOG' | 'PLAINTEXT' | 
 
 export type ValidationStatus = 'VALID' | 'INVALID';
 
+export * from './correlation';
+
 export interface LogValidationResult {
   status: ValidationStatus;
   errors: string[];
@@ -181,28 +183,6 @@ export interface AgentStatusInfo {
   description: string;
   activeRulesCount: number;
   uptime: string;
-}
-
-/**
- * Correlated Event from Multi-Agent Event Correlation Engine
- */
-export interface CorrelatedEvent {
-  correlationId: string;
-  timestamp: string;
-  eventIds: string[];
-  eventsCount: number;
-  sources: string[];
-  attackPattern: string;
-  mitreTechniqueId?: string;
-  confidence: number; // percentage
-  severity: SeverityLevel;
-  status: 'PENDING' | 'CORRELATED' | 'ESCALATED' | 'DISMISSED';
-  description: string;
-  agentContributions: {
-    network?: string;
-    system?: string;
-    application?: string;
-  };
 }
 
 /**

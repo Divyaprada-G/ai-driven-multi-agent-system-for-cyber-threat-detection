@@ -89,6 +89,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           >
             View Active Incidents ({metrics.criticalIncidents})
           </button>
+          <button
+            id="btn-dash-correlation"
+            onClick={() => onNavigate('correlation')}
+            className="px-3 py-2 rounded-lg bg-indigo-950 hover:bg-indigo-900 text-indigo-200 transition-colors border border-indigo-700 flex items-center gap-1.5"
+          >
+            <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span>Event Correlation</span>
+          </button>
         </div>
       </div>
 
@@ -279,6 +287,36 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <ThreatCategoriesChart data={threatCategories} height={240} />
           </div>
         </div>
+      </section>
+
+      {/* MULTI-AGENT CORRELATION ENGINE BANNER */}
+      <section aria-label="Event Correlation Quick Access" className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-cyan-950 border border-cyan-800 text-cyan-400 shrink-0">
+            <Radio className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400">
+                Multi-Agent Event Correlation Engine
+              </span>
+              <span className="px-2 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-mono">
+                ACTIVE
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Synthesizing temporal, IP, host, and multi-stage sequences across Network, System, and Application agents.
+            </p>
+          </div>
+        </div>
+
+        <button
+          id="btn-dash-open-correlation"
+          onClick={() => onNavigate('correlation')}
+          className="px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-colors shadow-lg shadow-cyan-600/20 shrink-0 self-end sm:self-auto"
+        >
+          <span>Open Correlation Engine →</span>
+        </button>
       </section>
 
       {/* 7. RECENT SECURITY EVENTS TABLE */}
