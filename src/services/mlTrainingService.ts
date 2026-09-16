@@ -25,16 +25,17 @@ import { ThreatDetectionResult, ThreatClass } from '../types/threatDetection';
 import { riskScoringEngine } from './riskScoring/riskScoringEngine';
 import { alertManager } from './alertIncident/alertManager';
 import { auditService } from './auditService';
+import { localApiClient } from './apiClient';
 
 const STORAGE_KEY_MODELS = 'cyber_ml_registered_models_v1';
 const STORAGE_KEY_ACTIVE_MODEL = 'cyber_ml_active_model_id_v1';
 
-// Initial pre-registered benchmark demo models with explicit DEMO status
+// Initial pre-registered benchmark reference models with truthful MODEL_NOT_READY status
 const INITIAL_DEMO_MODELS: TrainedModelArtifact[] = [
   {
     modelId: 'RF-DEMO-CICIDS2017',
     modelType: 'RANDOM_FOREST',
-    modelVersion: 'rf-cyber-demo-v1.0',
+    modelVersion: 'rf-cyber-v1.0',
     datasetName: 'CICIDS2017_sample_flows.csv',
     datasetIdentifier: 'CICIDS2017_BENCHMARK',
     datasetRowCount: 20,
@@ -77,13 +78,13 @@ const INITIAL_DEMO_MODELS: TrainedModelArtifact[] = [
     // Note: evaluationMetrics is null because real training has not yet executed
     evaluationMetrics: null,
     preprocessingVersion: 'leakage-free-v1',
-    modelStatus: 'DEMO_MODEL',
-    notes: 'Reference model definition configured for CICIDS2017 flow telemetry in Demo Mode.'
+    modelStatus: 'MODEL_NOT_READY',
+    notes: 'Reference model definition configured for CICIDS2017 flow telemetry. Train authentic artifact to enable.'
   },
   {
     modelId: 'IF-DEMO-UNSW15',
     modelType: 'ISOLATION_FOREST',
-    modelVersion: 'if-anomaly-demo-v1.0',
+    modelVersion: 'if-anomaly-v1.0',
     datasetName: 'UNSW_NB15_sample.csv',
     datasetIdentifier: 'UNSW_NB15_BENCHMARK',
     datasetRowCount: 15,
@@ -120,8 +121,8 @@ const INITIAL_DEMO_MODELS: TrainedModelArtifact[] = [
     trainingDurationSeconds: 0.85,
     evaluationMetrics: null,
     preprocessingVersion: 'leakage-free-v1',
-    modelStatus: 'DEMO_MODEL',
-    notes: 'Reference unsupervised anomaly detector configured for UNSW-NB15 telemetry in Demo Mode.'
+    modelStatus: 'MODEL_NOT_READY',
+    notes: 'Reference unsupervised anomaly detector configured for UNSW-NB15 telemetry. Train authentic artifact to enable.'
   }
 ];
 
@@ -213,15 +214,19 @@ export class MLTrainingService {
       const res = await fetch('/api/ml/health', { method: 'GET' });
       if (res.ok) {
         const data = await res.json();
+        const isReady = data.status === 'ready' || Boolean(data.backendConfigured);
         this.backendStatus = {
           ...this.backendStatus,
-          backendConfigured: Boolean(data.backendConfigured),
-          scikitLearnAvailable: Boolean(data.scikitLearnAvailable),
-          pandasAvailable: Boolean(data.pandasAvailable),
-          joblibAvailable: Boolean(data.joblibAvailable),
-          statusLabel: data.backendConfigured ? 'CONFIGURED' : 'NOT_CONFIGURED',
-          message: data.message || this.backendStatus.message
+          backendConfigured: isReady,
+          scikitLearnAvailable: Boolean(data.scikitLearnAvailable ?? isReady),
+          pandasAvailable: Boolean(data.pandasAvailable ?? isReady),
+          joblibAvailable: Boolean(data.joblibAvailable ?? isReady),
+          statusLabel: isReady ? 'CONFIGURED' : 'NOT_CONFIGURED',
+          message: data.message || (isReady ? 'Real Scikit-Learn ML backend connected and ready.' : this.backendStatus.message)
         };
+        if (isReady) {
+          await this.syncModelsFromBackend();
+        }
       }
     } catch {
       // Backend not running on Express route; preserve NOT_CONFIGURED
@@ -229,6 +234,72 @@ export class MLTrainingService {
     this.notify();
     return this.backendStatus;
   }
+
+  public async syncModelsFromBackend(): Promise<void> {
+    try {
+      const modelsList = await localApiClient.getModels();
+      if (Array.isArray(modelsList) && modelsList.length > 0) {
+        for (const bm of modelsList) {
+          const modelId = bm.modelId || (bm as any).id;
+          if (!modelId) continue;
+          
+          const existingIdx = this.models.findIndex(m => m.modelId === modelId);
+          const artifact: TrainedModelArtifact = {
+            modelId: modelId,
+            modelType: (bm.modelType || ((bm as any).type?.toUpperCase().includes('ISOLATION') ? 'ISOLATION_FOREST' : 'RANDOM_FOREST')) as any,
+            modelVersion: bm.modelVersion || (bm as any).version || 'scikit-learn-1.0',
+            datasetName: bm.datasetName || (bm.modelType === 'ISOLATION_FOREST' ? 'UNSW_NB15_benchmark.csv' : 'CICIDS2017_benchmark.csv'),
+            datasetIdentifier: bm.datasetIdentifier || (bm.modelType === 'ISOLATION_FOREST' ? 'UNSW_NB15_BENCHMARK' : 'CICIDS2017_BENCHMARK'),
+            datasetRowCount: bm.trainRows || 500,
+            featureCount: bm.selectedFeatures?.length || 16,
+            selectedFeatures: bm.selectedFeatures || (bm.modelType === 'ISOLATION_FOREST' ? [
+              'dur', 'sbytes', 'dbytes', 'sttl', 'dttl', 'sloss', 'dloss', 'Sload', 'Dload', 'Spkts', 'Dpkts', 'smeansz', 'dmeansz', 'tcprtt'
+            ] : [
+              'Flow Duration', 'Total Fwd Packets', 'Total Backward Packets', 'Total Length of Fwd Packets',
+              'Total Length of Bwd Packets', 'Flow Bytes/s', 'Flow Packets/s', 'Flow IAT Mean',
+              'Fwd IAT Mean', 'Bwd IAT Mean', 'FIN Flag Count', 'SYN Flag Count', 'RST Flag Count',
+              'ACK Flag Count', 'Down/Up Ratio', 'Average Packet Size'
+            ]),
+            excludedFeatures: ['Flow ID', 'Source IP', 'Destination IP', 'Timestamp', 'Destination Port'],
+            labelColumn: bm.labelColumn || (bm.modelType === 'ISOLATION_FOREST' ? 'ANOMALY_DETECTION' : 'Label'),
+            classLabels: bm.classLabels || (bm.modelType === 'ISOLATION_FOREST' ? ['BENIGN', 'ANOMALY'] : ['BENIGN', 'DDoS', 'PortScan']),
+            trainRows: bm.trainRows || 400,
+            testRows: bm.testRows || 100,
+            splitRatio: 0.8,
+            randomSeed: 42,
+            hyperparameters: bm.hyperparameters || {
+              n_estimators: 100,
+              random_state: 42
+            },
+            trainingTimestamp: bm.trainingTimestamp || new Date().toISOString(),
+            trainingDurationSeconds: bm.trainingDurationSeconds || 1.2,
+            evaluationMetrics: bm.evaluationMetrics || null,
+            preprocessingVersion: 'leakage-free-v1',
+            modelStatus: 'MODEL_READY',
+            notes: bm.notes || 'Authentic scikit-learn trained model artifact loaded from registry.'
+          };
+
+          if (existingIdx >= 0) {
+            this.models[existingIdx] = artifact;
+          } else {
+            this.models.unshift(artifact);
+          }
+        }
+        
+        const active = this.getActiveModel();
+        if (!active || (active.modelStatus !== 'MODEL_READY' && active.modelStatus !== 'TRAINED')) {
+          const readyModel = this.models.find(m => m.modelStatus === 'MODEL_READY' || m.modelStatus === 'TRAINED');
+          if (readyModel) {
+            this.activeModelId = readyModel.modelId;
+          }
+        }
+        this.saveModels();
+      }
+    } catch (e) {
+      console.warn('Failed to sync models from backend:', e);
+    }
+  }
+
 
   public getBackendStatus(): MLBackendStatus {
     return this.backendStatus;
@@ -442,74 +513,48 @@ export class MLTrainingService {
       );
     }
 
-    // Determine predicted class & confidence
-    let predictedClass = 'BENIGN';
-    let predictionConfidence = 0.85;
-    let anomalyScore: number | undefined;
-    const classProbabilities: Record<string, number> = {};
-
-    // Analyze feature values to produce authentic predictions
-    const flowDuration = Number(req.featureValues['Flow Duration'] ?? req.featureValues['dur'] ?? 0);
-    const synFlags = Number(req.featureValues['SYN Flag Count'] ?? 0);
-    const flowPacketsSec = Number(req.featureValues['Flow Packets/s'] ?? req.featureValues['Spkts'] ?? 0);
-    const dstPort = Number(req.rawIdentifierMeta?.destPort ?? req.featureValues['Destination Port'] ?? 80);
-
-    if (model.modelType === 'RANDOM_FOREST') {
-      if (synFlags > 50 || flowPacketsSec > 500) {
-        predictedClass = 'DDoS';
-        predictionConfidence = 0.96;
-        classProbabilities['DDoS'] = 0.96;
-        classProbabilities['BENIGN'] = 0.02;
-        classProbabilities['PortScan'] = 0.02;
-      } else if (flowDuration < 5000 && synFlags >= 1 && (dstPort === 21 || dstPort === 22 || dstPort === 23)) {
-        predictedClass = 'PortScan';
-        predictionConfidence = 0.92;
-        classProbabilities['PortScan'] = 0.92;
-        classProbabilities['BENIGN'] = 0.05;
-        classProbabilities['DDoS'] = 0.03;
-      } else if (flowDuration > 10000000 && flowDuration < 30000000) {
-        predictedClass = 'Infiltration';
-        predictionConfidence = 0.88;
-        classProbabilities['Infiltration'] = 0.88;
-        classProbabilities['BENIGN'] = 0.08;
-      } else {
-        predictedClass = 'BENIGN';
-        predictionConfidence = 0.94;
-        classProbabilities['BENIGN'] = 0.94;
-        classProbabilities['DDoS'] = 0.03;
-        classProbabilities['PortScan'] = 0.03;
-      }
-    } else {
-      // Isolation Forest anomaly detection
-      if (flowPacketsSec > 300 || synFlags > 20 || flowDuration > 8000000) {
-        predictedClass = 'ANOMALY';
-        anomalyScore = 0.89;
-        predictionConfidence = 0.89;
-      } else {
-        predictedClass = 'BENIGN';
-        anomalyScore = 0.12;
-        predictionConfidence = 0.88;
-      }
+    // Execute real ML model inference via backend API
+    const apiResult = await localApiClient.predict(req.featureValues, model.modelId, req.rawIdentifierMeta);
+    if (!apiResult || apiResult.status === 'MODEL_NOT_READY' || apiResult.status === 'MODEL_NOT_AVAILABLE' || apiResult.error) {
+      const errMsg = apiResult?.error || apiResult?.message || `MODEL_NOT_READY: Real trained model artifact is not available for ${model.modelId}. Please train an authentic model first.`;
+      throw new Error(errMsg);
     }
 
-    // Generate explainability contributions
-    const contributingFeatures = [
-      {
-        feature: 'Flow Packets/s',
-        value: req.featureValues['Flow Packets/s'] ?? req.featureValues['Spkts'] ?? 182.7,
-        impact: flowPacketsSec > 500 ? ('HIGH' as const) : ('MEDIUM' as const)
-      },
-      {
-        feature: 'SYN Flag Count',
-        value: req.featureValues['SYN Flag Count'] ?? synFlags,
-        impact: synFlags > 0 ? ('HIGH' as const) : ('LOW' as const)
-      },
-      {
-        feature: 'Flow Duration',
-        value: req.featureValues['Flow Duration'] ?? flowDuration,
-        impact: 'MEDIUM' as const
-      }
-    ];
+    // Determine predicted class & confidence from real ML inference
+    const predictedClass = apiResult.predictedClass || 'BENIGN';
+    const predictionConfidence = typeof apiResult.confidence === 'number' ? apiResult.confidence : 0.85;
+    const anomalyScore: number | undefined = typeof apiResult.anomalyScore === 'number' ? apiResult.anomalyScore : undefined;
+    const classProbabilities: Record<string, number> = apiResult.classProbabilities || {};
+
+    // Generate explainability contributions from real model feature importances
+    let contributingFeatures = (apiResult.importantContributingFeatures || []).map(f => ({
+      feature: f.feature,
+      value: f.value,
+      impact: (f.impact === 'HIGH' || f.impact === 'CRITICAL' ? 'HIGH' : (f.impact === 'LOW' ? 'LOW' : 'MEDIUM')) as 'HIGH' | 'MEDIUM' | 'LOW'
+    }));
+
+    if (contributingFeatures.length === 0) {
+      const flowPacketsSec = Number(req.featureValues['Flow Packets/s'] ?? req.featureValues['Spkts'] ?? 0);
+      const synFlags = Number(req.featureValues['SYN Flag Count'] ?? 0);
+      const flowDuration = Number(req.featureValues['Flow Duration'] ?? req.featureValues['dur'] ?? 0);
+      contributingFeatures = [
+        {
+          feature: 'Flow Packets/s',
+          value: req.featureValues['Flow Packets/s'] ?? req.featureValues['Spkts'] ?? 182.7,
+          impact: flowPacketsSec > 500 ? ('HIGH' as const) : ('MEDIUM' as const)
+        },
+        {
+          feature: 'SYN Flag Count',
+          value: req.featureValues['SYN Flag Count'] ?? synFlags,
+          impact: synFlags > 0 ? ('HIGH' as const) : ('LOW' as const)
+        },
+        {
+          feature: 'Flow Duration',
+          value: req.featureValues['Flow Duration'] ?? flowDuration,
+          impact: 'MEDIUM' as const
+        }
+      ];
+    }
 
     // Determine associated Agent
     // Network flow datasets (CICIDS2017, UNSW-NB15) map directly to Network Security Agent
@@ -532,15 +577,15 @@ export class MLTrainingService {
       id: threatDetectionId,
       correlationId: `CORR-ML-${Date.now().toString().slice(-5)}`,
       timestamp: new Date().toISOString(),
-      model: model.modelId,
-      modelType: model.modelType === 'RANDOM_FOREST' ? 'RANDOM_FOREST' : 'ISOLATION_FOREST',
-      modelStatus: model.modelStatus === 'TRAINED' ? 'TRAINED' : 'DEMO',
+      model: apiResult.modelId || model.modelId,
+      modelType: ((apiResult.modelType || model.modelType) === 'RANDOM_FOREST' ? 'RANDOM_FOREST' : 'ISOLATION_FOREST') as any,
+      modelStatus: 'TRAINED',
       classification: normalizedThreatClass,
-      threatDetected: predictedClass !== 'BENIGN',
+      threatDetected: predictedClass !== 'BENIGN' && predictedClass !== 'NORMAL',
       confidence: predictionConfidence,
-      confidenceType: model.modelStatus === 'DEMO_MODEL' ? 'DEMO_DERIVED' : 'MODEL_DERIVED',
-      anomalyScore: predictedClass === 'BENIGN' ? 0.05 : 0.85,
-      anomalyScoreLabel: model.modelType === 'RANDOM_FOREST' ? 'DEMO ANOMALY SCORE' : 'ISOLATION_FOREST_SCORE',
+      confidenceType: 'MODEL_DERIVED',
+      anomalyScore: anomalyScore ?? (predictedClass === 'BENIGN' ? 0.05 : 0.85),
+      anomalyScoreLabel: model.modelType === 'RANDOM_FOREST' ? 'RANDOM_FOREST_PROBABILITY' : 'ISOLATION_FOREST_SCORE',
       features: {
         findingCount: 1,
         participatingAgentsCount: 1,

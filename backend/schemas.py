@@ -49,6 +49,18 @@ class PredictionRequest(BaseModel):
     features: Dict[str, Any] = Field(..., description="Key-value pairs matching trained model schema")
     rawIdentifierMeta: Optional[Dict[str, Any]] = Field(default=None, description="Metadata excluded from ML features (IP, flowId, etc)")
 
+class ModelStatusResponse(BaseModel):
+    status: str # "MODEL_READY", "ARTIFACTS_MISSING", "MODEL_LOADING", "MODEL_ERROR", "SERVICE_UNAVAILABLE"
+    randomForest: str
+    isolationForest: str
+    activeModelId: Optional[str] = None
+    activeModelType: Optional[str] = None
+    modelVersion: Optional[str] = None
+    featureSchemaVersion: Optional[str] = "cicids2017-v1"
+    loadedArtifactsCount: int = 0
+    isTestData: bool = False
+    message: str
+
 class FeatureImpact(BaseModel):
     feature: str
     value: Any
@@ -57,15 +69,19 @@ class FeatureImpact(BaseModel):
 class PredictionResponse(BaseModel):
     predictionId: str
     timestamp: str
+    inferenceTimestamp: Optional[str] = None
     modelId: str
     modelVersion: str
+    featureSchemaVersion: Optional[str] = "cicids2017-v1"
     modelStatus: str
+    prediction: Optional[str] = None
     predictedClass: str
     rawClass: Optional[str] = None
     confidence: float
     confidenceDisclaimer: str = "This probability represents the model's predicted class probability and should not be interpreted as absolute certainty."
     classProbabilities: Dict[str, float] = {}
     anomalyScore: Optional[float] = None
+    anomalyFlag: Optional[bool] = None
     anomalyLabel: Optional[str] = None
     featureSummary: Dict[str, Any] = {}
     importantContributingFeatures: List[FeatureImpact] = []
@@ -80,6 +96,7 @@ class BatchPredictionRequest(BaseModel):
 class BatchPredictionResponse(BaseModel):
     totalRequested: int
     processed: int
+    totalProcessed: Optional[int] = None
     successful: int
     failed: int
     processingTimeMs: float

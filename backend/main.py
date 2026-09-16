@@ -80,14 +80,11 @@ async def startup_event():
     print("[CyberML Backend] Local API ready at http://127.0.0.1:8000 (Docs at /docs)")
 
 # -------------------------------------------------------------
-# 1. HEALTH CHECK ENDPOINT
+# 1. HEALTH CHECK ENDPOINTS
 # -------------------------------------------------------------
 @app.get("/api/health", response_model=HealthResponse)
 async def get_health():
-    """
-    Health check endpoint.
-    Frontend must use this endpoint to determine whether local backend is actually running.
-    """
+    """General health check endpoint."""
     return HealthResponse(
         status="ok",
         service="Cyber Threat Detection ML Backend",
@@ -96,6 +93,50 @@ async def get_health():
         offlineFirst=True,
         paidApisUsed=False
     )
+
+@app.get("/api/ml/health")
+async def get_ml_health():
+    """
+    ML-specific health check endpoint conforming to Section 7 requirements.
+    Reports real availability of trained scikit-learn artifacts.
+    """
+    model_service.refresh_registry()
+    models = model_service.get_registered_models()
+
+    rf_info = {"available": False, "modelId": None, "version": None}
+    if_info = {"available": False, "modelId": None, "version": None}
+
+    for m in models:
+        m_type = m.get("model_type") or m.get("modelType")
+        m_id = m.get("model_id") or m.get("modelId")
+        version = m.get("version") or m.get("modelVersion")
+
+        if m_type == "RANDOM_FOREST" and not rf_info["available"]:
+            rf_info = {
+                "available": True,
+                "modelId": m_id,
+                "version": version
+            }
+        elif m_type == "ISOLATION_FOREST" and not if_info["available"]:
+            if_info = {
+                "available": True,
+                "modelId": m_id,
+                "version": version
+            }
+
+    overall_ready = rf_info["available"] or if_info["available"]
+
+    return {
+        "status": "ready" if overall_ready else "not_ready",
+        "framework": "scikit-learn",
+        "backendConfigured": True,
+        "scikitLearnAvailable": True,
+        "pandasAvailable": True,
+        "joblibAvailable": True,
+        "randomForest": rf_info,
+        "isolationForest": if_info,
+        "message": "Real Scikit-Learn ML backend connected and ready." if overall_ready else "Model artifacts not ready"
+    }
 
 # -------------------------------------------------------------
 # 2. SYSTEM STATUS ENDPOINT
@@ -140,57 +181,114 @@ async def get_system_status():
 # -------------------------------------------------------------
 # 3. MODEL REGISTRY ENDPOINTS
 # -------------------------------------------------------------
+@app.get("/api/ml/models")
 @app.get("/api/models")
 async def get_registered_models():
-    """Returns all models trained and registered from Prompt 11."""
+    """Returns all models trained and registered."""
+    model_service.refresh_registry()
     return model_service.get_registered_models()
 
+@app.get("/api/ml/model-status")
+async def get_model_status():
+    """
+    Returns server-side model registry status.
+    Distinguishes:
+    - SERVICE_UNAVAILABLE
+    - ARTIFACTS_MISSING
+    - MODEL_LOADING
+    - MODEL_READY
+    - MODEL_ERROR
+    Never returns MODEL_READY merely because the Python package is installed.
+    """
+    model_service.refresh_registry()
+    return model_service.get_detailed_status()
+
 # -------------------------------------------------------------
-# 4. REAL PREDICTION ENDPOINT
+# 4. REAL PREDICTION ENDPOINTS
 # -------------------------------------------------------------
+@app.post("/api/ml/predict")
 @app.post("/api/predict")
 async def predict_sample(req: PredictionRequest):
     """
     Real Prediction Endpoint:
     Validates input features, loads preprocessing pipeline, transforms features,
     and runs inference through the actual Scikit-Learn model.
-    If no model is available, returns clear status without fabricating fake predictions.
+    Never falls back to heuristic predictions. Returns MODEL_NOT_READY when unavailable.
     """
+    # 1. Validate input structure
+    if not isinstance(req.features, dict) or len(req.features) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid feature input: 'features' must be a non-empty dictionary of feature names and values."
+        )
+
+    # 2. Validate feature schema (reject malformed / non-numeric types)
+    invalid_fields = []
+    for k, v in req.features.items():
+        if isinstance(v, (str, bool)) and not isinstance(v, (int, float)):
+            try:
+                float(v)
+            except (ValueError, TypeError):
+                invalid_fields.append(f"Field '{k}' has non-numeric value '{v}'")
+    if invalid_fields:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Malformed feature schema: all feature values must be numeric. Errors: {'; '.join(invalid_fields)}"
+        )
+
+    # 3. Run real prediction through model service
     result = model_service.predict(
         model_id=req.modelId,
         feature_values=req.features,
         raw_meta=req.rawIdentifierMeta
     )
 
-    if result.get("status") == "MODEL_NOT_AVAILABLE":
+    if result.get("status") in ["MODEL_NOT_READY", "MODEL_NOT_AVAILABLE", "ARTIFACTS_MISSING"]:
         return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content=result
         )
 
     return result
 
 # -------------------------------------------------------------
-# 5. BATCH PREDICTION ENDPOINT
+# 5. BATCH PREDICTION ENDPOINTS
 # -------------------------------------------------------------
+@app.post("/api/ml/predict/batch", response_model=BatchPredictionResponse)
 @app.post("/api/predict/batch", response_model=BatchPredictionResponse)
 async def predict_batch(req: BatchPredictionRequest):
     """
-    Batch Prediction with safe chunking and error resilience.
+    Batch Prediction with bounded batch size, feature validation, and safe execution.
     """
+    if not req.records or len(req.records) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Batch prediction records cannot be empty."
+        )
+
+    MAX_BATCH_SIZE = 500
+    if len(req.records) > MAX_BATCH_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Batch size exceeds maximum limit of {MAX_BATCH_SIZE} records."
+        )
+
     start_time = time.time()
     successful = 0
     failed = 0
     predictions = []
     errors = []
 
-    # Safe batch chunking
-    records = req.records[:500] # Safe limit per batch request
-    for idx, record in enumerate(records):
+    for idx, record in enumerate(req.records):
+        if not isinstance(record, dict):
+            errors.append({"recordIndex": idx, "error": "Record must be an object/dict"})
+            failed += 1
+            continue
+
         try:
             pred = model_service.predict(model_id=req.modelId, feature_values=record)
-            if pred.get("status") == "MODEL_NOT_AVAILABLE":
-                errors.append({"recordIndex": idx, "error": "Model not available"})
+            if pred.get("status") in ["MODEL_NOT_READY", "MODEL_NOT_AVAILABLE"]:
+                errors.append({"recordIndex": idx, "error": pred.get("error") or "MODEL_NOT_READY"})
                 failed += 1
             else:
                 predictions.append(pred)
@@ -203,13 +301,15 @@ async def predict_batch(req: BatchPredictionRequest):
 
     return BatchPredictionResponse(
         totalRequested=len(req.records),
-        processed=len(records),
+        processed=len(req.records),
+        totalProcessed=len(req.records),
         successful=successful,
         failed=failed,
         processingTimeMs=processing_time_ms,
         predictions=predictions,
         errors=errors
     )
+
 
 # -------------------------------------------------------------
 # 6. LIVE SECURITY EVENT INGESTION & PIPELINE

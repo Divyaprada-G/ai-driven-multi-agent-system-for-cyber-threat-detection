@@ -48,7 +48,7 @@ export interface LivePipelineStatus {
   mlEngineStatus: string;
   activeModelId?: string;
   activeModelType?: string;
-  activeModelStatus: 'TRAINED' | 'NOT_TRAINED' | 'DEMO_MODEL' | 'MODEL_NOT_AVAILABLE';
+  activeModelStatus: 'TRAINED' | 'MODEL_READY' | 'MODEL_NOT_READY' | 'MODEL_ERROR' | 'NOT_TRAINED' | 'DEMO_MODEL' | 'MODEL_NOT_AVAILABLE';
   queueLength: number;
   eventsReceived: number;
   eventsProcessed: number;

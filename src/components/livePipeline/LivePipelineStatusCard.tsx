@@ -116,11 +116,13 @@ export const LivePipelineStatusCard: React.FC<LivePipelineStatusCardProps> = ({
           </div>
           <div className="flex items-center justify-between mt-1">
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-              status.activeModelStatus === 'TRAINED'
+              status.activeModelStatus === 'TRAINED' || status.activeModelStatus === 'MODEL_READY'
                 ? 'bg-emerald-500/20 text-emerald-300'
-                : (status.activeModelStatus === 'DEMO_MODEL' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-red-500/20 text-red-300')
+                : (status.activeModelStatus === 'MODEL_ERROR' ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300')
             }`}>
-              {status.activeModelStatus}
+              {status.activeModelStatus === 'TRAINED' || status.activeModelStatus === 'MODEL_READY'
+                ? 'MODEL READY'
+                : (status.activeModelStatus === 'MODEL_ERROR' ? 'MODEL ERROR' : 'MODEL NOT READY')}
             </span>
             <button
               onClick={onNavigateToTraining}

@@ -107,7 +107,8 @@ export interface ThreatDetectionResult {
   confidence: number; // 0.0 to 1.0
   confidenceType: 'MODEL_DERIVED' | 'DEMO_DERIVED' | 'MODEL-DERIVED' | 'DEMO-DERIVED';
   anomalyScore: number; // 0.0 = nominal, 1.0 = highly anomalous
-  anomalyScoreLabel: 'DEMO ANOMALY SCORE' | 'ISOLATION_FOREST_SCORE';
+  anomalyScoreLabel: 'DEMO ANOMALY SCORE' | 'ISOLATION_FOREST_SCORE' | 'RANDOM_FOREST_PROBABILITY' | 'MODEL_DERIVED_SCORE';
+
   features: ThreatFeatureVector;
   normalizedFeatures?: NormalizedFeatureVector;
   evidence: string[];

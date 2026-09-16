@@ -4,6 +4,7 @@ Data Leakage-Free Preprocessing Pipeline
 """
 
 import numpy as np
+import pandas as pd
 
 def clean_and_split_data(df, feature_cols, target_col, test_size=0.2, random_state=42):
     """

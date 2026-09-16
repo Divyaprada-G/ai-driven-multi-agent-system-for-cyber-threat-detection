@@ -84,8 +84,9 @@ class LivePipelineService {
   public getStatus(): LivePipelineStatus {
     const activeModel = mlTrainingService.getActiveModel();
     const activeModelStatus = activeModel
-      ? (activeModel.modelStatus === 'TRAINED' ? 'TRAINED' : 'DEMO_MODEL')
+      ? (activeModel.modelStatus === 'TRAINED' || activeModel.modelStatus === 'MODEL_READY' ? 'MODEL_READY' : 'MODEL_NOT_READY')
       : 'MODEL_NOT_AVAILABLE';
+
 
     const avgLat = this.latenciesMs.length > 0
       ? Number((this.latenciesMs.reduce((a, b) => a + b, 0) / this.latenciesMs.length).toFixed(1))
@@ -305,20 +306,24 @@ class LivePipelineService {
 
       const activeModel = mlTrainingService.getActiveModel();
 
-      if (activeModel) {
-        // Execute real test prediction through mlTrainingService
-        predictionResult = await mlTrainingService.predictSample({
-          modelId: activeModel.modelId,
-          featureValues: event.features,
-          rawIdentifierMeta: {
-            sourceIp: event.sourceIp,
-            destIp: event.destinationIp,
-            flowId: event.eventId
-          }
-        });
+      if (activeModel && (activeModel.modelStatus === 'MODEL_READY' || activeModel.modelStatus === 'TRAINED')) {
+        try {
+          // Execute real test prediction through mlTrainingService
+          predictionResult = await mlTrainingService.predictSample({
+            modelId: activeModel.modelId,
+            featureValues: event.features,
+            rawIdentifierMeta: {
+              sourceIp: event.sourceIp,
+              destIp: event.destinationIp,
+              flowId: event.eventId
+            }
+          });
 
-        predictedClass = predictionResult.predictedClass || 'BENIGN';
-        confidence = predictionResult.predictionConfidence || 0.85;
+          predictedClass = predictionResult.predictedClass || 'BENIGN';
+          confidence = predictionResult.predictionConfidence || 0.85;
+        } catch {
+          // ML backend offline or not ready; pipeline proceeds safely without fabricating false predictions
+        }
       }
 
       const isThreat = predictedClass !== 'BENIGN';

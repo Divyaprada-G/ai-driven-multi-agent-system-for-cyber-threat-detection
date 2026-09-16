@@ -115,15 +115,24 @@ export const ModelStatusAlert: React.FC<Props> = ({
         </div>
       )}
 
-      {activeModelStatus === 'DEMO_MODEL' && (
+      {(activeModelStatus === 'DEMO_MODEL' || activeModelStatus === 'MODEL_NOT_READY' || activeModelStatus === 'NOT_CONFIGURED') && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300">
           <Info className="w-4 h-4 text-blue-400 shrink-0" />
           <span>
-            <strong>Reference Mode:</strong> Active model is loaded from reference specifications.
-            To generate validated academic evaluation metrics, train on an uploaded or benchmark dataset.
+            <strong>Model Status:</strong> {activeModelStatus === 'MODEL_READY' || activeModelStatus === 'TRAINED' ? 'MODEL READY' : 'MODEL NOT READY'}.
+            Train an authentic Random Forest or Isolation Forest model on an uploaded or benchmark dataset to generate real evaluation metrics and live inference.
           </span>
         </div>
       )}
+      {(activeModelStatus === 'MODEL_READY' || activeModelStatus === 'TRAINED') && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>
+            <strong>Model Status:</strong> MODEL READY. Active trained scikit-learn model artifact is loaded and verified for live inference.
+          </span>
+        </div>
+      )}
+
     </div>
   );
 };

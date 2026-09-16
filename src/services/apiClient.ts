@@ -4,7 +4,7 @@
  * Prompt 12 — 100% Free / Local / No Paid External API
  */
 
-const API_BASE_URL = ((import.meta as any).env?.VITE_API_BASE_URL as string) || 'http://localhost:8000';
+const API_BASE_URL = '';
 
 export interface HealthResponse {
   status: string;
@@ -87,35 +87,66 @@ class LocalApiClient {
     return await res.json();
   }
 
-  public async getModels(): Promise<any[]> {
-    const res = await fetch(`${this.baseUrl}/api/models`, {
+  public async getMlHealth(): Promise<any> {
+    const res = await fetch(`${this.baseUrl}/api/ml/health`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
-    if (!res.ok) throw new Error(`Get models failed: ${res.statusText}`);
+    if (!res.ok) throw new Error(`ML Health failed: ${res.statusText}`);
+    return await res.json();
+  }
+
+  public async getMlModelStatus(): Promise<any> {
+    const res = await fetch(`${this.baseUrl}/api/ml/model-status`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`ML Model Status failed: ${res.statusText}`);
+    return await res.json();
+  }
+
+  public async getModels(): Promise<any[]> {
+    const res = await fetch(`${this.baseUrl}/api/ml/models`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) {
+      // Fallback
+      const fb = await fetch(`${this.baseUrl}/api/models`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!fb.ok) throw new Error(`Get models failed: ${res.statusText}`);
+      return await fb.json();
+    }
     return await res.json();
   }
 
   public async predict(features: Record<string, any>, modelId?: string, rawIdentifierMeta?: Record<string, any>): Promise<any> {
-    const res = await fetch(`${this.baseUrl}/api/predict`, {
+    const res = await fetch(`${this.baseUrl}/api/ml/predict`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ modelId, features, rawIdentifierMeta })
     });
     const data = await res.json();
-    if (!res.ok) {
-      return data; // May contain status: "MODEL_NOT_AVAILABLE"
-    }
     return data;
   }
 
   public async batchPredict(records: Record<string, any>[], modelId?: string): Promise<any> {
-    const res = await fetch(`${this.baseUrl}/api/predict/batch`, {
+    const res = await fetch(`${this.baseUrl}/api/ml/predict/batch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ modelId, records, batchSize: 50 })
     });
-    if (!res.ok) throw new Error(`Batch predict failed: ${res.statusText}`);
+    if (!res.ok) {
+      const fb = await fetch(`${this.baseUrl}/api/predict/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelId, records, batchSize: 50 })
+      });
+      if (!fb.ok) throw new Error(`Batch predict failed: ${res.statusText}`);
+      return await fb.json();
+    }
     return await res.json();
   }
 

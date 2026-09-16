@@ -96,8 +96,12 @@ export type ModelOperationalStatus =
   | 'CONFIGURED'
   | 'TRAINING'
   | 'TRAINED'
+  | 'MODEL_READY'
+  | 'MODEL_NOT_READY'
+  | 'MODEL_ERROR'
   | 'FAILED'
   | 'DEMO_MODEL';
+
 
 export interface RandomForestHyperparameters {
   n_estimators: number;
