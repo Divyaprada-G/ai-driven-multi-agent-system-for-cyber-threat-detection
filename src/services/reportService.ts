@@ -18,6 +18,7 @@ import { correlationService } from './correlationService';
 import { logRepository } from './logRepository';
 import { unifiedAnalyticsService } from './unifiedAnalyticsService';
 import { TimeRangeFilter } from '../types/analytics';
+import { localApiClient } from './apiClient';
 
 export interface StructuredSecurityReport {
   reportId: string;

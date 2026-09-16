@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
+import { databaseService } from './src/db/databaseService.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,7 +56,6 @@ async function ensurePythonBackendRunning() {
       pythonProcess = null;
     });
 
-    // Wait up to 5 seconds for it to become ready
     for (let i = 0; i < 10; i++) {
       await new Promise((r) => setTimeout(r, 500));
       try {
@@ -75,7 +75,7 @@ async function ensurePythonBackendRunning() {
 
 async function startServer() {
   const app = express();
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '15mb' }));
 
   // Kick off Python backend check in background
   ensurePythonBackendRunning().catch((err) => {
@@ -83,7 +83,393 @@ async function startServer() {
   });
 
   // -------------------------------------------------------------
-  // ML SERVICE HEALTH ENDPOINT
+  // DATABASE HEALTH & STATUS (Task 13: DATABASE_CONNECTED vs DATABASE_UNAVAILABLE)
+  // -------------------------------------------------------------
+  app.get('/api/db/health', async (_req, res) => {
+    const health = await databaseService.checkConnection();
+    if (health.connected) {
+      return res.status(200).json({
+        status: 'DATABASE_CONNECTED',
+        database: 'PostgreSQL',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      return res.status(503).json({
+        status: 'DATABASE_UNAVAILABLE',
+        database: 'PostgreSQL',
+        error: health.details || 'Unable to connect to PostgreSQL',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // TASK 11: EVENTS APIS
+  // POST /api/events
+  // GET /api/events
+  // GET /api/events/:id
+  // -------------------------------------------------------------
+  app.post('/api/events', async (req, res) => {
+    const { source, eventType, rawPayload, normalizedFields, eventTimestamp, sourceIp, destinationIp, host, username, severity, batchId, isTestEvent } = req.body || {};
+
+    if (!source || !eventType || rawPayload === undefined) {
+      return res.status(400).json({
+        error: "Missing required event fields: 'source', 'eventType', and 'rawPayload' are required."
+      });
+    }
+
+    try {
+      const result = await databaseService.insertRawEvent({
+        source,
+        eventType,
+        rawPayload: typeof rawPayload === 'string' ? rawPayload : JSON.stringify(rawPayload),
+        normalizedFields: normalizedFields || {},
+        eventTimestamp,
+        sourceIp,
+        destinationIp,
+        host,
+        username,
+        severity,
+        batchId,
+        isTestEvent
+      });
+
+      return res.status(result.isDuplicate ? 200 : 201).json({
+        success: true,
+        isDuplicate: result.isDuplicate,
+        event: result.event
+      });
+    } catch (err: any) {
+      console.error('[API] POST /api/events error:', err);
+      return res.status(500).json({ error: err.message || 'Failed saving event to database' });
+    }
+  });
+
+  app.get('/api/events', async (req, res) => {
+    const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+    const offset = parseInt(req.query.offset as string) || 0;
+    try {
+      const events = await databaseService.getEvents(limit, offset);
+      return res.json(events);
+    } catch (err: any) {
+      console.error('[API] GET /api/events error:', err);
+      return res.status(500).json({ error: err.message || 'Failed retrieving events from database' });
+    }
+  });
+
+  app.get('/api/events/:id', async (req, res) => {
+    try {
+      const event = await databaseService.getEventById(req.params.id);
+      if (!event) {
+        return res.status(404).json({ error: `Event '${req.params.id}' not found` });
+      }
+      return res.json(event);
+    } catch (err: any) {
+      console.error('[API] GET /api/events/:id error:', err);
+      return res.status(500).json({ error: err.message || 'Failed retrieving event' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // TASK 5: AGENT FINDINGS PERSISTENCE
+  // POST /api/findings
+  // -------------------------------------------------------------
+  app.post('/api/findings', async (req, res) => {
+    const { eventId, agentType, threatType, severity, confidence, evidence, indicators, mitreTechnique, mitreTactic, timestamp, metadata } = req.body || {};
+
+    if (!eventId || !agentType || !threatType || severity === undefined || confidence === undefined) {
+      return res.status(400).json({
+        error: "Missing required finding fields: 'eventId', 'agentType', 'threatType', 'severity', and 'confidence' are required."
+      });
+    }
+
+    try {
+      const finding = await databaseService.insertFinding({
+        eventId,
+        agentType,
+        threatType,
+        severity,
+        confidence,
+        evidence: evidence || [],
+        indicators: indicators || [],
+        mitreTechnique,
+        mitreTactic,
+        timestamp,
+        metadata
+      });
+      return res.status(201).json(finding);
+    } catch (err: any) {
+      console.error('[API] POST /api/findings error:', err);
+      return res.status(500).json({ error: err.message || 'Failed saving security finding' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // TASK 4 & 11: ML DETECTIONS APIS
+  // POST /api/detections
+  // GET /api/detections
+  // -------------------------------------------------------------
+  app.post('/api/detections', async (req, res) => {
+    const {
+      eventId,
+      modelId,
+      modelVersion,
+      featureSchemaVersion,
+      prediction,
+      predictedClass,
+      confidence,
+      classProbabilities,
+      anomalyScore,
+      anomalyFlag,
+      anomalyLabel,
+      featureSummary,
+      importantContributingFeatures,
+      inferenceTimestamp
+    } = req.body || {};
+
+    if (!eventId || !modelId || !modelVersion || !prediction || !predictedClass || confidence === undefined || !classProbabilities) {
+      return res.status(400).json({
+        error: "Missing required detection fields: eventId, modelId, modelVersion, prediction, predictedClass, confidence, classProbabilities."
+      });
+    }
+
+    try {
+      const detection = await databaseService.insertDetection({
+        eventId,
+        modelId,
+        modelVersion,
+        featureSchemaVersion,
+        prediction,
+        predictedClass,
+        confidence,
+        classProbabilities,
+        anomalyScore,
+        anomalyFlag,
+        anomalyLabel,
+        featureSummary,
+        importantContributingFeatures,
+        inferenceTimestamp
+      });
+      return res.status(201).json(detection);
+    } catch (err: any) {
+      console.error('[API] POST /api/detections error:', err);
+      return res.status(500).json({ error: err.message || 'Failed saving detection' });
+    }
+  });
+
+  app.get('/api/detections', async (req, res) => {
+    const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+    const offset = parseInt(req.query.offset as string) || 0;
+    try {
+      const dets = await databaseService.getDetections(limit, offset);
+      return res.json(dets);
+    } catch (err: any) {
+      console.error('[API] GET /api/detections error:', err);
+      return res.status(500).json({ error: err.message || 'Failed retrieving detections' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // TASK 6 & 7: CORRELATIONS & RISK ASSESSMENTS
+  // POST /api/correlations
+  // POST /api/risk-assessments
+  // -------------------------------------------------------------
+  app.post('/api/correlations', async (req, res) => {
+    try {
+      const corr = await databaseService.insertCorrelation(req.body);
+      return res.status(201).json(corr);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Failed saving correlation' });
+    }
+  });
+
+  app.post('/api/risk-assessments', async (req, res) => {
+    try {
+      const risk = await databaseService.insertRiskAssessment(req.body);
+      return res.status(201).json(risk);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Failed saving risk assessment' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // TASK 8 & 11: ALERTS APIS
+  // GET /api/alerts
+  // POST /api/alerts
+  // PATCH /api/alerts/:id
+  // -------------------------------------------------------------
+  app.get('/api/alerts', async (req, res) => {
+    const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+    const offset = parseInt(req.query.offset as string) || 0;
+    try {
+      const alertList = await databaseService.getAlerts(limit, offset);
+      return res.json(alertList);
+    } catch (err: any) {
+      console.error('[API] GET /api/alerts error:', err);
+      return res.status(500).json({ error: err.message || 'Failed retrieving alerts' });
+    }
+  });
+
+  app.post('/api/alerts', async (req, res) => {
+    try {
+      const created = await databaseService.insertAlert(req.body);
+      return res.status(201).json(created);
+    } catch (err: any) {
+      console.error('[API] POST /api/alerts error:', err);
+      return res.status(500).json({ error: err.message || 'Failed creating alert' });
+    }
+  });
+
+  app.get('/api/alerts/:id', async (req, res) => {
+    try {
+      const alert = await databaseService.getAlertById(req.params.id);
+      if (!alert) {
+        return res.status(404).json({ error: `Alert '${req.params.id}' not found` });
+      }
+      return res.json(alert);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Failed retrieving alert' });
+    }
+  });
+
+  app.patch('/api/alerts/:id', async (req, res) => {
+    const { status, actor, reason } = req.body || {};
+    if (!status) {
+      return res.status(400).json({ error: "Missing required 'status' field." });
+    }
+
+    const validStatuses = ['NEW', 'ACKNOWLEDGED', 'INVESTIGATING', 'CONTAINED', 'RESOLVED', 'FALSE_POSITIVE', 'SUPPRESSED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: `Invalid status '${status}'. Must be one of ${validStatuses.join(', ')}.` });
+    }
+
+    try {
+      const updated = await databaseService.updateAlertStatus(req.params.id, status, actor, reason);
+      if (!updated) {
+        return res.status(404).json({ error: `Alert '${req.params.id}' not found` });
+      }
+      return res.json(updated);
+    } catch (err: any) {
+      console.error('[API] PATCH /api/alerts/:id error:', err);
+      return res.status(500).json({ error: err.message || 'Failed updating alert' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // TASK 9 & 11: INCIDENTS APIS
+  // GET /api/incidents
+  // POST /api/incidents
+  // GET /api/incidents/:id
+  // PATCH /api/incidents/:id
+  // -------------------------------------------------------------
+  app.get('/api/incidents', async (req, res) => {
+    const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+    const offset = parseInt(req.query.offset as string) || 0;
+    try {
+      const incs = await databaseService.getIncidents(limit, offset);
+      return res.json(incs);
+    } catch (err: any) {
+      console.error('[API] GET /api/incidents error:', err);
+      return res.status(500).json({ error: err.message || 'Failed retrieving incidents' });
+    }
+  });
+
+  app.post('/api/incidents', async (req, res) => {
+    try {
+      const inc = await databaseService.insertIncident(req.body);
+      return res.status(201).json(inc);
+    } catch (err: any) {
+      console.error('[API] POST /api/incidents error:', err);
+      return res.status(500).json({ error: err.message || 'Failed creating incident' });
+    }
+  });
+
+  app.get('/api/incidents/:id', async (req, res) => {
+    try {
+      const inc = await databaseService.getIncidentById(req.params.id);
+      if (!inc) {
+        return res.status(404).json({ error: `Incident '${req.params.id}' not found` });
+      }
+      const history = await databaseService.getIncidentHistory(req.params.id);
+      return res.json({ ...inc, history });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Failed retrieving incident' });
+    }
+  });
+
+  app.patch('/api/incidents/:id', async (req, res) => {
+    const { status, assignee, priority, containmentStatus, resolutionSummary, newNote, actor, reason } = req.body || {};
+
+    if (status) {
+      const validStatuses = ['NEW', 'ACKNOWLEDGED', 'INVESTIGATING', 'CONTAINED', 'RESOLVED', 'FALSE_POSITIVE'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: `Invalid status '${status}'. Must be one of ${validStatuses.join(', ')}.` });
+      }
+    }
+
+    try {
+      const updated = await databaseService.updateIncident(req.params.id, {
+        status,
+        assignee,
+        priority,
+        containmentStatus,
+        resolutionSummary,
+        newNote,
+        actor,
+        reason
+      });
+
+      if (!updated) {
+        return res.status(404).json({ error: `Incident '${req.params.id}' not found` });
+      }
+      return res.json(updated);
+    } catch (err: any) {
+      console.error('[API] PATCH /api/incidents/:id error:', err);
+      return res.status(500).json({ error: err.message || 'Failed updating incident' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // TASK 11: AUDIT APIS
+  // GET /api/audit
+  // -------------------------------------------------------------
+  app.get('/api/audit', async (req, res) => {
+    const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+    const offset = parseInt(req.query.offset as string) || 0;
+    try {
+      const logs = await databaseService.getAuditLogs(limit, offset);
+      return res.json(logs);
+    } catch (err: any) {
+      console.error('[API] GET /api/audit error:', err);
+      return res.status(500).json({ error: err.message || 'Failed retrieving audit logs' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // TASK 10: REPORTS METADATA APIS
+  // POST /api/reports
+  // GET /api/reports
+  // -------------------------------------------------------------
+  app.post('/api/reports', async (req, res) => {
+    try {
+      const rep = await databaseService.insertReport(req.body);
+      return res.status(201).json(rep);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Failed creating report record' });
+    }
+  });
+
+  app.get('/api/reports', async (_req, res) => {
+    try {
+      const reps = await databaseService.getReports();
+      return res.json(reps);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Failed retrieving reports' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // ML SERVICE PROXIES & INFERENCE
   // -------------------------------------------------------------
   const handleMlHealth = async (_req: express.Request, res: express.Response) => {
     try {
@@ -107,27 +493,47 @@ async function startServer() {
 
   app.get('/api/ml/health', handleMlHealth);
 
-  // -------------------------------------------------------------
-  // ML MODELS REGISTRY ENDPOINTS
-  // -------------------------------------------------------------
   const handleGetModels = async (_req: express.Request, res: express.Response) => {
     try {
       const response = await fetch(`${ML_SERVICE_URL}/api/ml/models`, { signal: AbortSignal.timeout(3000) });
       const data = await response.json();
+
+      // Mirror models into PostgreSQL model_registry
+      if (Array.isArray(data)) {
+        for (const m of data) {
+          databaseService.upsertModelRegistry({
+            id: m.model_id,
+            modelType: m.algorithm === 'RandomForestClassifier' ? 'RANDOM_FOREST' : 'ISOLATION_FOREST',
+            modelVersion: m.model_version,
+            featureSchemaVersion: m.feature_schema_version || 'cicids2017-v1',
+            algorithm: m.algorithm,
+            trainingDataset: m.training_dataset,
+            trainingTimestamp: m.training_timestamp,
+            trainingMetrics: m.training_metrics,
+            featureNames: m.features,
+            classes: m.classes,
+            status: m.status
+          }).catch((err) => console.warn('[ModelSync] Error syncing model to DB:', err));
+        }
+      }
       return res.status(response.status).json(data);
     } catch {
-      return res.status(200).json([]);
+      // Fallback to PostgreSQL registry
+      try {
+        const stored = await databaseService.getRegisteredModels();
+        return res.json(stored);
+      } catch {
+        return res.status(200).json([]);
+      }
     }
   };
 
   app.get('/api/ml/models', handleGetModels);
   app.get('/api/models', handleGetModels);
 
-  // -------------------------------------------------------------
-  // REAL ML PREDICTION ENDPOINTS
-  // -------------------------------------------------------------
+  // REAL ML PREDICTION with automatic DATABASE PERSISTENCE (Task 4)
   const handlePredict = async (req: express.Request, res: express.Response) => {
-    const { features, modelId, rawIdentifierMeta } = req.body || {};
+    const { features, modelId, rawIdentifierMeta, eventId } = req.body || {};
 
     if (!features || typeof features !== 'object' || Array.isArray(features) || Object.keys(features).length === 0) {
       return res.status(400).json({
@@ -145,6 +551,27 @@ async function startServer() {
       });
 
       const data = await response.json();
+
+      // If successful inference and eventId provided, persist detection in PostgreSQL
+      if (response.ok && data.status === 'SUCCESS' && eventId) {
+        databaseService.insertDetection({
+          eventId,
+          modelId: data.modelId,
+          modelVersion: data.modelVersion,
+          featureSchemaVersion: data.featureSchemaVersion || 'cicids2017-v1',
+          prediction: data.prediction,
+          predictedClass: data.predictedClass,
+          confidence: data.confidence,
+          classProbabilities: data.classProbabilities || {},
+          anomalyScore: data.anomalyScore,
+          anomalyFlag: data.anomalyFlag,
+          anomalyLabel: data.anomalyLabel,
+          featureSummary: data.featureSummary,
+          importantContributingFeatures: data.importantContributingFeatures,
+          inferenceTimestamp: data.inferenceTimestamp
+        }).catch((err) => console.error('[DetectionSync] Failed saving ML detection to DB:', err));
+      }
+
       return res.status(response.status).json(data);
     } catch (err: any) {
       return res.status(503).json({
@@ -159,26 +586,20 @@ async function startServer() {
   app.post('/api/ml/predict', handlePredict);
   app.post('/api/predict', handlePredict);
 
-  // -------------------------------------------------------------
-  // BATCH PREDICTION ENDPOINTS
-  // -------------------------------------------------------------
   const handleBatchPredict = async (req: express.Request, res: express.Response) => {
     const { records, modelId } = req.body || {};
-
     if (!Array.isArray(records) || records.length === 0) {
       return res.status(400).json({
         error: "Invalid input: 'records' must be a non-empty array of feature objects.",
         status: 'BAD_REQUEST'
       });
     }
-
     if (records.length > 500) {
       return res.status(400).json({
         error: 'Batch limit exceeded: Maximum 500 records per request.',
         status: 'BAD_REQUEST'
       });
     }
-
     try {
       const response = await fetch(`${ML_SERVICE_URL}/api/ml/predict/batch`, {
         method: 'POST',
@@ -186,15 +607,13 @@ async function startServer() {
         body: JSON.stringify({ modelId, records }),
         signal: AbortSignal.timeout(30000)
       });
-
       const data = await response.json();
       return res.status(response.status).json(data);
     } catch (err: any) {
       return res.status(503).json({
         status: 'MODEL_NOT_READY',
         code: 'MODEL_NOT_READY',
-        error: `ML prediction service unavailable at ${ML_SERVICE_URL}: ${err.message || err}`,
-        message: 'Real ML batch inference is unavailable.'
+        error: `ML prediction service unavailable at ${ML_SERVICE_URL}: ${err.message || err}`
       });
     }
   };
@@ -202,36 +621,16 @@ async function startServer() {
   app.post('/api/ml/predict/batch', handleBatchPredict);
   app.post('/api/predict/batch', handleBatchPredict);
 
-  // -------------------------------------------------------------
-  // GENERAL BACKEND PROXY (HEALTH, STATUS, EVENTS, ALERTS, INCIDENTS)
-  // -------------------------------------------------------------
-  const forwardToPython = async (req: express.Request, res: express.Response, targetPath: string) => {
+  // General Python status endpoints
+  app.get('/api/ml/model-status', async (_req, res) => {
     try {
-      const options: RequestInit = {
-        method: req.method,
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000)
-      };
-      if (req.method !== 'GET' && req.method !== 'HEAD') {
-        options.body = JSON.stringify(req.body);
-      }
-      const response = await fetch(`${ML_SERVICE_URL}${targetPath}`, options);
-      const data = await response.json();
-      return res.status(response.status).json(data);
-    } catch (err: any) {
-      return res.status(503).json({
-        status: 'SERVICE_UNAVAILABLE',
-        error: `Failed to reach Python backend: ${err.message || err}`
-      });
+      const resp = await fetch(`${ML_SERVICE_URL}/api/ml/model-status`, { signal: AbortSignal.timeout(2000) });
+      const data = await resp.json();
+      return res.status(resp.status).json(data);
+    } catch {
+      return res.status(503).json({ status: 'SERVICE_UNAVAILABLE' });
     }
-  };
-
-  app.get('/api/health', (req, res) => forwardToPython(req, res, '/api/health'));
-  app.get('/api/status', (req, res) => forwardToPython(req, res, '/api/status'));
-  app.all('/api/security-events*', (req, res) => forwardToPython(req, res, req.originalUrl));
-  app.all('/api/alerts*', (req, res) => forwardToPython(req, res, req.originalUrl));
-  app.all('/api/incidents*', (req, res) => forwardToPython(req, res, req.originalUrl));
-  app.all('/api/pipeline*', (req, res) => forwardToPython(req, res, req.originalUrl));
+  });
 
   // -------------------------------------------------------------
   // VITE MIDDLEWARE / STATIC ASSETS
@@ -255,18 +654,13 @@ async function startServer() {
   });
 }
 
-// Clean shutdown handler
 process.on('SIGINT', () => {
-  if (pythonProcess) {
-    pythonProcess.kill();
-  }
+  if (pythonProcess) pythonProcess.kill();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  if (pythonProcess) {
-    pythonProcess.kill();
-  }
+  if (pythonProcess) pythonProcess.kill();
   process.exit(0);
 });
 
