@@ -198,8 +198,20 @@ export const LiveEventStreamTable: React.FC<LiveEventStreamTableProps> = ({
                     className="hover:bg-slate-800/50 cursor-pointer transition-colors group"
                   >
                     <td className="py-2.5 px-3 text-slate-400 whitespace-nowrap">{timeStr}</td>
-                    <td className="py-2.5 px-3 text-slate-200 font-semibold whitespace-nowrap">
-                      {evt.eventId}
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <div className="text-slate-200 font-semibold">{evt.eventId}</div>
+                      <div className="mt-0.5">
+                        {evt.isSimulated ? (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            SIMULATED
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            LIVE TELEMETRY
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-2.5 px-3 whitespace-nowrap">
                       <div className="flex items-center space-x-1.5 font-sans">

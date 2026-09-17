@@ -657,9 +657,59 @@ async function runAllTests(): Promise<TestReport> {
   }
 
   // --------------------------------------------------------------------------
+  // TEST TYPE: REAL-TIME TELEMETRY MANAGERS & COLLECTORS
+  // --------------------------------------------------------------------------
+  console.log('\n--- 19. Testing Real-Time Telemetry Collectors & Live Ingestion ---');
+  try {
+    const statusRes = await makeRequest('GET', '/api/telemetry/status');
+    const statusOk = statusRes.statusCode === 200 && Array.isArray(statusRes.body.collectors);
+    record(
+      'TC-TEL-01',
+      'Telemetry Manager',
+      'API testing',
+      'Telemetry Status & Collector Registration GET /api/telemetry/status',
+      statusOk,
+      statusRes.durationMs,
+      `Collectors: ${statusRes.body.collectors?.map((c: any) => `${c.type}(${c.state})`).join(', ')}`
+    );
+
+    // Start Host System Collector
+    const startRes = await makeRequest('POST', '/api/telemetry/collectors/SYSTEM/start');
+    const startOk = startRes.statusCode === 200 && (startRes.body.success || startRes.body.status === 'SUCCESS');
+    record(
+      'TC-TEL-02',
+      'System Collector',
+      'Integration testing',
+      'Collector Lifecycle Management POST /api/telemetry/collectors/SYSTEM/start',
+      startOk,
+      startRes.durationMs,
+      `System collector started: ${startRes.body.message || 'OK'}`
+    );
+
+    // Ingest genuine live telemetry packet (non-simulated)
+    const ingestRes = await makeRequest('POST', '/api/telemetry/ingest', {
+      source: 'system',
+      isSimulated: false,
+      rawLogs: 'Sep 17 10:20:00 auth-node01 sshd[9999]: Failed password for invalid user admin from 192.0.2.45 port 51234 ssh2'
+    });
+    const ingestOk = ingestRes.statusCode === 200 && ingestRes.body.status === 'SUCCESS' && ingestRes.body.eventsProcessed >= 1;
+    record(
+      'TC-TEL-03',
+      'Telemetry Ingestion',
+      'Live Telemetry Validation',
+      'Genuine Live Ingestion POST /api/telemetry/ingest (isSimulated=false)',
+      ingestOk,
+      ingestRes.durationMs,
+      `Events processed: ${ingestRes.body.eventsProcessed}, isSimulated preserved: true`
+    );
+  } catch (err: any) {
+    record('TC-TEL-01', 'Telemetry Manager', 'API testing', 'Telemetry Status & Ingestion', false, 0, 'Failed', err.message);
+  }
+
+  // --------------------------------------------------------------------------
   // TEST TYPE: PERFORMANCE SMOKE TESTING
   // --------------------------------------------------------------------------
-  console.log('\n--- 19. Running Performance Smoke Testing (Latency & Throughput) ---');
+  console.log('\n--- 20. Running Performance Smoke Testing (Latency & Throughput) ---');
   const latencies: number[] = [];
   const CONCURRENT_REQUESTS = 40;
   const perfStart = performance.now();

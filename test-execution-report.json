@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-09-17T16:55:56.667Z",
-  "totalTests": 22,
-  "passed": 22,
+  "timestamp": "2026-09-17T17:26:01.904Z",
+  "totalTests": 25,
+  "passed": 25,
   "failed": 0,
-  "durationMs": 155,
+  "durationMs": 146,
   "componentsTested": 16,
   "results": [
     {
@@ -21,7 +21,7 @@
       "testType": "API testing",
       "name": "Health Endpoint GET /api/health",
       "passed": true,
-      "durationMs": 16,
+      "durationMs": 12,
       "details": "Status 200, components: {\"nodeServer\":\"ONLINE\",\"pythonMLBackend\":\"INTEGRATED_ENGINE_ACTIVE\",\"database\":\"DATABASE_CONNECTED\",\"databaseMode\":\"JSON_STORE\"}"
     },
     {
@@ -30,8 +30,8 @@
       "testType": "API testing",
       "name": "Aggregated Metrics GET /api/stats",
       "passed": true,
-      "durationMs": 3,
-      "details": "Total Events: 3, Threats: 24"
+      "durationMs": 2,
+      "details": "Total Events: 13, Threats: 68"
     },
     {
       "id": "TC-API-03",
@@ -39,7 +39,7 @@
       "testType": "API testing",
       "name": "Pipeline Status GET /api/pipeline/status",
       "passed": true,
-      "durationMs": 2,
+      "durationMs": 1,
       "details": "Engine: undefined, Status: RUNNING"
     },
     {
@@ -48,7 +48,7 @@
       "testType": "Integration",
       "name": "MongoDB Health & Standby Mode",
       "passed": true,
-      "durationMs": 2,
+      "durationMs": 1,
       "details": "Database mode: MongoDB, Connected: false"
     },
     {
@@ -57,8 +57,8 @@
       "testType": "End-to-end testing",
       "name": "MongoDB / Local Persistent Store CRUD",
       "passed": true,
-      "durationMs": 16,
-      "details": "Created & retrieved incident INC-EVAL-156542"
+      "durationMs": 4,
+      "details": "Created & retrieved incident INC-EVAL-961778"
     },
     {
       "id": "TC-LOG-01",
@@ -66,7 +66,7 @@
       "testType": "Unit testing",
       "name": "Syslog Parsing & Field Extraction",
       "passed": true,
-      "durationMs": 4,
+      "durationMs": 2,
       "details": "Event parsed with sourceIp: 192.0.2.45, eventType: AUTH_FAILURE"
     },
     {
@@ -75,8 +75,8 @@
       "testType": "Integration",
       "name": "Port Scan & Entropy Detection Flow",
       "passed": {
-        "alertId": "ALT-156565-7THI",
-        "incidentId": "INC-20260917-59JKL",
+        "alertId": "ALT-961786-8HOS",
+        "incidentId": "INC-20260917-WZ1A6",
         "title": "SYN Port Sweep",
         "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
         "alertType": "PORT_SCAN",
@@ -98,13 +98,13 @@
           "Detection Method: Port Frequency & Packet Entropy Engine",
           "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
         ],
-        "timestamp": "2026-09-17T16:55:56.566Z",
-        "createdAt": "2026-09-17T16:55:56.566Z",
-        "updatedAt": "2026-09-17T16:55:56.566Z",
-        "_id": "ALT-1789664156566-ieaf7"
+        "timestamp": "2026-09-17T17:26:01.787Z",
+        "createdAt": "2026-09-17T17:26:01.787Z",
+        "updatedAt": "2026-09-17T17:26:01.787Z",
+        "_id": "ALT-1789665961787-8d61t"
       },
-      "durationMs": 5,
-      "details": "Network detection created alert: ALT-156565-7THI linked to INC-20260917-59JKL"
+      "durationMs": 4,
+      "details": "Network detection created alert: ALT-961786-8HOS linked to INC-20260917-WZ1A6"
     },
     {
       "id": "TC-SYS-01",
@@ -112,7 +112,7 @@
       "testType": "Integration",
       "name": "Host Brute-Force Detection & Attribution",
       "passed": true,
-      "durationMs": 5,
+      "durationMs": 4,
       "details": "Severity correctly determined as: High (Rule: Active Exploitation & Credential Abuse)"
     },
     {
@@ -122,7 +122,7 @@
       "name": "Web Exploitation (SQLi) Identification",
       "passed": true,
       "durationMs": 4,
-      "details": "Assigned Severity: Critical, Incident: INC-20260917-KGM3S"
+      "details": "Assigned Severity: Critical, Incident: INC-20260917-SS4WB"
     },
     {
       "id": "TC-CORR-01",
@@ -148,7 +148,7 @@
       "testType": "End-to-end testing",
       "name": "10 Required Fields & Incident Lifecycle (Ack/Resolve)",
       "passed": true,
-      "durationMs": 5,
+      "durationMs": 6,
       "details": "All 10 required attributes verified. Incident transitioned to RESOLVED."
     },
     {
@@ -157,7 +157,7 @@
       "testType": "Integration",
       "name": "ML Inference & Isolation Forest Scoring",
       "passed": true,
-      "durationMs": 6,
+      "durationMs": 7,
       "details": "ML Pipeline inference completed. Threat Detected: true, Model: Ensemble"
     },
     {
@@ -166,7 +166,7 @@
       "testType": "Integration",
       "name": "Multi-Store Metrics Aggregation & Consistency",
       "passed": true,
-      "durationMs": 3,
+      "durationMs": 2,
       "details": "Stats synchronized across local store and MongoDB collections."
     },
     {
@@ -175,7 +175,7 @@
       "testType": "Invalid input testing",
       "name": "Malformed JSON & 404 Entity Resilience",
       "passed": true,
-      "durationMs": 5,
+      "durationMs": 4,
       "details": "Malformed JSON returned 400 (expected 400). Non-existent ID returned 404 (expected 404)."
     },
     {
@@ -193,7 +193,7 @@
       "testType": "Security testing",
       "name": "Strict Safety Guards (No Autonomous Block, Safe Targets Only)",
       "passed": true,
-      "durationMs": 4,
+      "durationMs": 3,
       "details": "Autonomous destructive action blocked (403). Loopback block blocked (403). Legitimate human containment authorized."
     },
     {
@@ -211,8 +211,8 @@
       "testType": "Duplicate event testing",
       "name": "Alert Rate Limiting & Burst Suppression",
       "passed": true,
-      "durationMs": 7,
-      "details": "Burst count incremented to 3. Notification suppression: true"
+      "durationMs": 12,
+      "details": "Burst count incremented to 6. Notification suppression: true"
     },
     {
       "id": "TC-SEC-01",
@@ -220,8 +220,35 @@
       "testType": "Security testing",
       "name": "XSS Ingestion & NoSQL Injection Parameter Sanitization",
       "passed": true,
-      "durationMs": 6,
+      "durationMs": 11,
       "details": "Malicious script payload safely isolated in data store. NoSQL parameter handled cleanly."
+    },
+    {
+      "id": "TC-TEL-01",
+      "component": "Telemetry Manager",
+      "testType": "API testing",
+      "name": "Telemetry Status & Collector Registration GET /api/telemetry/status",
+      "passed": true,
+      "durationMs": 4,
+      "details": "Collectors: SYSTEM(LIVE), NETWORK(OFFLINE), APPLICATION(OFFLINE)"
+    },
+    {
+      "id": "TC-TEL-02",
+      "component": "System Collector",
+      "testType": "Integration testing",
+      "name": "Collector Lifecycle Management POST /api/telemetry/collectors/SYSTEM/start",
+      "passed": true,
+      "durationMs": 2,
+      "details": "System collector started: OK"
+    },
+    {
+      "id": "TC-TEL-03",
+      "component": "Telemetry Ingestion",
+      "testType": "Live Telemetry Validation",
+      "name": "Genuine Live Ingestion POST /api/telemetry/ingest (isSimulated=false)",
+      "passed": true,
+      "durationMs": 3,
+      "details": "Events processed: 1, isSimulated preserved: true"
     },
     {
       "id": "TC-PERF-01",
@@ -229,20 +256,20 @@
       "testType": "Performance smoke testing",
       "name": "Concurrency Smoke Test (40 parallel requests)",
       "passed": true,
-      "durationMs": 29,
-      "details": "P50 Latency: 17ms, P95 Latency: 24ms, Throughput: 1391.7 req/sec",
+      "durationMs": 33,
+      "details": "P50 Latency: 22ms, P95 Latency: 26ms, Throughput: 1225 req/sec",
       "metrics": {
-        "p50": 17,
-        "p95": 24,
-        "throughput": 1391.7
+        "p50": 22,
+        "p95": 26,
+        "throughput": 1225
       }
     }
   ],
   "performanceMetrics": {
-    "smokeLatencyP50Ms": 17,
-    "smokeLatencyP95Ms": 24,
-    "smokeThroughputReqPerSec": 1391.7,
-    "totalRequestsRun": 62
+    "smokeLatencyP50Ms": 22,
+    "smokeLatencyP95Ms": 26,
+    "smokeThroughputReqPerSec": 1225,
+    "totalRequestsRun": 65
   },
   "bugsFound": []
 }

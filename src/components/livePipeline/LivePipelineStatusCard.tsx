@@ -176,9 +176,14 @@ export const LivePipelineStatusCard: React.FC<LivePipelineStatusCardProps> = ({
       {/* Primary KPI Counters */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-3">
-          <span className="text-xs text-slate-400">Events Received</span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400">Events Received</span>
+            <span className="text-[10px] font-mono text-emerald-400">
+              {status.totalLiveEvents || 0} Live / {status.totalSimulatedEvents || 0} Sim
+            </span>
+          </div>
           <p className="text-2xl font-bold text-slate-100 mt-1">{status.eventsReceived}</p>
-          <span className="text-[10px] text-slate-500">Total ingested</span>
+          <span className="text-[10px] text-slate-500">Total ingested across pipeline</span>
         </div>
 
         <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-3">
@@ -200,7 +205,12 @@ export const LivePipelineStatusCard: React.FC<LivePipelineStatusCardProps> = ({
         </div>
 
         <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-3">
-          <span className="text-xs text-slate-400">Incidents Created</span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400">Incidents Created</span>
+            <span className="text-[10px] font-mono text-cyan-400">
+              {status.liveCollectorsActive !== undefined ? `${status.liveCollectorsActive}/3 Active` : ''}
+            </span>
+          </div>
           <p className="text-2xl font-bold text-red-500 mt-1">{status.incidentsCreated}</p>
           <span className="text-[10px] text-red-400/70">Escalated (Risk ≥ 70)</span>
         </div>

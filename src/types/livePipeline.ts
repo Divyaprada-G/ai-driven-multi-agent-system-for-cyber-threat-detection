@@ -21,7 +21,9 @@ export interface LiveSecurityEvent {
   destinationPort?: number;
   protocol?: string;
   features: Record<string, any>;
-  isSimulated: boolean; // Always true for test events
+  isSimulated: boolean; // Strictly false for live telemetry; true for simulated test events
+  telemetrySource?: 'HOST_SYSTEM' | 'NETWORK_INTERFACE' | 'APP_HTTP' | 'SYSLOG_INGEST' | 'EXTERNAL_AGENT' | 'SIMULATOR';
+  collectorState?: 'LIVE' | 'SIMULATED' | 'OFFLINE' | 'ERROR';
   agentId: string;
   agentType: string;
   findingId?: string;
@@ -64,6 +66,10 @@ export interface LivePipelineStatus {
   simulatorRate: number;
   simulatorMode: LiveSimulatorMode;
   lastEventProcessedAt?: string;
+  totalLiveEvents?: number;
+  totalSimulatedEvents?: number;
+  liveCollectorsActive?: number;
+  collectorHealth?: any[];
 }
 
 export interface SimulatorConfig {

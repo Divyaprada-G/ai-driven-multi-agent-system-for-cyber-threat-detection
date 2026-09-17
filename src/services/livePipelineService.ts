@@ -42,6 +42,14 @@ class LivePipelineService {
   private simulatorTimer: any = null;
   private queueTimer: any = null;
 
+  // Real-Time Telemetry Collectors state
+  private totalLiveEventsCount: number = 0;
+  private totalSimulatedEventsCount: number = 0;
+  private liveCollectorsActive: number = 0;
+  private collectorHealthList: any[] = [];
+  private isLiveStreaming: boolean = false;
+  private eventSource: any = null;
+
   // Polling backend timer
   private backendPollTimer: any = null;
   private isBackendOnline: boolean = false;
@@ -52,6 +60,9 @@ class LivePipelineService {
     // Listen for backend online/offline transitions
     localApiClient.subscribe((online) => {
       this.isBackendOnline = online;
+      if (online) {
+        this.refreshCollectors();
+      }
       this.notify();
     });
 
@@ -59,6 +70,7 @@ class LivePipelineService {
     this.startQueueConsumer();
     // Initial health check
     this.checkBackendHealth();
+    this.refreshCollectors();
   }
 
   public subscribe(listener: () => void): () => void {
@@ -125,8 +137,123 @@ class LivePipelineService {
       simulatorActive: this.simulatorActive,
       simulatorRate: this.simulatorRate,
       simulatorMode: this.simulatorMode,
-      lastEventProcessedAt: this.lastProcessedTime
+      lastEventProcessedAt: this.lastProcessedTime,
+      totalLiveEvents: this.totalLiveEventsCount,
+      totalSimulatedEvents: this.totalSimulatedEventsCount,
+      liveCollectorsActive: this.liveCollectorsActive,
+      collectorHealth: this.collectorHealthList
     };
+  }
+
+  public async refreshCollectors(): Promise<void> {
+    try {
+      const status = await localApiClient.getTelemetryStatus();
+      if (status && status.collectors) {
+        this.collectorHealthList = status.collectors;
+        this.liveCollectorsActive = status.activeCollectorsCount || 0;
+        if (status.metrics) {
+          if (status.metrics.totalLiveEvents !== undefined) {
+            this.totalLiveEventsCount = status.metrics.totalLiveEvents;
+          }
+          if (status.metrics.totalSimulatedEvents !== undefined) {
+            this.totalSimulatedEventsCount = status.metrics.totalSimulatedEvents;
+          }
+        }
+        this.notify();
+      }
+    } catch {
+      // Ignored if offline
+    }
+  }
+
+  public async startAllLiveCollectors(): Promise<boolean> {
+    const res = await localApiClient.startAllCollectors();
+    await this.refreshCollectors();
+    this.startLiveStream();
+    return Boolean(res?.success);
+  }
+
+  public async stopAllLiveCollectors(): Promise<boolean> {
+    const res = await localApiClient.stopAllCollectors();
+    await this.refreshCollectors();
+    return Boolean(res?.success);
+  }
+
+  public async startLiveCollector(type: 'SYSTEM' | 'NETWORK' | 'APPLICATION'): Promise<boolean> {
+    const res = await localApiClient.startCollector(type);
+    await this.refreshCollectors();
+    if (!this.isLiveStreaming) {
+      this.startLiveStream();
+    }
+    return Boolean(res?.success);
+  }
+
+  public async stopLiveCollector(type: 'SYSTEM' | 'NETWORK' | 'APPLICATION'): Promise<boolean> {
+    const res = await localApiClient.stopCollector(type);
+    await this.refreshCollectors();
+    return Boolean(res?.success);
+  }
+
+  public startLiveStream(): void {
+    if (this.isLiveStreaming || typeof window === 'undefined' || !window.EventSource) return;
+
+    try {
+      this.isLiveStreaming = true;
+      const url = localApiClient.getTelemetryStreamUrl();
+      this.eventSource = new EventSource(url);
+
+      this.eventSource.onmessage = (e: MessageEvent) => {
+        try {
+          const parsed = JSON.parse(e.data);
+          if (parsed.type === 'NEW_TELEMETRY_EVENT' && parsed.data?.event) {
+            const ev = parsed.data.event;
+            this.enqueueEvent({
+              eventId: ev.eventId,
+              source: ev.source,
+              eventType: ev.eventType,
+              sourceIp: ev.sourceIp,
+              destinationIp: ev.destinationIp,
+              sourcePort: ev.sourcePort,
+              destinationPort: ev.destinationPort,
+              protocol: ev.protocol,
+              features: ev.features,
+              isSimulated: ev.isSimulated === true,
+              telemetrySource: ev.telemetrySource,
+              collectorState: ev.collectorState,
+              details: ev.details
+            });
+          } else if (parsed.type === 'COLLECTOR_STATUS_UPDATE' && parsed.data) {
+            this.collectorHealthList = parsed.data.collectors || [];
+            this.liveCollectorsActive = parsed.data.activeCollectorsCount || 0;
+            this.notify();
+          }
+        } catch {}
+      };
+
+      this.eventSource.onerror = () => {
+        this.isLiveStreaming = false;
+        if (this.eventSource) {
+          this.eventSource.close();
+          this.eventSource = null;
+        }
+      };
+    } catch {
+      this.isLiveStreaming = false;
+    }
+  }
+
+  public stopLiveStream(): void {
+    this.isLiveStreaming = false;
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+  }
+
+  public async ingestManualTelemetry(payload: any): Promise<any> {
+    const res = await localApiClient.ingestTelemetry(payload);
+    await this.refreshCollectors();
+    return res;
   }
 
   public getEvents(limit: number = 100): LiveSecurityEvent[] {
@@ -255,6 +382,13 @@ class LivePipelineService {
       agentType = 'Application Security Agent';
     }
 
+    const isSimulated = eventData.isSimulated !== undefined ? eventData.isSimulated : false;
+    if (isSimulated) {
+      this.totalSimulatedEventsCount++;
+    } else {
+      this.totalLiveEventsCount++;
+    }
+
     const queuedItem: LiveSecurityEvent = {
       eventId,
       receivedAt,
@@ -267,7 +401,9 @@ class LivePipelineService {
       destinationPort: eventData.destinationPort || 80,
       protocol: eventData.protocol || 'TCP',
       features: eventData.features || {},
-      isSimulated: true, // Always marked as simulated
+      isSimulated,
+      telemetrySource: eventData.telemetrySource || (isSimulated ? 'SIMULATOR' : 'HOST_SYSTEM'),
+      collectorState: eventData.collectorState || (isSimulated ? 'SIMULATED' : 'LIVE'),
       agentId,
       agentType,
       details: eventData.details || 'Live event queued for multi-agent ML evaluation.'

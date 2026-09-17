@@ -1,0 +1,133 @@
+/**
+ * AI-DRIVEN MULTI-AGENT CYBER THREAT DETECTION SYSTEM
+ * Real-Time Telemetry & Data Collection Types
+ * Strict separation between LIVE telemetry, SIMULATED data, OFFLINE, and ERROR states.
+ */
+
+export type CollectorType = 'SYSTEM' | 'NETWORK' | 'APPLICATION' | 'INGESTION_API';
+
+export type CollectorState = 'LIVE' | 'SIMULATED' | 'OFFLINE' | 'ERROR';
+
+export type TelemetrySourceType =
+  | 'HOST_SYSTEM'
+  | 'NETWORK_INTERFACE'
+  | 'APP_HTTP'
+  | 'SYSLOG_INGEST'
+  | 'EXTERNAL_AGENT'
+  | 'SIMULATOR';
+
+export interface CollectorHealth {
+  type: CollectorType;
+  name: string;
+  state: CollectorState;
+  enabled: boolean;
+  samplingIntervalMs: number;
+  eventsCollected: number;
+  eventsDropped: number;
+  errorsCount: number;
+  currentEps: number;
+  lastEventAt?: string;
+  errorMessage?: string;
+  details?: Record<string, any>;
+}
+
+export interface SystemMetricsPacket {
+  hostname: string;
+  platform: string;
+  arch: string;
+  uptimeSeconds: number;
+  cpuCount: number;
+  cpuUsagePercent: number;
+  totalMemoryBytes: number;
+  freeMemoryBytes: number;
+  usedMemoryPercent: number;
+  processCount: number;
+  heapUsedBytes: number;
+  loadAverage: number[];
+  authEvents?: {
+    failedLogins: number;
+    acceptedLogins: number;
+    sudoAttempts: number;
+  };
+}
+
+export interface NetworkMetricsPacket {
+  interfaces: Array<{
+    name: string;
+    ip: string;
+    mac: string;
+    internal: boolean;
+    family: string;
+  }>;
+  activeSocketsCount: number;
+  listeningPorts: number[];
+  establishedConnections: number;
+  bytesReceived: number;
+  bytesSent: number;
+  packetsPerSecond: number;
+  suspiciousConnections: Array<{
+    remoteIp: string;
+    port: number;
+    state: string;
+    reason?: string;
+  }>;
+}
+
+export interface ApplicationMetricsPacket {
+  activeRequests: number;
+  totalRequestsHandled: number;
+  statusCodes: {
+    '2xx': number;
+    '3xx': number;
+    '4xx': number;
+    '5xx': number;
+  };
+  averageResponseTimeMs: number;
+  errorRatePercent: number;
+  suspiciousRequestsCount: number;
+  recentSecurityTriggers: Array<{
+    timestamp: string;
+    path: string;
+    method: string;
+    clientIp: string;
+    triggerType: 'SQLI' | 'XSS' | 'PATH_TRAVERSAL' | 'AUTH_FAILURE' | 'RATE_LIMIT';
+    details: string;
+  }>;
+}
+
+export interface NormalizedTelemetryEvent {
+  eventId: string;
+  timestamp: string;
+  source: 'network' | 'system' | 'application';
+  eventType: string;
+  sourceIp: string;
+  destinationIp: string;
+  sourcePort?: number;
+  destinationPort?: number;
+  protocol?: string;
+  host: string;
+  username?: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  details: string;
+  rawPayload: string;
+  contentHash: string;
+  isSimulated: boolean; // Strictly false for live telemetry
+  telemetrySource: TelemetrySourceType;
+  collectorState: CollectorState;
+  features: Record<string, number | string>;
+  agentRouting: {
+    assignedAgent: string;
+    assignedAgentId: string;
+  };
+}
+
+export interface TelemetryIngestRequest {
+  source: 'network' | 'system' | 'application';
+  eventType?: string;
+  rawLogs?: string;
+  structuredEvents?: Array<Partial<NormalizedTelemetryEvent>>;
+  host?: string;
+  sourceIp?: string;
+  destinationIp?: string;
+  isSimulated?: boolean;
+}

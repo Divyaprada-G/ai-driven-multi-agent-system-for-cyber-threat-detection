@@ -23,6 +23,7 @@ import {
 import { livePipelineService } from '../services/livePipelineService';
 import { LivePipelineStatus, LiveSecurityEvent, LiveSimulatorMode } from '../types/livePipeline';
 import { LivePipelineStatusCard } from '../components/livePipeline/LivePipelineStatusCard';
+import { LiveTelemetryCollectorsPanel } from '../components/livePipeline/LiveTelemetryCollectorsPanel';
 import { LivePipelineControls } from '../components/livePipeline/LivePipelineControls';
 import { LiveEventStreamTable } from '../components/livePipeline/LiveEventStreamTable';
 import { AcademicPresentationView } from '../components/livePipeline/AcademicPresentationView';
@@ -120,6 +121,9 @@ export const LivePipelinePage: React.FC<LivePipelinePageProps> = ({ onNavigate }
         onRefresh={handleRefreshStatus}
         onNavigateToTraining={() => onNavigate('datasets-ml')}
       />
+
+      {/* Real-Time Telemetry Collectors Control Panel */}
+      <LiveTelemetryCollectorsPanel status={status} />
 
       {/* Operational Controls & Simulator Controls */}
       <LivePipelineControls

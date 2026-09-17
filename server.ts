@@ -17,6 +17,7 @@ import { alertRateLimiter } from './src/services/alertIncident/rateLimiter';
 import { notificationDispatcher } from './src/services/alertIncident/notificationDispatcher';
 import { auditService } from './src/services/auditService';
 import { runWorkflowTestSuite } from './src/services/alertIncident/workflowTestSuite';
+import { telemetryManager } from './src/services/telemetry/telemetryManager';
 
 const PORT = config.port;
 const ML_SERVICE_URL = config.mlServiceUrl;
@@ -51,6 +52,30 @@ async function startServer() {
   app.use(express.json({ limit: '15mb' }));
   app.use(express.text({ limit: '15mb' }));
   app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+
+  // Real-Time Application Telemetry Interceptor
+  app.use((req, res, next) => {
+    const startTime = performance.now();
+    res.on('finish', () => {
+      const durationMs = performance.now() - startTime;
+      const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+      const rawQuery = req.url.includes('?') ? req.url.split('?')[1] : '';
+      let rawBody = '';
+      if (req.body) {
+        rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      }
+      telemetryManager.getApplicationCollector().recordHttpRequest(
+        req.method,
+        req.path,
+        res.statusCode,
+        durationMs,
+        clientIp,
+        rawQuery,
+        rawBody
+      );
+    });
+    next();
+  });
 
   // Kick off ML service status check
   checkExternalMlService().catch((err) => {
@@ -2117,6 +2142,103 @@ except Exception as e:
     } catch (err: any) {
       return res.status(500).json({ error: err.message || 'Error processing multi-agent pipeline' });
     }
+  });
+
+  // -------------------------------------------------------------
+  // REAL-TIME TELEMETRY COLLECTORS & INGESTION APIS
+  // Target Architecture: Actual Data Sources -> Telemetry Collectors ->
+  // Event Normalization -> Preprocessing -> Multi-Agents -> Threat Detection ->
+  // 7-Factor Risk Scoring -> Alert/Incident Management -> Database -> Dashboard
+  // -------------------------------------------------------------
+  app.get('/api/telemetry/status', (_req, res) => {
+    try {
+      const status = telemetryManager.getStatus();
+      return res.status(200).json(status);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Failed getting telemetry status' });
+    }
+  });
+
+  app.get('/api/telemetry/events', (req, res) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 200);
+      const events = telemetryManager.getRecentEvents(limit);
+      return res.status(200).json({
+        total: events.length,
+        events
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Failed retrieving telemetry events' });
+    }
+  });
+
+  app.post('/api/telemetry/collectors/:type/start', (req, res) => {
+    const rawType = (req.params.type || '').toUpperCase();
+    if (!['SYSTEM', 'NETWORK', 'APPLICATION'].includes(rawType)) {
+      return res.status(400).json({ error: `Invalid collector type '${req.params.type}'. Must be SYSTEM, NETWORK, or APPLICATION.` });
+    }
+    const started = telemetryManager.startCollector(rawType as any);
+    return res.status(200).json({
+      success: started,
+      collector: rawType,
+      state: started ? 'LIVE' : 'ERROR',
+      status: telemetryManager.getStatus()
+    });
+  });
+
+  app.post('/api/telemetry/collectors/:type/stop', (req, res) => {
+    const rawType = (req.params.type || '').toUpperCase();
+    if (!['SYSTEM', 'NETWORK', 'APPLICATION'].includes(rawType)) {
+      return res.status(400).json({ error: `Invalid collector type '${req.params.type}'. Must be SYSTEM, NETWORK, or APPLICATION.` });
+    }
+    telemetryManager.stopCollector(rawType as any);
+    return res.status(200).json({
+      success: true,
+      collector: rawType,
+      state: 'OFFLINE',
+      status: telemetryManager.getStatus()
+    });
+  });
+
+  app.post('/api/telemetry/collectors/start-all', (_req, res) => {
+    telemetryManager.startAll();
+    return res.status(200).json({
+      success: true,
+      state: 'LIVE',
+      status: telemetryManager.getStatus()
+    });
+  });
+
+  app.post('/api/telemetry/collectors/stop-all', (_req, res) => {
+    telemetryManager.stopAll();
+    return res.status(200).json({
+      success: true,
+      state: 'OFFLINE',
+      status: telemetryManager.getStatus()
+    });
+  });
+
+  app.post('/api/telemetry/ingest', async (req, res) => {
+    try {
+      const payload = req.body || {};
+      const result = await telemetryManager.ingestExternalTelemetry(payload);
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message || 'Failed ingesting telemetry' });
+    }
+  });
+
+  app.get('/api/telemetry/stream', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    telemetryManager.addSseClient(res);
+
+    req.on('close', () => {
+      telemetryManager.removeSseClient(res);
+    });
   });
 
   // -------------------------------------------------------------
