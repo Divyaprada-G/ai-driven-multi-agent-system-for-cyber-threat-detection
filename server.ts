@@ -8,6 +8,9 @@ import { localStore } from './src/db/localStore';
 import { localAnalysisEngine, DEMO_LOGS, DEMO_SCENARIOS } from './src/services/localAnalysisEngine';
 import { config, validateConfig } from './src/serverConfig';
 import { logger } from './src/logger';
+import { mongoService } from './src/db/mongo/mongoService';
+import { mongoConnection } from './src/db/mongo/connection';
+import { runMongoTestSuite } from './src/db/mongo/mongoTestSuite';
 
 const PORT = config.port;
 const ML_SERVICE_URL = config.mlServiceUrl;
@@ -511,6 +514,342 @@ async function startServer() {
         error: health.details || 'Unable to connect to PostgreSQL',
         timestamp: new Date().toISOString()
       });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // MONGODB INTEGRATION APIS
+  // Health, Security Events, Incidents, Detections, Alerts, Logs, Models, Stats & Tests
+  // -------------------------------------------------------------
+  app.get('/api/mongo/health', async (_req, res) => {
+    try {
+      const health = await mongoConnection.checkHealth();
+      return res.status(health.connected ? 200 : 503).json(health);
+    } catch (err: any) {
+      return res.status(500).json({ status: 'ERROR', error: err.message });
+    }
+  });
+
+  // 1. Security Events: POST, GET, GET by ID
+  app.post('/api/mongo/events', async (req, res) => {
+    try {
+      const result = await mongoService.createSecurityEvent(req.body);
+      return res.status(result.isDuplicate ? 200 : 201).json({
+        success: true,
+        isDuplicate: result.isDuplicate,
+        event: result.event
+      });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/mongo/events', async (req, res) => {
+    try {
+      const { severity, source, eventType, sourceIp, host, search, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
+      const result = await mongoService.getSecurityEvents(
+        {
+          severity: severity as string,
+          source: source as string,
+          eventType: eventType as string,
+          sourceIp: sourceIp as string,
+          host: host as string,
+          search: search as string,
+          startTime: startTime as string,
+          endTime: endTime as string
+        },
+        {
+          limit: limit ? parseInt(limit as string) : undefined,
+          offset: offset ? parseInt(offset as string) : undefined,
+          page: page ? parseInt(page as string) : undefined,
+          sortBy: sortBy as string,
+          sortOrder: sortOrder as any
+        }
+      );
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/mongo/events/:id', async (req, res) => {
+    try {
+      const event = await mongoService.getSecurityEventById(req.params.id);
+      if (!event) {
+        return res.status(404).json({ error: `Security event '${req.params.id}' not found` });
+      }
+      return res.status(200).json(event);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 2. Incidents: POST, GET, GET by ID, PATCH status, POST notes
+  app.post('/api/mongo/incidents', async (req, res) => {
+    try {
+      const incident = await mongoService.createIncident(req.body);
+      return res.status(201).json({ success: true, incident });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/mongo/incidents', async (req, res) => {
+    try {
+      const { status, severity, priority, assignee, search, minRisk, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
+      const result = await mongoService.getIncidents(
+        {
+          status: status as string,
+          severity: severity as string,
+          priority: priority as string,
+          assignee: assignee as string,
+          search: search as string,
+          minRisk: minRisk ? parseFloat(minRisk as string) : undefined,
+          startTime: startTime as string,
+          endTime: endTime as string
+        },
+        {
+          limit: limit ? parseInt(limit as string) : undefined,
+          offset: offset ? parseInt(offset as string) : undefined,
+          page: page ? parseInt(page as string) : undefined,
+          sortBy: sortBy as string,
+          sortOrder: sortOrder as any
+        }
+      );
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/mongo/incidents/:id', async (req, res) => {
+    try {
+      const incident = await mongoService.getIncidentById(req.params.id);
+      if (!incident) {
+        return res.status(404).json({ error: `Incident '${req.params.id}' not found` });
+      }
+      return res.status(200).json(incident);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.patch('/api/mongo/incidents/:id/status', async (req, res) => {
+    try {
+      const { status, actor, reason } = req.body || {};
+      if (!status) {
+        return res.status(400).json({ error: "Missing required 'status' field." });
+      }
+      const updated = await mongoService.updateIncidentStatus(req.params.id, status, actor, reason);
+      if (!updated) {
+        return res.status(404).json({ error: `Incident '${req.params.id}' not found` });
+      }
+      return res.status(200).json({ success: true, incident: updated });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/mongo/incidents/:id/notes', async (req, res) => {
+    try {
+      const { note, author } = req.body || {};
+      if (!note) {
+        return res.status(400).json({ error: "Missing required 'note' field." });
+      }
+      const updated = await mongoService.addInvestigationNote(req.params.id, note, author);
+      if (!updated) {
+        return res.status(404).json({ error: `Incident '${req.params.id}' not found` });
+      }
+      return res.status(200).json({ success: true, incident: updated });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  // 3. Threat Detections: POST, GET
+  app.post('/api/mongo/detections', async (req, res) => {
+    try {
+      const detection = await mongoService.createThreatDetection(req.body);
+      return res.status(201).json({ success: true, detection });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/mongo/detections', async (req, res) => {
+    try {
+      const { threatType, severity, detectionEngine, eventId, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
+      const result = await mongoService.getThreatDetections(
+        {
+          threatType: threatType as string,
+          severity: severity as string,
+          detectionEngine: detectionEngine as string,
+          eventId: eventId as string,
+          startTime: startTime as string,
+          endTime: endTime as string
+        },
+        {
+          limit: limit ? parseInt(limit as string) : undefined,
+          offset: offset ? parseInt(offset as string) : undefined,
+          page: page ? parseInt(page as string) : undefined,
+          sortBy: sortBy as string,
+          sortOrder: sortOrder as any
+        }
+      );
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 4. Alert Records: POST, GET, PATCH status
+  app.post('/api/mongo/alerts', async (req, res) => {
+    try {
+      const alert = await mongoService.createAlert(req.body);
+      return res.status(201).json({ success: true, alert });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/mongo/alerts', async (req, res) => {
+    try {
+      const { status, severity, priority, incidentId, alertType, search, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
+      const result = await mongoService.getAlerts(
+        {
+          status: status as string,
+          severity: severity as string,
+          priority: priority as string,
+          incidentId: incidentId as string,
+          alertType: alertType as string,
+          search: search as string,
+          startTime: startTime as string,
+          endTime: endTime as string
+        },
+        {
+          limit: limit ? parseInt(limit as string) : undefined,
+          offset: offset ? parseInt(offset as string) : undefined,
+          page: page ? parseInt(page as string) : undefined,
+          sortBy: sortBy as string,
+          sortOrder: sortOrder as any
+        }
+      );
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.patch('/api/mongo/alerts/:id/status', async (req, res) => {
+    try {
+      const { status, actor } = req.body || {};
+      if (!status) {
+        return res.status(400).json({ error: "Missing required 'status' field." });
+      }
+      const updated = await mongoService.updateAlertStatus(req.params.id, status, actor);
+      if (!updated) {
+        return res.status(404).json({ error: `Alert '${req.params.id}' not found` });
+      }
+      return res.status(200).json({ success: true, alert: updated });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  // 5. Agent Execution Logs: POST, GET
+  app.post('/api/mongo/logs', async (req, res) => {
+    try {
+      const log = await mongoService.createAgentLog(req.body);
+      return res.status(201).json({ success: true, log });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/mongo/logs', async (req, res) => {
+    try {
+      const { agentId, level, action, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
+      const result = await mongoService.getAgentLogs(
+        {
+          agentId: agentId as string,
+          level: level as string,
+          action: action as string,
+          startTime: startTime as string,
+          endTime: endTime as string
+        },
+        {
+          limit: limit ? parseInt(limit as string) : undefined,
+          offset: offset ? parseInt(offset as string) : undefined,
+          page: page ? parseInt(page as string) : undefined,
+          sortBy: sortBy as string,
+          sortOrder: sortOrder as any
+        }
+      );
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 6. Model Metadata: POST, GET, GET by ID
+  app.post('/api/mongo/models', async (req, res) => {
+    try {
+      const model = await mongoService.createOrUpdateModelMetadata(req.body);
+      return res.status(200).json({ success: true, model });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/mongo/models', async (req, res) => {
+    try {
+      const { status, algorithm, limit, offset, page } = req.query;
+      const result = await mongoService.listModelMetadata(
+        {
+          status: status as string,
+          algorithm: algorithm as string
+        },
+        {
+          limit: limit ? parseInt(limit as string) : undefined,
+          offset: offset ? parseInt(offset as string) : undefined,
+          page: page ? parseInt(page as string) : undefined
+        }
+      );
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/mongo/models/:id', async (req, res) => {
+    try {
+      const model = await mongoService.getModelMetadata(req.params.id);
+      if (!model) {
+        return res.status(404).json({ error: `Model metadata '${req.params.id}' not found` });
+      }
+      return res.status(200).json(model);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 7. Dashboard Statistics: GET
+  app.get('/api/mongo/stats', async (_req, res) => {
+    try {
+      const stats = await mongoService.getDashboardStatistics();
+      return res.status(200).json(stats);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 8. Test Suite Execution: POST
+  app.post('/api/mongo/test-suite', async (_req, res) => {
+    try {
+      const suiteResults = await runMongoTestSuite();
+      return res.status(200).json(suiteResults);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
     }
   });
 

@@ -1,10 +1,122 @@
 {
-  "rawEvents": [],
+  "rawEvents": [
+    {
+      "id": "EVT-72b01ba8-e587-45fb-910f-72271899d858",
+      "source": "Zeek-Bro",
+      "eventType": "NETWORK_PORT_SCAN",
+      "severity": "HIGH",
+      "rawPayload": "2026-09-17T12:00:00Z src_ip=192.168.1.50 dst_ip=10.0.0.1 port=22 action=SYN_FLOOD password=[REDACTED]",
+      "normalizedFields": {
+        "protocol": "TCP",
+        "port": 22,
+        "attack": "PortScan"
+      },
+      "sourceIp": "192.168.1.50",
+      "destinationIp": "10.0.0.1",
+      "host": "dmz-fw01",
+      "contentHash": "208e137c58c3f647f4ce77335f005061b7f9d6883fd4493591ebbf981df39183",
+      "isTestEvent": false,
+      "timestamp": "2026-09-17T11:00:42.702Z",
+      "createdAt": "2026-09-17T11:00:42.702Z"
+    },
+    {
+      "id": "EVT-3206dbe3-a4ed-4fa8-bf96-1cd2f9771e74",
+      "source": "Zeek-Bro",
+      "eventType": "NETWORK_PORT_SCAN",
+      "severity": "HIGH",
+      "rawPayload": "2026-09-17T12:00:00Z src_ip=192.168.1.50 dst_ip=10.0.0.1 port=22 action=SYN_FLOOD plainPass=[REDACTED]",
+      "normalizedFields": {
+        "protocol": "TCP",
+        "port": 22,
+        "attack": "PortScan"
+      },
+      "sourceIp": "192.168.1.50",
+      "destinationIp": "10.0.0.1",
+      "host": "dmz-fw01",
+      "contentHash": "7986eb1dd88d68537e0d1a178ec7e7a65d37e01cf51d5e86d2cc166c0b8a265e",
+      "isTestEvent": false,
+      "timestamp": "2026-09-17T10:59:13.010Z",
+      "createdAt": "2026-09-17T10:59:13.011Z"
+    }
+  ],
   "securityFindings": [],
-  "detections": [],
+  "detections": [
+    {
+      "id": "DET-TEST-842693",
+      "eventId": "EVT-72b01ba8-e587-45fb-910f-72271899d858",
+      "modelId": "RANDOM_FOREST",
+      "modelVersion": "1.0.0",
+      "prediction": "DDoS - SYN Flood",
+      "predictedClass": "DDoS - SYN Flood",
+      "confidence": 0.94,
+      "classProbabilities": {
+        "DDoS - SYN Flood": 0.94
+      },
+      "featureSummary": {
+        "flowDuration": 1200,
+        "synPackets": 850,
+        "flowBytesSec": 92400
+      },
+      "inferenceTimestamp": "2026-09-17T11:00:42.707Z",
+      "createdAt": "2026-09-17T11:00:42.707Z"
+    },
+    {
+      "id": "DET-TEST-753009",
+      "eventId": "EVT-LOCAL",
+      "modelId": "RANDOM_FOREST",
+      "modelVersion": "1.0.0",
+      "prediction": "DDoS - SYN Flood",
+      "predictedClass": "DDoS - SYN Flood",
+      "confidence": 0.94,
+      "classProbabilities": {
+        "DDoS - SYN Flood": 0.94
+      },
+      "featureSummary": {
+        "flowDuration": 1200,
+        "synPackets": 850,
+        "flowBytesSec": 92400
+      },
+      "inferenceTimestamp": "2026-09-17T10:59:13.016Z",
+      "createdAt": "2026-09-17T10:59:13.016Z"
+    }
+  ],
   "correlations": [],
   "riskAssessments": [],
   "alerts": [
+    {
+      "alertId": "ALT-TEST-842693",
+      "incidentId": "INC-TEST-842693",
+      "title": "High-Volume Port Scan Detected",
+      "description": "Single IP probed more than 20 ports within 5 seconds.",
+      "alertType": "NETWORK_RECON",
+      "severity": "HIGH",
+      "riskScore": 78,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [],
+      "id": "ALT-1789642842708-cfdh9",
+      "createdAt": "2026-09-17T11:00:42.708Z"
+    },
+    {
+      "alertId": "ALT-TEST-753009",
+      "incidentId": "INC-TEST-753009",
+      "title": "High-Volume Port Scan Detected",
+      "description": "Single IP probed more than 20 ports within 5 seconds.",
+      "alertType": "NETWORK_RECON",
+      "severity": "HIGH",
+      "riskScore": 78,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [],
+      "id": "ALT-1789642753017-6jmab",
+      "createdAt": "2026-09-17T10:59:13.017Z"
+    },
     {
       "title": "[SystemAgent] Brute Force Attack",
       "description": "Multiple repeated authentication failures (4 failed attempts) from 203.0.113.50.",
@@ -199,6 +311,58 @@
     }
   ],
   "incidents": [
+    {
+      "incidentId": "INC-TEST-842693",
+      "title": "Automated Multi-Vector Reconnaissance Attack",
+      "description": "Distributed port scan followed by SSH credential brute force attempt.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "INVESTIGATING",
+      "riskScore": 88,
+      "primaryIp": "192.168.1.50",
+      "affectedHost": "dmz-fw01",
+      "mitreTechniques": [
+        "T1046",
+        "T1110.001"
+      ],
+      "investigationNotes": [
+        {
+          "id": "note-1789642842706",
+          "author": "Incident Responder",
+          "note": "Firewall ACL rules applied to isolate source IP 192.168.1.50.",
+          "timestamp": "2026-09-17T11:00:42.706Z"
+        }
+      ],
+      "id": "INC-TEST-842693",
+      "createdAt": "2026-09-17T11:00:42.704Z",
+      "updatedAt": "2026-09-17T11:00:42.706Z"
+    },
+    {
+      "incidentId": "INC-TEST-753009",
+      "title": "Automated Multi-Vector Reconnaissance Attack",
+      "description": "Distributed port scan followed by SSH credential brute force attempt.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 88,
+      "primaryIp": "192.168.1.50",
+      "affectedHost": "dmz-fw01",
+      "mitreTechniques": [
+        "T1046",
+        "T1110.001"
+      ],
+      "investigationNotes": [
+        {
+          "id": "note-1789642753014",
+          "author": "Incident Responder",
+          "note": "Firewall ACL rules applied to isolate source IP 192.168.1.50.",
+          "timestamp": "2026-09-17T10:59:13.015Z"
+        }
+      ],
+      "id": "INC-1789642753013-pxion",
+      "createdAt": "2026-09-17T10:59:13.013Z",
+      "updatedAt": "2026-09-17T10:59:13.015Z"
+    },
     {
       "incidentId": "INC-391280",
       "title": "Privilege Escalation Intrusion Chain",
@@ -414,249 +578,112 @@
       "createdAt": "2026-09-17T08:47:32.616Z"
     }
   ],
-  "incidentHistory": [],
-  "auditLogs": [],
+  "incidentHistory": [
+    {
+      "id": "INCH-1789642842706-jk67j",
+      "incidentId": "INC-TEST-842693",
+      "changedBy": "system",
+      "changeType": "STATUS_UPDATE",
+      "previousState": {
+        "status": "NEW"
+      },
+      "newState": {
+        "status": "INVESTIGATING"
+      },
+      "timestamp": "2026-09-17T11:00:42.706Z"
+    }
+  ],
+  "auditLogs": [
+    {
+      "actor": "NetworkMonitoringAgent",
+      "action": "PROCESS_PACKET_BATCH",
+      "targetType": "AGENT_LOG",
+      "targetId": "LOG-TEST-842693",
+      "severity": "LOW",
+      "details": {
+        "message": "Batch of 500 network flows ingested and parsed cleanly.",
+        "executionTimeMs": 14.8,
+        "eventsProcessedCount": 500
+      },
+      "id": "AUD-1789642842709-15sh2",
+      "createdAt": "2026-09-17T11:00:42.709Z"
+    },
+    {
+      "actor": "NetworkMonitoringAgent",
+      "action": "PROCESS_PACKET_BATCH",
+      "targetType": "AGENT_LOG",
+      "targetId": "LOG-TEST-753009",
+      "severity": "LOW",
+      "details": {
+        "message": "Batch of 500 network flows ingested and parsed cleanly.",
+        "executionTimeMs": 14.8,
+        "eventsProcessedCount": 500
+      },
+      "id": "AUD-1789642753018-qccya",
+      "createdAt": "2026-09-17T10:59:13.018Z"
+    }
+  ],
   "reports": [],
   "models": [
     {
-      "id": "IF-20260917-101933",
-      "modelType": "ISOLATION_FOREST",
-      "modelVersion": "if-cyber-20260917",
-      "featureSchemaVersion": "cicids2017-v1",
-      "algorithm": "IsolationForest",
-      "trainingDataset": "test_dataset_cicids2017.csv",
-      "trainingTimestamp": "2026-09-17T10:19:33.454398Z",
-      "trainingMetrics": {
-        "anomalyThreshold": 0.5587
-      },
-      "featureNames": [
-        "Destination Port",
+      "id": "RF-MODEL-842693",
+      "name": "Random Forest Threat Classifier v2",
+      "version": "2.1.0",
+      "framework": "Scikit-Learn",
+      "accuracy": 0.978,
+      "f1Score": 0.965,
+      "features": [
         "Flow Duration",
         "Total Fwd Packets",
-        "Total Backward Packets",
-        "Total Length of Fwd Packets",
-        "Total Length of Bwd Packets",
         "Flow Bytes/s",
-        "Flow Packets/s",
-        "Flow IAT Mean",
-        "Fwd IAT Mean",
-        "Bwd IAT Mean",
-        "FIN Flag Count",
-        "SYN Flag Count",
-        "RST Flag Count",
-        "ACK Flag Count",
-        "Down/Up Ratio",
-        "Average Packet Size",
-        "Init_Win_bytes_forward",
-        "Active Mean",
-        "Idle Mean"
+        "SYN Flag Count"
       ],
+      "hyperparameters": {},
+      "status": "ACTIVE",
+      "updatedAt": "2026-09-17T11:00:42.710Z",
+      "createdAt": "2026-09-17T11:00:42.710Z"
+    },
+    {
+      "id": "RF-MODEL-753009",
+      "name": "Random Forest Threat Classifier v2",
+      "version": "2.1.0",
+      "framework": "Scikit-Learn",
+      "accuracy": 0.978,
+      "f1Score": 0.965,
+      "features": [
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Flow Bytes/s",
+        "SYN Flag Count"
+      ],
+      "hyperparameters": {},
+      "status": "ACTIVE",
+      "updatedAt": "2026-09-17T10:59:13.019Z",
+      "createdAt": "2026-09-17T10:59:13.019Z"
+    },
+    {
+      "id": "IF-20260917-101933",
+      "modelType": "ISOLATION_FOREST",
+      "featureSchemaVersion": "cicids2017-v1",
+      "trainingTimestamp": "2026-09-17T10:19:33.454376Z",
       "classes": [
         "BENIGN",
         "ANOMALY"
       ],
-      "status": "READY",
-      "updatedAt": "2026-09-17T10:19:33.460Z",
+      "updatedAt": "2026-09-17T10:53:27.612Z",
       "createdAt": "2026-09-17T10:19:33.460Z"
     },
     {
       "id": "RF-20260917-101929",
-      "modelType": "RANDOM_FOREST",
-      "modelVersion": "rf-cyber-20260917",
+      "modelType": "ISOLATION_FOREST",
       "featureSchemaVersion": "cicids2017-v1",
-      "algorithm": "RandomForestClassifier",
-      "trainingDataset": "test_dataset_cicids2017.csv",
-      "trainingTimestamp": "2026-09-17T10:19:29.746638Z",
-      "trainingMetrics": {
-        "accuracy": 1,
-        "macroPrecision": 1,
-        "macroRecall": 1,
-        "macroF1": 1,
-        "weightedPrecision": 1,
-        "weightedRecall": 1,
-        "weightedF1": 1,
-        "confusionMatrix": {
-          "labels": [
-            "BENIGN",
-            "DDoS",
-            "PortScan"
-          ],
-          "matrix": [
-            [
-              2,
-              0,
-              0
-            ],
-            [
-              0,
-              2,
-              0
-            ],
-            [
-              0,
-              0,
-              2
-            ]
-          ],
-          "totalSamples": 6
-        },
-        "classificationReport": [
-          {
-            "className": "BENIGN",
-            "precision": 1,
-            "recall": 1,
-            "f1Score": 1,
-            "support": 2
-          },
-          {
-            "className": "DDoS",
-            "precision": 1,
-            "recall": 1,
-            "f1Score": 1,
-            "support": 2
-          },
-          {
-            "className": "PortScan",
-            "precision": 1,
-            "recall": 1,
-            "f1Score": 1,
-            "support": 2
-          }
-        ],
-        "featureImportances": [
-          {
-            "feature": "Flow Packets/s",
-            "importance": 0.1587,
-            "rank": 1
-          },
-          {
-            "feature": "Total Length of Bwd Packets",
-            "importance": 0.1133,
-            "rank": 2
-          },
-          {
-            "feature": "Flow Bytes/s",
-            "importance": 0.1083,
-            "rank": 3
-          },
-          {
-            "feature": "Total Length of Fwd Packets",
-            "importance": 0.1033,
-            "rank": 4
-          },
-          {
-            "feature": "Down/Up Ratio",
-            "importance": 0.0877,
-            "rank": 5
-          },
-          {
-            "feature": "Flow Duration",
-            "importance": 0.0782,
-            "rank": 6
-          },
-          {
-            "feature": "Fwd IAT Mean",
-            "importance": 0.0768,
-            "rank": 7
-          },
-          {
-            "feature": "ACK Flag Count",
-            "importance": 0.0544,
-            "rank": 8
-          },
-          {
-            "feature": "Flow IAT Mean",
-            "importance": 0.0527,
-            "rank": 9
-          },
-          {
-            "feature": "Init_Win_bytes_forward",
-            "importance": 0.0527,
-            "rank": 10
-          },
-          {
-            "feature": "SYN Flag Count",
-            "importance": 0.0402,
-            "rank": 11
-          },
-          {
-            "feature": "RST Flag Count",
-            "importance": 0.0333,
-            "rank": 12
-          },
-          {
-            "feature": "Total Fwd Packets",
-            "importance": 0.0254,
-            "rank": 13
-          },
-          {
-            "feature": "Average Packet Size",
-            "importance": 0.0152,
-            "rank": 14
-          },
-          {
-            "feature": "Destination Port",
-            "importance": 0,
-            "rank": 15
-          },
-          {
-            "feature": "Total Backward Packets",
-            "importance": 0,
-            "rank": 16
-          },
-          {
-            "feature": "Bwd IAT Mean",
-            "importance": 0,
-            "rank": 17
-          },
-          {
-            "feature": "FIN Flag Count",
-            "importance": 0,
-            "rank": 18
-          },
-          {
-            "feature": "Active Mean",
-            "importance": 0,
-            "rank": 19
-          },
-          {
-            "feature": "Idle Mean",
-            "importance": 0,
-            "rank": 20
-          }
-        ],
-        "evaluatedOnTestRows": 6,
-        "evaluatedAt": "2026-09-17T10:19:29.746600Z"
-      },
-      "featureNames": [
-        "Destination Port",
-        "Flow Duration",
-        "Total Fwd Packets",
-        "Total Backward Packets",
-        "Total Length of Fwd Packets",
-        "Total Length of Bwd Packets",
-        "Flow Bytes/s",
-        "Flow Packets/s",
-        "Flow IAT Mean",
-        "Fwd IAT Mean",
-        "Bwd IAT Mean",
-        "FIN Flag Count",
-        "SYN Flag Count",
-        "RST Flag Count",
-        "ACK Flag Count",
-        "Down/Up Ratio",
-        "Average Packet Size",
-        "Init_Win_bytes_forward",
-        "Active Mean",
-        "Idle Mean"
-      ],
+      "trainingTimestamp": "2026-09-17T10:19:29.746631Z",
       "classes": [
         "BENIGN",
         "DDoS",
         "PortScan"
       ],
-      "status": "READY",
-      "updatedAt": "2026-09-17T10:19:29.754Z",
+      "updatedAt": "2026-09-17T10:53:27.613Z",
       "createdAt": "2026-09-17T10:19:29.754Z"
     },
     {
@@ -669,7 +696,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "updatedAt": "2026-09-17T10:53:27.613Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -681,7 +708,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "updatedAt": "2026-09-17T10:53:27.613Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -694,7 +721,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "updatedAt": "2026-09-17T10:53:27.613Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -707,7 +734,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T10:19:25.997Z",
+      "updatedAt": "2026-09-17T10:53:27.613Z",
       "createdAt": "2026-09-17T10:19:25.997Z"
     },
     {
@@ -719,7 +746,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "updatedAt": "2026-09-17T10:53:27.613Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     },
     {
@@ -732,7 +759,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "updatedAt": "2026-09-17T10:53:27.614Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     }
   ]

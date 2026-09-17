@@ -17,6 +17,8 @@ import { eq, desc, inArray, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 
 import { localStore } from './localStore.ts';
+import { mongoConnection } from './mongo/connection.ts';
+import { mongoService } from './mongo/mongoService.ts';
 
 /**
  * Deterministic Content Hash (SHA-256) for deduplication
@@ -35,15 +37,27 @@ export function generateContentHash(event: {
 
 export class DatabaseService {
   /**
-   * Health Check: Distinguishes DATABASE_CONNECTED vs DATABASE_UNAVAILABLE / LOCAL_STORE
+   * Health Check: Distinguishes DATABASE_CONNECTED vs DATABASE_UNAVAILABLE / LOCAL_STORE / MONGODB
    */
   async checkConnection(): Promise<{ status: string; connected: boolean; details?: string; mode?: string }> {
+    if (mongoConnection.isConfigured()) {
+      const mongoHealth = await mongoConnection.checkHealth();
+      if (mongoHealth.connected) {
+        return {
+          status: 'DATABASE_CONNECTED',
+          connected: true,
+          mode: 'MongoDB',
+          details: `Connected to MongoDB database '${mongoHealth.database}' with ${mongoHealth.collections?.securityEvents ?? 0} events`
+        };
+      }
+    }
+
     if (!isDbConfigured()) {
       return {
         status: 'DATABASE_CONNECTED',
         connected: true,
         mode: 'JSON_STORE',
-        details: 'PostgreSQL not configured. Persistent JSON local storage active.'
+        details: 'PostgreSQL/MongoDB not configured. Persistent JSON local storage active.'
       };
     }
     try {
@@ -253,6 +267,10 @@ export class DatabaseService {
     const id = det.id || `DET-${crypto.randomUUID()}`;
     const infTs = det.inferenceTimestamp ? new Date(det.inferenceTimestamp) : new Date();
 
+    if (!isDbConfigured()) {
+      return localStore.insertDetection({ ...det, id, inferenceTimestamp: infTs.toISOString() });
+    }
+
     try {
       const inserted = await db
         .insert(detections)
@@ -276,12 +294,15 @@ export class DatabaseService {
         .returning();
       return inserted[0];
     } catch (err: any) {
-      console.error('[DatabaseService] insertDetection failed:', err);
-      throw new Error('Database operation failed: insertDetection', { cause: err });
+      console.warn('[DatabaseService] insertDetection falling back to localStore:', err.message);
+      return localStore.insertDetection({ ...det, id, inferenceTimestamp: infTs.toISOString() });
     }
   }
 
   async getDetections(limit = 100, offset = 0) {
+    if (!isDbConfigured()) {
+      return localStore.listDetections(limit);
+    }
     try {
       return await db
         .select()
@@ -290,8 +311,8 @@ export class DatabaseService {
         .limit(limit)
         .offset(offset);
     } catch (err: any) {
-      console.error('[DatabaseService] getDetections failed:', err);
-      throw new Error('Database operation failed: getDetections', { cause: err });
+      console.warn('[DatabaseService] getDetections falling back to localStore:', err.message);
+      return localStore.listDetections(limit);
     }
   }
 
@@ -314,6 +335,9 @@ export class DatabaseService {
     summary: string;
   }) {
     const id = corr.id || `CORR-${crypto.randomUUID()}`;
+    if (!isDbConfigured()) {
+      return localStore.insertCorrelation({ ...corr, id });
+    }
     try {
       const inserted = await db
         .insert(correlations)
@@ -335,8 +359,8 @@ export class DatabaseService {
         .returning();
       return inserted[0];
     } catch (err: any) {
-      console.error('[DatabaseService] insertCorrelation failed:', err);
-      throw new Error('Database operation failed: insertCorrelation', { cause: err });
+      console.warn('[DatabaseService] insertCorrelation falling back to localStore:', err.message);
+      return localStore.insertCorrelation({ ...corr, id });
     }
   }
 
@@ -354,6 +378,9 @@ export class DatabaseService {
   }) {
     const id = risk.id || `RISK-${crypto.randomUUID()}`;
     const calcTs = risk.calculationTimestamp ? new Date(risk.calculationTimestamp) : new Date();
+    if (!isDbConfigured()) {
+      return localStore.insertRiskAssessment({ ...risk, id, calculationTimestamp: calcTs.toISOString() });
+    }
     try {
       const inserted = await db
         .insert(riskAssessments)
@@ -372,8 +399,8 @@ export class DatabaseService {
         .returning();
       return inserted[0];
     } catch (err: any) {
-      console.error('[DatabaseService] insertRiskAssessment failed:', err);
-      throw new Error('Database operation failed: insertRiskAssessment', { cause: err });
+      console.warn('[DatabaseService] insertRiskAssessment falling back to localStore:', err.message);
+      return localStore.insertRiskAssessment({ ...risk, id, calculationTimestamp: calcTs.toISOString() });
     }
   }
 

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Shield, Cpu, Bell, Sliders, Webhook, Save, CheckCircle2, GitMerge } from 'lucide-react';
+import { Settings, Shield, Cpu, Bell, Sliders, Webhook, Save, CheckCircle2, GitMerge, Database } from 'lucide-react';
 import { correlationService } from '../services/correlationService';
 import { CorrelationStrength } from '../types';
+import { MongoIntegrationPanel } from '../components/settings/MongoIntegrationPanel';
 
 export const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'general' | 'correlation' | 'detection' | 'agents' | 'alerts' | 'integration' | 'system'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'mongodb' | 'correlation' | 'detection' | 'agents' | 'alerts' | 'integration' | 'system'>('general');
   const [savedFeedback, setSavedFeedback] = useState(false);
 
   // Correlation Config State
@@ -75,6 +76,7 @@ export const SettingsPage: React.FC = () => {
       <div className="flex flex-wrap gap-1.5 p-1 bg-slate-900/90 border border-slate-800 rounded-xl">
         {[
           { id: 'general', label: 'General', icon: Settings },
+          { id: 'mongodb', label: 'MongoDB Integration', icon: Database },
           { id: 'correlation', label: 'Correlation Settings', icon: GitMerge },
           { id: 'detection', label: 'Detection', icon: Shield },
           { id: 'agents', label: 'Agents', icon: Cpu },
@@ -104,6 +106,9 @@ export const SettingsPage: React.FC = () => {
 
       {/* Tab Panels */}
       <form onSubmit={handleSave} className="p-6 bg-slate-900/70 border border-slate-800 rounded-xl space-y-6">
+        {/* MongoDB Integration */}
+        {activeTab === 'mongodb' && <MongoIntegrationPanel />}
+
         {/* General */}
         {activeTab === 'general' && (
           <div className="space-y-4">

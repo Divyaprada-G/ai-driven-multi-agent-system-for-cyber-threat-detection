@@ -94,8 +94,16 @@ class LocalStore {
     return this.data.rawEvents.slice(0, limit);
   }
 
+  public listEvents(limit = 50): any[] {
+    return this.listRawEvents(limit);
+  }
+
   public getRawEventById(id: string): any | null {
     return this.data.rawEvents.find((e) => e.id === id) || null;
+  }
+
+  public getEventById(id: string): any | null {
+    return this.getRawEventById(id);
   }
 
   // Findings
@@ -191,9 +199,11 @@ class LocalStore {
 
   // Incidents
   public insertIncident(incident: any): any {
+    const incId = incident.incidentId || incident.id || `INC-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const record = {
       ...incident,
-      id: incident.id || `INC-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: incId,
+      incidentId: incId,
       status: incident.status || 'NEW',
       createdAt: new Date().toISOString()
     };
@@ -207,11 +217,11 @@ class LocalStore {
   }
 
   public getIncidentById(id: string): any | null {
-    return this.data.incidents.find((inc) => inc.id === id) || null;
+    return this.data.incidents.find((inc) => inc.id === id || inc.incidentId === id) || null;
   }
 
   public updateIncidentStatus(id: string, status: string, notes?: string, changedBy = 'system'): any | null {
-    const incident = this.data.incidents.find((inc) => inc.id === id);
+    const incident = this.data.incidents.find((inc) => inc.id === id || inc.incidentId === id);
     if (!incident) return null;
     const oldStatus = incident.status;
     incident.status = status;
@@ -229,6 +239,18 @@ class LocalStore {
       timestamp: new Date().toISOString()
     });
 
+    this.save();
+    return incident;
+  }
+
+  public addInvestigationNote(id: string, note: any): any | null {
+    const incident = this.data.incidents.find((inc) => inc.id === id || inc.incidentId === id);
+    if (!incident) return null;
+    if (!incident.investigationNotes) {
+      incident.investigationNotes = [];
+    }
+    incident.investigationNotes.push(note);
+    incident.updatedAt = new Date().toISOString();
     this.save();
     return incident;
   }
@@ -284,6 +306,14 @@ class LocalStore {
 
   public getRegisteredModels(): any[] {
     return this.data.models;
+  }
+
+  public upsertModel(model: any): any {
+    return this.upsertModelRegistry(model);
+  }
+
+  public listModels(): any[] {
+    return this.getRegisteredModels();
   }
 
   // Aggregated stats helper
