@@ -144,6 +144,12 @@ export interface SecurityAlert {
   history: AlertHistoryEntry[];
   simulatedResponses: SimulatedResponseRecord[];
 
+  // Explicit workflow fields
+  agentName?: string;
+  threatCategory?: string;
+  detectionMethod?: string;
+  incidentStatus?: IncidentLifecycleStatus;
+
   // Notification and dispatch attributes
   notificationStatus: NotificationStatus;
   targetChannels: string[];

@@ -151,9 +151,14 @@ class SeverityRuleEngine {
     } else if (cat.includes('SQL') || cat.includes('INJECTION') || cat.includes('EXPLOIT') || cat.includes('BRUTE') || cat.includes('PRIVILEGE')) {
       factors.push(`Exploitation pattern detected: ${cat}`);
       risk = Math.max(risk, 74);
-    } else if (cat.includes('SCAN') || cat.includes('ANOMALY') || cat.includes('PROBE')) {
+    } else if (cat.includes('SCAN') || cat.includes('ANOMALY')) {
       factors.push(`Reconnaissance / Anomaly pattern: ${cat}`);
       risk = Math.max(risk, 45);
+    } else if (cat.includes('PROBE') || cat.includes('POLICY') || cat.includes('PING') || cat.includes('MINOR')) {
+      factors.push(`Minor reconnaissance / policy deviation: ${cat}`);
+      if (input.riskScore === undefined) {
+        risk = 28;
+      }
     } else if (cat.includes('BENIGN') || cat.includes('HEARTBEAT') || cat.includes('INFO') || cat.includes('AUDIT')) {
       factors.push(`Administrative/Benign activity: ${cat}`);
       risk = Math.min(risk, 15);
@@ -237,6 +242,10 @@ class SeverityRuleEngine {
    */
   public getRules(): SeverityRuleDefinition[] {
     return [...TRANSPARENT_SEVERITY_RULES];
+  }
+
+  public getAllRules(): SeverityRuleDefinition[] {
+    return this.getRules();
   }
 }
 

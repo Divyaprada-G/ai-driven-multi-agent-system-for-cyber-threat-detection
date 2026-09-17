@@ -199,6 +199,114 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({
           {/* Tab 1: OVERVIEW */}
           {activeTab === 'OVERVIEW' && (
             <div className="space-y-4">
+              {/* Explicit Required Alert Information Specification Panel */}
+              <div className="p-4 bg-slate-950/90 rounded-xl border border-cyan-900/50 shadow-inner space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 text-cyan-400" />
+                    <span className="text-xs font-mono uppercase tracking-wider text-cyan-300 font-bold">
+                      Required Alert Information
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
+                    Workflow Spec Compliant
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-mono text-xs">
+                  <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 uppercase block">1. Incident ID</span>
+                    <span className="font-bold text-cyan-300">
+                      {alert.incidentId ? (
+                        <button
+                          onClick={() => {
+                            if (onNavigateToIncident && alert.incidentId) {
+                              onClose();
+                              onNavigateToIncident(alert.incidentId);
+                            }
+                          }}
+                          className="hover:underline text-cyan-400 font-bold inline-flex items-center gap-1"
+                        >
+                          {alert.incidentId}
+                          <ExternalLink className="w-3 h-3" />
+                        </button>
+                      ) : (
+                        'INC-PENDING'
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 uppercase block">2. Detection Timestamp</span>
+                    <span className="text-slate-200">{alert.timestamp}</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 uppercase block">3. Agent Name</span>
+                    <span className="text-emerald-400 font-semibold">
+                      {alert.agentName || (alert.participatingAgents && alert.participatingAgents.length > 0 ? alert.participatingAgents.join(', ') : 'NetworkAgent')}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 uppercase block">4. Threat Category</span>
+                    <span className="text-purple-300 font-semibold">
+                      {alert.threatCategory || alert.threatClassification || alert.alertType}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 uppercase block">5. Severity</span>
+                    <div className="mt-0.5">
+                      <SeverityBadge severity={alert.severity} size="sm" />
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 uppercase block">6. Incident Status</span>
+                    <div className="mt-0.5">
+                      <StatusBadge status={alert.incidentStatus || alert.status} type="incident" />
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 sm:col-span-2 lg:col-span-3">
+                    <span className="text-[10px] text-slate-400 uppercase block">7. Detection Method</span>
+                    <span className="text-cyan-300">
+                      {alert.detectionMethod || alert.ruleTriggered || 'Multi-Agent Correlation & Statistical Entropy Engine'}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 sm:col-span-2 lg:col-span-3">
+                    <span className="text-[10px] text-slate-400 uppercase block">8. Description</span>
+                    <span className="text-slate-300 leading-relaxed block mt-0.5">
+                      {alert.description || alert.explanation}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 sm:col-span-2 lg:col-span-3">
+                    <span className="text-[10px] text-slate-400 uppercase block">9. Evidence</span>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {alert.evidence && alert.evidence.length > 0 ? (
+                        alert.evidence.map((ev, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[11px]">
+                            {ev}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-slate-500">Telemetry indicators recorded</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-amber-950/30 border border-amber-800/60 sm:col-span-2 lg:col-span-3">
+                    <span className="text-[10px] text-amber-400 uppercase block font-bold">10. Recommended Action</span>
+                    <span className="text-amber-200 font-semibold block mt-0.5">
+                      {alert.recommendedAction}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Explanation & Causal Attribution */}
               <div>
                 <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5">

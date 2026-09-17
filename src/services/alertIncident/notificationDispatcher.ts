@@ -321,6 +321,34 @@ export class NotificationDispatcher {
   public getHistory(limit = 50): NotificationDispatchRecord[] {
     return this.dispatchHistory.slice(0, limit);
   }
+
+  public getDispatches(limit = 100): NotificationDispatchRecord[] {
+    return this.dispatchHistory.slice(0, limit);
+  }
+
+  public getConfigSummary() {
+    return {
+      email: {
+        enabled: Boolean(process.env.NOTIFICATION_EMAIL_TO),
+        configured: Boolean(process.env.NOTIFICATION_EMAIL_TO),
+        destination: this.maskDestination(process.env.NOTIFICATION_EMAIL_TO || 'soc-oncall@internal.security')
+      },
+      webhook: {
+        enabled: Boolean(process.env.NOTIFICATION_WEBHOOK_URL),
+        configured: Boolean(process.env.NOTIFICATION_WEBHOOK_URL),
+        destination: this.maskDestination(process.env.NOTIFICATION_WEBHOOK_URL || 'https://soc.internal/webhook/alerts')
+      },
+      n8n: {
+        enabled: Boolean(process.env.N8N_WEBHOOK_URL),
+        configured: Boolean(process.env.N8N_WEBHOOK_URL),
+        destination: this.maskDestination(process.env.N8N_WEBHOOK_URL || 'https://n8n.internal.automation/webhook/cyber-alerts')
+      }
+    };
+  }
+
+  public async retryDispatch(dispatchId: string): Promise<NotificationDispatchRecord | null> {
+    return this.retryFailedDispatch(dispatchId);
+  }
 }
 
 export const notificationDispatcher = new NotificationDispatcher();

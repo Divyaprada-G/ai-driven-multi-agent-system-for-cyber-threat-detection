@@ -178,6 +178,9 @@ export interface MongoPaginationOptions {
 
 export interface MongoPaginatedResult<T> {
   data: T[];
+  incidents?: T[];
+  alerts?: T[];
+  events?: T[];
   total: number;
   limit: number;
   offset: number;

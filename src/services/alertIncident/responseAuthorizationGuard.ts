@@ -18,7 +18,8 @@ export interface ResponseAuthorizationRequest {
   targetType: 'ALERT' | 'INCIDENT';
   authorizedBy: string;
   operationalJustification: string;
-  userConfirmation: boolean;
+  userConfirmation?: boolean;
+  explicitUserAuthorization?: boolean;
   dryRunOnly?: boolean;
 }
 
@@ -27,6 +28,7 @@ export interface ResponseAuthorizationDecision {
   actionId?: string;
   reason: string;
   safetyViolation?: string;
+  violations?: string[];
   auditRecord?: {
     id: string;
     timestamp: string;
@@ -48,28 +50,38 @@ class ResponseAuthorizationGuard {
 
     // Safety Mandate 1 & 2: Automated/unauthorized execution is strictly rejected
     if (!req.authorizedBy || req.authorizedBy.toLowerCase() === 'system' || req.authorizedBy.toLowerCase() === 'automation') {
+      const reason = 'Autonomous execution of response actions is strictly prohibited. An authenticated human SOC analyst must authorize this action.';
+      const violation = 'AUTOMATED_DESTRUCTIVE_ACTION_PREVENTED';
       return {
         allowed: false,
-        reason: 'Autonomous execution of response actions is strictly prohibited. An authenticated human SOC analyst must authorize this action.',
-        safetyViolation: 'AUTOMATED_DESTRUCTIVE_ACTION_PREVENTED'
+        reason,
+        safetyViolation: violation,
+        violations: [violation, reason]
       };
     }
 
     // Safety Mandate 3: Explicit user confirmation checkbox is required
-    if (!req.userConfirmation) {
+    const isConfirmed = Boolean(req.userConfirmation || req.explicitUserAuthorization);
+    if (!isConfirmed) {
+      const reason = 'Explicit user authorization confirmation was not provided. The analyst must explicitly confirm agreement to proceed.';
+      const violation = 'MISSING_USER_CONFIRMATION';
       return {
         allowed: false,
-        reason: 'Explicit user authorization confirmation was not provided. The analyst must explicitly confirm agreement to proceed.',
-        safetyViolation: 'MISSING_USER_CONFIRMATION'
+        reason,
+        safetyViolation: violation,
+        violations: [violation, reason]
       };
     }
 
     // Operational justification mandate
     if (!req.operationalJustification || req.operationalJustification.trim().length < 5) {
+      const reason = 'Operational justification is required for all containment actions to maintain SOC compliance and audit trail.';
+      const violation = 'INSUFFICIENT_JUSTIFICATION';
       return {
         allowed: false,
-        reason: 'Operational justification is required for all containment actions to maintain SOC compliance and audit trail.',
-        safetyViolation: 'INSUFFICIENT_JUSTIFICATION'
+        reason,
+        safetyViolation: violation,
+        violations: [violation, reason]
       };
     }
 
@@ -78,10 +90,13 @@ class ResponseAuthorizationGuard {
       // Prevent accidental lockout of loopback or RFC 1918 gateway
       const cleanIp = (req.target || '').trim();
       if (cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp === '0.0.0.0') {
+        const reason = `Safety constraint violation: Blocking critical loopback address '${cleanIp}' is prohibited.`;
+        const violation = 'CRITICAL_ADDRESS_PROTECTION';
         return {
           allowed: false,
-          reason: `Safety constraint violation: Blocking critical loopback address '${cleanIp}' is prohibited.`,
-          safetyViolation: 'CRITICAL_ADDRESS_PROTECTION'
+          reason,
+          safetyViolation: violation,
+          violations: [violation, reason]
         };
       }
     }
@@ -91,6 +106,7 @@ class ResponseAuthorizationGuard {
       allowed: true,
       actionId,
       reason: `Response action '${req.actionType}' authorized by analyst '${req.authorizedBy}'. Justification: ${req.operationalJustification}`,
+      violations: [],
       auditRecord: {
         id: actionId,
         timestamp: now,

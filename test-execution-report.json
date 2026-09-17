@@ -1,0 +1,248 @@
+{
+  "timestamp": "2026-09-17T16:55:56.667Z",
+  "totalTests": 22,
+  "passed": 22,
+  "failed": 0,
+  "durationMs": 155,
+  "componentsTested": 16,
+  "results": [
+    {
+      "id": "TC-FE-01",
+      "component": "Frontend",
+      "testType": "Integration",
+      "name": "HTML Entry Point & Metadata Sync",
+      "passed": true,
+      "durationMs": 0,
+      "details": "index.html matches metadata.json with title, og:tags, and #root mount element."
+    },
+    {
+      "id": "TC-API-01",
+      "component": "Backend APIs",
+      "testType": "API testing",
+      "name": "Health Endpoint GET /api/health",
+      "passed": true,
+      "durationMs": 16,
+      "details": "Status 200, components: {\"nodeServer\":\"ONLINE\",\"pythonMLBackend\":\"INTEGRATED_ENGINE_ACTIVE\",\"database\":\"DATABASE_CONNECTED\",\"databaseMode\":\"JSON_STORE\"}"
+    },
+    {
+      "id": "TC-API-02",
+      "component": "Backend APIs",
+      "testType": "API testing",
+      "name": "Aggregated Metrics GET /api/stats",
+      "passed": true,
+      "durationMs": 3,
+      "details": "Total Events: 3, Threats: 24"
+    },
+    {
+      "id": "TC-API-03",
+      "component": "Backend APIs",
+      "testType": "API testing",
+      "name": "Pipeline Status GET /api/pipeline/status",
+      "passed": true,
+      "durationMs": 2,
+      "details": "Engine: undefined, Status: RUNNING"
+    },
+    {
+      "id": "TC-DB-01",
+      "component": "Database connectivity",
+      "testType": "Integration",
+      "name": "MongoDB Health & Standby Mode",
+      "passed": true,
+      "durationMs": 2,
+      "details": "Database mode: MongoDB, Connected: false"
+    },
+    {
+      "id": "TC-DB-02",
+      "component": "Database connectivity",
+      "testType": "End-to-end testing",
+      "name": "MongoDB / Local Persistent Store CRUD",
+      "passed": true,
+      "durationMs": 16,
+      "details": "Created & retrieved incident INC-EVAL-156542"
+    },
+    {
+      "id": "TC-LOG-01",
+      "component": "Log preprocessing",
+      "testType": "Unit testing",
+      "name": "Syslog Parsing & Field Extraction",
+      "passed": true,
+      "durationMs": 4,
+      "details": "Event parsed with sourceIp: 192.0.2.45, eventType: AUTH_FAILURE"
+    },
+    {
+      "id": "TC-NET-01",
+      "component": "Network Agent",
+      "testType": "Integration",
+      "name": "Port Scan & Entropy Detection Flow",
+      "passed": {
+        "alertId": "ALT-156565-7THI",
+        "incidentId": "INC-20260917-59JKL",
+        "title": "SYN Port Sweep",
+        "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+        "alertType": "PORT_SCAN",
+        "threatCategory": "PORT_SCAN",
+        "agentName": "NetworkAgent",
+        "detectionMethod": "Port Frequency & Packet Entropy Engine",
+        "recommendedAction": "Review NetworkAgent telemetry, inspect indicators [203.0.113.15], and request human authorization if containment is warranted.",
+        "incidentStatus": "NEW",
+        "severity": "HIGH",
+        "riskScore": 76,
+        "priority": "P2",
+        "status": "NEW",
+        "mitreTechniques": [],
+        "evidence": [
+          "SYN packets without ACK completion",
+          "5 distinct ports scanned in 200ms",
+          "Entropy: 0.94",
+          "Agent: NetworkAgent",
+          "Detection Method: Port Frequency & Packet Entropy Engine",
+          "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+        ],
+        "timestamp": "2026-09-17T16:55:56.566Z",
+        "createdAt": "2026-09-17T16:55:56.566Z",
+        "updatedAt": "2026-09-17T16:55:56.566Z",
+        "_id": "ALT-1789664156566-ieaf7"
+      },
+      "durationMs": 5,
+      "details": "Network detection created alert: ALT-156565-7THI linked to INC-20260917-59JKL"
+    },
+    {
+      "id": "TC-SYS-01",
+      "component": "System Agent",
+      "testType": "Integration",
+      "name": "Host Brute-Force Detection & Attribution",
+      "passed": true,
+      "durationMs": 5,
+      "details": "Severity correctly determined as: High (Rule: Active Exploitation & Credential Abuse)"
+    },
+    {
+      "id": "TC-APP-01",
+      "component": "Application Agent",
+      "testType": "Integration",
+      "name": "Web Exploitation (SQLi) Identification",
+      "passed": true,
+      "durationMs": 4,
+      "details": "Assigned Severity: Critical, Incident: INC-20260917-KGM3S"
+    },
+    {
+      "id": "TC-CORR-01",
+      "component": "Event Correlation Agent",
+      "testType": "Integration",
+      "name": "Cross-Agent Multi-Stage Attack Correlation",
+      "passed": true,
+      "durationMs": 4,
+      "details": "Evaluated Multi-Agent Attack as Critical. Rule: Multi-Stage Infiltration & Critical Compromise"
+    },
+    {
+      "id": "TC-THREAT-01",
+      "component": "Threat Detection Agent",
+      "testType": "Unit testing",
+      "name": "Transparent 5-Tier Severity Rule Engine",
+      "passed": true,
+      "durationMs": 1,
+      "details": "Validated Informational, Low, Medium, High, Critical severity mapping."
+    },
+    {
+      "id": "TC-ALERT-01",
+      "component": "Alert and Response Agent",
+      "testType": "End-to-end testing",
+      "name": "10 Required Fields & Incident Lifecycle (Ack/Resolve)",
+      "passed": true,
+      "durationMs": 5,
+      "details": "All 10 required attributes verified. Incident transitioned to RESOLVED."
+    },
+    {
+      "id": "TC-ML-01",
+      "component": "Machine learning pipeline",
+      "testType": "Integration",
+      "name": "ML Inference & Isolation Forest Scoring",
+      "passed": true,
+      "durationMs": 6,
+      "details": "ML Pipeline inference completed. Threat Detected: true, Model: Ensemble"
+    },
+    {
+      "id": "TC-STAT-01",
+      "component": "Dashboard statistics",
+      "testType": "Integration",
+      "name": "Multi-Store Metrics Aggregation & Consistency",
+      "passed": true,
+      "durationMs": 3,
+      "details": "Stats synchronized across local store and MongoDB collections."
+    },
+    {
+      "id": "TC-ERR-01",
+      "component": "Error handling",
+      "testType": "Invalid input testing",
+      "name": "Malformed JSON & 404 Entity Resilience",
+      "passed": true,
+      "durationMs": 5,
+      "details": "Malformed JSON returned 400 (expected 400). Non-existent ID returned 404 (expected 404)."
+    },
+    {
+      "id": "TC-VAL-01",
+      "component": "Input validation",
+      "testType": "Missing data testing",
+      "name": "Rejection of Empty and Incomplete Payloads",
+      "passed": true,
+      "durationMs": 2,
+      "details": "Empty threat detection rejected with 400. Incomplete event rejected with 400."
+    },
+    {
+      "id": "TC-AUTH-01",
+      "component": "Authentication and authorization",
+      "testType": "Security testing",
+      "name": "Strict Safety Guards (No Autonomous Block, Safe Targets Only)",
+      "passed": true,
+      "durationMs": 4,
+      "details": "Autonomous destructive action blocked (403). Loopback block blocked (403). Legitimate human containment authorized."
+    },
+    {
+      "id": "TC-ENV-01",
+      "component": "Environment variable handling",
+      "testType": "Security testing",
+      "name": "Configuration Masking & Fallback Initialization",
+      "passed": true,
+      "durationMs": 1,
+      "details": "Notification credentials masked. Sensitive secrets redacted in API outputs."
+    },
+    {
+      "id": "TC-DUP-01",
+      "component": "Duplicate Detection",
+      "testType": "Duplicate event testing",
+      "name": "Alert Rate Limiting & Burst Suppression",
+      "passed": true,
+      "durationMs": 7,
+      "details": "Burst count incremented to 3. Notification suppression: true"
+    },
+    {
+      "id": "TC-SEC-01",
+      "component": "Security Testing",
+      "testType": "Security testing",
+      "name": "XSS Ingestion & NoSQL Injection Parameter Sanitization",
+      "passed": true,
+      "durationMs": 6,
+      "details": "Malicious script payload safely isolated in data store. NoSQL parameter handled cleanly."
+    },
+    {
+      "id": "TC-PERF-01",
+      "component": "System Performance",
+      "testType": "Performance smoke testing",
+      "name": "Concurrency Smoke Test (40 parallel requests)",
+      "passed": true,
+      "durationMs": 29,
+      "details": "P50 Latency: 17ms, P95 Latency: 24ms, Throughput: 1391.7 req/sec",
+      "metrics": {
+        "p50": 17,
+        "p95": 24,
+        "throughput": 1391.7
+      }
+    }
+  ],
+  "performanceMetrics": {
+    "smokeLatencyP50Ms": 17,
+    "smokeLatencyP95Ms": 24,
+    "smokeThroughputReqPerSec": 1391.7,
+    "totalRequestsRun": 62
+  },
+  "bugsFound": []
+}

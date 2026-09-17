@@ -335,9 +335,9 @@ async function startServer() {
   });
 
   // -------------------------------------------------------------
-  // DASHBOARD AGGREGATED STATS: GET /api/dashboard/stats
+  // DASHBOARD AGGREGATED STATS: GET /api/dashboard/stats and /api/stats
   // -------------------------------------------------------------
-  app.get('/api/dashboard/stats', async (_req, res) => {
+  const handleAggregatedStats = async (_req: express.Request, res: express.Response) => {
     try {
       let pyStats: any = null;
       if (isPythonBackendOnline) {
@@ -371,7 +371,10 @@ async function startServer() {
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
-  });
+  };
+
+  app.get('/api/dashboard/stats', handleAggregatedStats);
+  app.get('/api/stats', handleAggregatedStats);
 
   // -------------------------------------------------------------
   // DEMO SCENARIOS & EXECUTION

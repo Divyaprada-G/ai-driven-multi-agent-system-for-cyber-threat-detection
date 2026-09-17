@@ -23,6 +23,7 @@ export const RISK_CONFIG: RiskModelConfig = {
     affectedEntities: 0.05 // 5% contribution
   },
   severityPoints: {
+    INFORMATIONAL: 10,
     LOW: 25,
     MEDIUM: 50,
     HIGH: 75,

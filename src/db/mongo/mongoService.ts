@@ -371,12 +371,21 @@ class MongoService {
       minRisk?: number;
       startTime?: string | Date;
       endTime?: string | Date;
+      limit?: number;
+      offset?: number;
+      page?: number;
     } = {},
     pagination?: MongoPaginationOptions
   ): Promise<MongoPaginatedResult<MongoIncident>> {
+    const effectivePagination = {
+      limit: filters.limit,
+      offset: filters.offset,
+      page: filters.page,
+      ...pagination
+    };
     const { limit, offset, page, sortBy, sortOrder } = this.normalizePagination({
-      ...pagination,
-      sortBy: pagination?.sortBy || 'createdAt'
+      ...effectivePagination,
+      sortBy: effectivePagination?.sortBy || 'createdAt'
     });
 
     const db = await mongoConnection.getDatabase();
@@ -431,6 +440,7 @@ class MongoService {
 
       return {
         data: sliced,
+        incidents: sliced,
         total,
         limit,
         offset,
@@ -495,6 +505,7 @@ class MongoService {
 
       return {
         data,
+        incidents: data,
         total,
         limit,
         offset,
@@ -843,10 +854,19 @@ class MongoService {
       search?: string;
       startTime?: string | Date;
       endTime?: string | Date;
+      limit?: number;
+      offset?: number;
+      page?: number;
     } = {},
     pagination?: MongoPaginationOptions
   ): Promise<MongoPaginatedResult<MongoAlert>> {
-    const { limit, offset, page, sortBy, sortOrder } = this.normalizePagination(pagination);
+    const effectivePagination = {
+      limit: filters.limit,
+      offset: filters.offset,
+      page: filters.page,
+      ...pagination
+    };
+    const { limit, offset, page, sortBy, sortOrder } = this.normalizePagination(effectivePagination);
 
     const db = await mongoConnection.getDatabase();
     if (!db) {
@@ -893,6 +913,7 @@ class MongoService {
 
       return {
         data: sliced,
+        alerts: sliced,
         total,
         limit,
         offset,
@@ -947,6 +968,7 @@ class MongoService {
 
       return {
         data,
+        alerts: data,
         total,
         limit,
         offset,

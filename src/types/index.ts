@@ -3,7 +3,7 @@
  * Core Data Models and Domain Interfaces
  */
 
-export type SeverityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type SeverityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'INFORMATIONAL';
 
 export type LogType = 'NETWORK' | 'SYSTEM' | 'APPLICATION';
 

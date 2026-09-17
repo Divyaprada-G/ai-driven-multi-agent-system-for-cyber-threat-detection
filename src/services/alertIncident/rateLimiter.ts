@@ -27,7 +27,9 @@ export interface RateLimitResult {
   isDuplicate: boolean;
   isRateLimited: boolean;
   contentHash: string;
+  fingerprint?: string;
   burstCount: number;
+  frequency?: number;
   suppressNotification: boolean;
   reason?: string;
 }
@@ -93,7 +95,9 @@ export class AlertRateLimiter {
         isDuplicate: false,
         isRateLimited: false,
         contentHash: hash,
+        fingerprint: hash,
         burstCount: 1,
+        frequency: 1,
         suppressNotification: false
       };
     }
@@ -113,7 +117,9 @@ export class AlertRateLimiter {
         isDuplicate: true,
         isRateLimited: true,
         contentHash: hash,
+        fingerprint: hash,
         burstCount: bucket.count,
+        frequency: bucket.count,
         suppressNotification: true,
         reason: `Rate limit threshold exceeded (${bucket.recentTimestamps.length} occurrences in last 60s). Suppressed notification.`
       };
@@ -127,7 +133,9 @@ export class AlertRateLimiter {
         isDuplicate: true,
         isRateLimited: false,
         contentHash: hash,
+        fingerprint: hash,
         burstCount: bucket.count,
+        frequency: bucket.count,
         suppressNotification: true, // Suppress repeated external notifications during active burst
         reason: `Deduplicated active burst (occurrence #${bucket.count}). Notification suppressed to prevent alert flood.`
       };
@@ -143,7 +151,9 @@ export class AlertRateLimiter {
       isDuplicate: false,
       isRateLimited: false,
       contentHash: hash,
+      fingerprint: hash,
       burstCount: 1,
+      frequency: 1,
       suppressNotification: false
     };
   }

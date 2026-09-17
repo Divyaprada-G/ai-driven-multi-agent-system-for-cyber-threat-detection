@@ -21,7 +21,7 @@ import { responseAuthorizationGuard, ResponseAuthorizationRequest, ResponseAutho
 import { alertManager } from './alertManager';
 import { incidentManager } from './incidentManager';
 import { auditService } from '../auditService';
-import { SecurityAlert, SecurityIncident, IncidentLifecycleStatus } from '../../types/alertIncident';
+import { SecurityAlert, SecurityIncident, IncidentLifecycleStatus, IncidentTimelineEntry } from '../../types/alertIncident';
 
 export interface ThreatDetectionInput {
   threatCategory: string;
@@ -135,7 +135,7 @@ class IncidentWorkflowService {
     ];
 
     // 4. Construct Security Incident Record
-    const incidentTimeline = supportingEvents.map((evt, idx) => ({
+    const incidentTimeline: IncidentTimelineEntry[] = supportingEvents.map((evt, idx) => ({
       id: `tl-${incidentId}-${idx}`,
       time: new Date().toLocaleTimeString(),
       timestamp: evt.timestamp || timestamp,
@@ -226,6 +226,10 @@ class IncidentWorkflowService {
       explanation: `${input.description} (Evaluated under ${severityEval.ruleName})`,
       recommendedAction,
       status: 'NEW',
+      incidentStatus: newIncident.status,
+      agentName: input.agentName,
+      threatCategory: input.threatCategory,
+      detectionMethod: input.detectionMethod,
       isRead: false,
       deduplicationCount: rateLimitCheck.burstCount,
       lastSeenTimestamp: timestamp,

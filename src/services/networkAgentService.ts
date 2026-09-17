@@ -214,7 +214,7 @@ class NetworkAgentServiceImpl implements INetworkAgentService {
       }));
 
     // Severity Distribution
-    const sevMap: Record<SeverityLevel, number> = { LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 };
+    const sevMap: Record<SeverityLevel, number> = { INFORMATIONAL: 0, LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 };
     for (const r of results) {
       sevMap[r.severity] = (sevMap[r.severity] || 0) + 1;
     }
