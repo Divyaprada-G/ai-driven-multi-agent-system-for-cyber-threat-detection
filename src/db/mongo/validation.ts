@@ -18,7 +18,18 @@ import {
   MongoModelMetadata
 } from './types';
 
-const ALLOWED_SEVERITIES: Set<SeverityLevel> = new Set(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+const ALLOWED_SEVERITIES: Set<string> = new Set([
+  'LOW',
+  'MEDIUM',
+  'HIGH',
+  'CRITICAL',
+  'INFORMATIONAL',
+  'Low',
+  'Medium',
+  'High',
+  'Critical',
+  'Informational'
+]);
 const ALLOWED_PRIORITIES: Set<IncidentPriority> = new Set(['P1', 'P2', 'P3', 'P4']);
 const ALLOWED_INCIDENT_STATUSES: Set<IncidentStatus> = new Set([
   'NEW',
@@ -319,6 +330,11 @@ export function validateAlertInput(input: any): Omit<MongoAlert, '_id'> {
     title: sanitizeSensitiveData(title),
     description: sanitizeSensitiveData(String(input.description || '')),
     alertType: String(input.alertType || input.alert_type || 'SECURITY_ALERT'),
+    threatCategory: input.threatCategory ? String(input.threatCategory) : undefined,
+    agentName: input.agentName ? String(input.agentName) : undefined,
+    detectionMethod: input.detectionMethod ? String(input.detectionMethod) : undefined,
+    recommendedAction: input.recommendedAction ? String(input.recommendedAction) : undefined,
+    incidentStatus: input.incidentStatus ? String(input.incidentStatus) : undefined,
     severity,
     riskScore,
     priority,

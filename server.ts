@@ -11,6 +11,12 @@ import { logger } from './src/logger';
 import { mongoService } from './src/db/mongo/mongoService';
 import { mongoConnection } from './src/db/mongo/connection';
 import { runMongoTestSuite } from './src/db/mongo/mongoTestSuite';
+import { severityRuleEngine } from './src/services/alertIncident/severityRuleEngine';
+import { responseAuthorizationGuard } from './src/services/alertIncident/responseAuthorizationGuard';
+import { alertRateLimiter } from './src/services/alertIncident/rateLimiter';
+import { notificationDispatcher } from './src/services/alertIncident/notificationDispatcher';
+import { auditService } from './src/services/auditService';
+import { runWorkflowTestSuite } from './src/services/alertIncident/workflowTestSuite';
 
 const PORT = config.port;
 const ML_SERVICE_URL = config.mlServiceUrl;
@@ -853,6 +859,285 @@ async function startServer() {
     }
   });
 
+  // =============================================================
+  // SECURE ALERT AND INCIDENT RESPONSE WORKFLOW APIS
+  // =============================================================
+
+  // 1. When a threat is detected: Full 7-step orchestrated pipeline
+  app.post('/api/workflow/threat-detected', async (req, res) => {
+    try {
+      const {
+        threatCategory,
+        threatType,
+        source,
+        sourceIp,
+        affectedHost,
+        agentName = 'ThreatDetectionAgent',
+        detectionMethod = 'Multi-Agent Ensemble / Isolation Forest',
+        description,
+        evidence = [],
+        recommendedAction,
+        supportingEvents = [],
+        riskScore,
+        confidence,
+        anomalyScore,
+        participatingAgents,
+        mitreTactic,
+        mitreTechnique,
+        isMultiStage
+      } = req.body || {};
+
+      if (!threatCategory && !threatType && !description) {
+        return res.status(400).json({
+          error: 'Missing required detection fields: threatCategory/threatType and description are required.'
+        });
+      }
+
+      const timestamp = new Date().toISOString();
+      const cat = threatCategory || threatType || 'ANOMALY';
+      const desc = description || `Threat detection triggered on ${source || sourceIp || 'endpoint'}`;
+
+      // Step A: Rate limiting & duplicate prevention
+      const rateLimitCheck = alertRateLimiter.evaluate({
+        source: source || sourceIp || 'unknown',
+        threatCategory: cat,
+        primaryIp: sourceIp,
+        agentName,
+        detectionMethod
+      });
+
+      // Step B: Assign severity based on transparent rules
+      const severityEval = severityRuleEngine.evaluateSeverity({
+        threatCategory: cat,
+        threatType: threatType || cat,
+        riskScore,
+        confidence,
+        anomalyScore,
+        participatingAgents: participatingAgents || [agentName],
+        mitreTactic,
+        isMultiStage,
+        affectedHost,
+        eventCount: supportingEvents.length || 1,
+        indicators: evidence
+      });
+
+      // Step 1: Create a unique incident ID
+      const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const randPart = Math.random().toString(36).substring(2, 7).toUpperCase();
+      const incidentId = `INC-${datePart}-${randPart}`;
+      const alertId = `ALT-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      const finalRecommendedAction =
+        recommendedAction ||
+        `Review ${agentName} telemetry, inspect indicators [${sourceIp || affectedHost || 'endpoint'}], and request human authorization if containment is warranted.`;
+
+      // Step 2: Store the incident in MongoDB
+      const incidentDoc = await mongoService.createIncident({
+        incidentId,
+        title: threatType || cat,
+        description: desc,
+        severity: severityEval.normalizedSeverity,
+        priority: severityEval.calculatedRiskScore >= 90 ? 'P1' : severityEval.calculatedRiskScore >= 70 ? 'P2' : 'P3',
+        status: 'NEW',
+        riskScore: severityEval.calculatedRiskScore,
+        primaryIp: sourceIp || source,
+        affectedHost,
+        mitreTechniques: mitreTechnique ? [mitreTechnique] : [],
+        investigationNotes: [
+          {
+            id: `note-${incidentId}-1`,
+            timestamp,
+            author: 'SOC Workflow Automation',
+            note: `Incident automatically opened. Severity: ${severityEval.severity}. Justification: ${severityEval.justification}`
+          }
+        ]
+      });
+
+      // Step 4 & 5: Store the alert in MongoDB with all required alert information
+      const alertDoc = await mongoService.createAlert({
+        alertId,
+        incidentId,
+        title: threatType || cat,
+        description: desc,
+        alertType: cat,
+        threatCategory: cat,
+        agentName,
+        detectionMethod,
+        recommendedAction: finalRecommendedAction,
+        incidentStatus: 'NEW',
+        severity: severityEval.severity,
+        riskScore: severityEval.calculatedRiskScore,
+        priority: severityEval.calculatedRiskScore >= 90 ? 'P1' : severityEval.calculatedRiskScore >= 70 ? 'P2' : 'P3',
+        status: 'NEW',
+        mitreTechniques: mitreTechnique ? [mitreTechnique] : [],
+        evidence: [
+          ...evidence,
+          `Agent: ${agentName}`,
+          `Detection Method: ${detectionMethod}`,
+          `Severity Rule: ${severityEval.ruleName} (${severityEval.justification})`
+        ]
+      });
+
+      // Step 7: Record creation in Audit Log
+      const auditLog = auditService.recordAction({
+        action: 'INCIDENT_CREATED',
+        entityType: 'INCIDENT',
+        entityId: incidentId,
+        actor: agentName,
+        details: `Incident ${incidentId} created: [${severityEval.severity}] ${cat} on ${sourceIp || affectedHost || source || 'system'}. Rule: ${severityEval.ruleName}`,
+        metadata: {
+          alertId,
+          severity: severityEval.severity,
+          ruleId: severityEval.ruleId,
+          detectionMethod,
+          riskScore: severityEval.calculatedRiskScore
+        }
+      });
+
+      // Step C: Dispatch notifications (Email, Webhook, n8n) if not suppressed by rate limiting
+      let notifications: any[] = [];
+      if (!rateLimitCheck.suppressNotification) {
+        notifications = await notificationDispatcher.dispatchAll({
+          alertId,
+          incidentId,
+          title: alertDoc.title,
+          severity: severityEval.severity,
+          threatCategory: cat,
+          agentName,
+          description: desc,
+          evidence: alertDoc.evidence || evidence,
+          detectionMethod,
+          recommendedAction: finalRecommendedAction,
+          timestamp,
+          incidentStatus: 'NEW'
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        incidentId,
+        alertId,
+        severity: severityEval.severity,
+        severityRule: {
+          ruleId: severityEval.ruleId,
+          ruleName: severityEval.ruleName,
+          justification: severityEval.justification
+        },
+        rateLimitStatus: rateLimitCheck,
+        incident: incidentDoc,
+        alert: alertDoc,
+        notifications,
+        auditLogId: auditLog.id,
+        message: `Incident ${incidentId} and Alert ${alertId} created and stored in MongoDB.`
+      });
+    } catch (err: any) {
+      console.error('[API] /api/workflow/threat-detected error:', err);
+      return res.status(500).json({ error: err.message || 'Workflow processing error' });
+    }
+  });
+
+  // 2. Retrieve transparent severity rules
+  app.get('/api/workflow/severity-rules', (_req, res) => {
+    res.json({
+      rules: severityRuleEngine.getAllRules(),
+      explanation: 'Transparent rule-based severity assignment mapping threat metrics, multi-agent correlations, and impact to severity levels (Informational, Low, Medium, High, Critical).'
+    });
+  });
+
+  // 3. Test/Evaluate transparent severity for any telemetry payload
+  app.post('/api/workflow/evaluate-severity', (req, res) => {
+    try {
+      const evaluation = severityRuleEngine.evaluateSeverity(req.body);
+      return res.json(evaluation);
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  // 4. Human-In-The-Loop Authorized Response Execution (Strict Safety Requirements)
+  app.post('/api/workflow/authorize-response', (req, res) => {
+    try {
+      const decision = responseAuthorizationGuard.evaluateAuthorization(req.body);
+      if (!decision.allowed) {
+        // Record denied attempt in audit log
+        auditService.recordAction({
+          action: 'RESPONSE_ACTION_DENIED',
+          entityType: req.body?.targetType === 'INCIDENT' ? 'INCIDENT' : 'ALERT',
+          entityId: req.body?.targetId || 'UNKNOWN',
+          actor: req.body?.authorizedBy || 'ANONYMOUS',
+          details: `[SAFETY GUARD DENIAL] Blocked action '${req.body?.actionType}' on '${req.body?.target}'. Reasons: ${decision.violations.join('; ')}`,
+          metadata: { decision }
+        });
+
+        return res.status(403).json(decision);
+      }
+
+      // Safe simulated execution
+      const simulationRecord = responseAuthorizationGuard.executeAuthorizedResponse(req.body);
+
+      // Immutable Audit Log
+      auditService.recordAction({
+        action: 'RESPONSE_ACTION_AUTHORIZED',
+        entityType: req.body.targetType === 'INCIDENT' ? 'INCIDENT' : 'ALERT',
+        entityId: req.body.targetId,
+        actor: req.body.authorizedBy,
+        details: `[SAFETY GUARD: AUTHORIZED] ${req.body.actionType} on target '${req.body.target}'. Justification: ${req.body.operationalJustification}`,
+        metadata: {
+          actionType: req.body.actionType,
+          target: req.body.target,
+          simulationId: simulationRecord.id
+        }
+      });
+
+      return res.json({
+        ...decision,
+        simulationRecord
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 5. Notification Dispatch History & Safe Retries
+  app.get('/api/workflow/notifications', (_req, res) => {
+    res.json({
+      dispatches: notificationDispatcher.getDispatches(),
+      channels: notificationDispatcher.getConfigSummary()
+    });
+  });
+
+  app.post('/api/workflow/notifications/:id/retry', async (req, res) => {
+    try {
+      const result = await notificationDispatcher.retryDispatch(req.params.id);
+      if (!result) {
+        return res.status(404).json({ error: `Notification dispatch '${req.params.id}' not found.` });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 6. Audit Logs Retrieval
+  app.get('/api/workflow/audit-logs', (_req, res) => {
+    const logs = auditService.getAuditLogs();
+    res.json({
+      total: logs.length,
+      logs
+    });
+  });
+
+  // 7. Workflow Comprehensive Verification Test Suite
+  app.all('/api/workflow/test-suite', async (_req, res) => {
+    try {
+      const summary = await runWorkflowTestSuite();
+      return res.status(200).json(summary);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+
   // -------------------------------------------------------------
   // TASK 11: EVENTS APIS
   // POST /api/events
@@ -1098,6 +1383,17 @@ async function startServer() {
       if (!updated) {
         return res.status(404).json({ error: `Alert '${req.params.id}' not found` });
       }
+
+      // Record status change in immutable audit log
+      auditService.recordAction({
+        action: 'ALERT_STATUS_UPDATED',
+        entityType: 'ALERT',
+        entityId: req.params.id,
+        actor: actor || 'SOC Analyst',
+        details: `Alert ${req.params.id} transitioned to ${status}.${reason ? ` Reason: ${reason}` : ''}`,
+        metadata: { newStatus: status, reason }
+      });
+
       return res.json(updated);
     } catch (err: any) {
       console.error('[API] PATCH /api/alerts/:id error:', err);
@@ -1147,7 +1443,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/incidents/:id', async (req, res) => {
+  const handleIncidentUpdate = async (req: express.Request, res: express.Response) => {
     const { status, assignee, priority, containmentStatus, resolutionSummary, newNote, actor, reason } = req.body || {};
 
     if (status) {
@@ -1172,12 +1468,37 @@ async function startServer() {
       if (!updated) {
         return res.status(404).json({ error: `Incident '${req.params.id}' not found` });
       }
+
+      // Record all status and lifecycle changes in audit log (Requirement 7)
+      if (status) {
+        auditService.recordAction({
+          action: status === 'RESOLVED' ? 'INCIDENT_RESOLVED' : status === 'ACKNOWLEDGED' ? 'INCIDENT_ACKNOWLEDGED' : 'INCIDENT_STATUS_UPDATED',
+          entityType: 'INCIDENT',
+          entityId: req.params.id,
+          actor: actor || 'SOC Analyst',
+          details: `Incident ${req.params.id} updated to status '${status}'.${reason ? ` Note: ${reason}` : ''}`,
+          metadata: { status, assignee, priority, reason }
+        });
+      } else if (newNote) {
+        auditService.recordAction({
+          action: 'INVESTIGATION_NOTE_ADDED',
+          entityType: 'INCIDENT',
+          entityId: req.params.id,
+          actor: actor || 'SOC Analyst',
+          details: `Analyst note added to ${req.params.id}: ${newNote}`,
+          metadata: { note: newNote }
+        });
+      }
+
       return res.json(updated);
     } catch (err: any) {
       console.error('[API] PATCH /api/incidents/:id error:', err);
       return res.status(500).json({ error: err.message || 'Failed updating incident' });
     }
-  });
+  };
+
+  app.patch('/api/incidents/:id', handleIncidentUpdate);
+  app.patch('/api/incidents/:id/status', handleIncidentUpdate);
 
   // -------------------------------------------------------------
   // TASK 11: AUDIT APIS

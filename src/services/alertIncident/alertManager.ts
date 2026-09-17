@@ -427,6 +427,30 @@ export class AlertManager {
     return record;
   }
 
+  /**
+   * Directly inject a pre-constructed alert (e.g. from workflow engine)
+   */
+  public addDirectAlert(alert: SecurityAlert): void {
+    const existingIndex = this.alerts.findIndex(a => a.id === alert.id || a.alertId === alert.alertId);
+    if (existingIndex >= 0) {
+      this.alerts[existingIndex] = alert;
+    } else {
+      this.alerts.unshift(alert);
+    }
+    this.notify();
+  }
+
+  /**
+   * Append an authorized response simulation record
+   */
+  public addSimulatedResponse(alertId: string, record: SimulatedResponseRecord): void {
+    const alert = this.getAlertById(alertId);
+    if (!alert) return;
+    if (!alert.simulatedResponses) alert.simulatedResponses = [];
+    alert.simulatedResponses.unshift(record);
+    this.notify();
+  }
+
   private generateSimulatedCommandSnippet(actionType: ResponseSimulationActionType, target: string): string {
     switch (actionType) {
       case 'BLOCK_IP':

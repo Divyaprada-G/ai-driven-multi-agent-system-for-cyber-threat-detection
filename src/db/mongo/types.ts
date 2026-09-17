@@ -3,7 +3,7 @@
  * MongoDB Document Types, Enums & Interfaces
  */
 
-export type SeverityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type SeverityLevel = 'INFORMATIONAL' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'Informational' | 'Low' | 'Medium' | 'High' | 'Critical';
 export type IncidentPriority = 'P1' | 'P2' | 'P3' | 'P4';
 export type IncidentStatus = 'NEW' | 'ACKNOWLEDGED' | 'INVESTIGATING' | 'CONTAINED' | 'RESOLVED' | 'FALSE_POSITIVE';
 export type AlertStatus = 'NEW' | 'ACKNOWLEDGED' | 'INVESTIGATING' | 'CONTAINED' | 'RESOLVED' | 'FALSE_POSITIVE' | 'SUPPRESSED';
@@ -104,6 +104,11 @@ export interface MongoAlert {
   title: string;
   description: string;
   alertType: string;
+  threatCategory?: string;
+  agentName?: string;
+  detectionMethod?: string;
+  recommendedAction?: string;
+  incidentStatus?: string;
   severity: SeverityLevel;
   riskScore: number;
   priority: IncidentPriority;
@@ -213,4 +218,37 @@ export interface MongoDashboardStats {
   activeModelsCount: number;
   timestamp: string;
   source: 'MONGODB' | 'JSON_STORE_FALLBACK';
+}
+
+export interface MongoAuditLog {
+  _id?: any;
+  id: string;
+  timestamp: Date;
+  action: string;
+  actor: string;
+  entityType: 'INCIDENT' | 'ALERT' | 'RESPONSE_ACTION' | 'SYSTEM' | 'NOTIFICATION';
+  entityId: string;
+  details: string;
+  previousStatus?: string;
+  newStatus?: string;
+  reason?: string;
+  createdAt: Date;
+}
+
+export interface MongoNotificationDispatch {
+  _id?: any;
+  id: string;
+  channel: 'EMAIL' | 'WEBHOOK' | 'N8N';
+  alertId: string;
+  incidentId?: string;
+  destination: string;
+  status: 'PENDING' | 'DISPATCHED' | 'FAILED' | 'RETRYING';
+  attemptCount: number;
+  maxAttempts: number;
+  lastError?: string;
+  responseStatus?: number;
+  payloadSummary: string;
+  createdAt: Date;
+  updatedAt: Date;
+  dispatchedAt?: Date;
 }

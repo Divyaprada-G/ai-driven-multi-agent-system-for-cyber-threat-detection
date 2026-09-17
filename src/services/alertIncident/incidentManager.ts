@@ -629,6 +629,30 @@ export class IncidentManager {
     return record;
   }
 
+  /**
+   * Directly inject a pre-constructed incident (e.g. from workflow engine)
+   */
+  public addDirectIncident(incident: SecurityIncident): void {
+    const existingIndex = this.incidents.findIndex(i => i.id === incident.id || i.incidentId === incident.incidentId);
+    if (existingIndex >= 0) {
+      this.incidents[existingIndex] = incident;
+    } else {
+      this.incidents.unshift(incident);
+    }
+    this.notify();
+  }
+
+  /**
+   * Append an authorized response simulation record
+   */
+  public addSimulatedResponse(incidentId: string, record: SimulatedResponseRecord): void {
+    const inc = this.getIncidentById(incidentId);
+    if (!inc) return;
+    if (!inc.simulatedResponses) inc.simulatedResponses = [];
+    inc.simulatedResponses.unshift(record);
+    this.notify();
+  }
+
   private generateSimulatedCommandSnippet(actionType: ResponseSimulationActionType, target: string): string {
     switch (actionType) {
       case 'BLOCK_IP':

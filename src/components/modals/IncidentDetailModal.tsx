@@ -200,12 +200,39 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
               </div>
 
               {/* Status Transition Control */}
-              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <label className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
-                  Transition Incident Lifecycle Status:
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {(['NEW', 'INVESTIGATING', 'CONTAINED', 'RESOLVED'] as IncidentStatus[]).map(st => (
+              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
+                    Incident Lifecycle Actions:
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {incident.status !== 'ACKNOWLEDGED' && incident.status !== 'RESOLVED' && (
+                      <button
+                        id="btn-incident-quick-acknowledge"
+                        type="button"
+                        onClick={() => onUpdateStatus(incident.incidentId, 'ACKNOWLEDGED')}
+                        className="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-mono font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-md shadow-cyan-600/20"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Acknowledge Incident</span>
+                      </button>
+                    )}
+                    {incident.status !== 'RESOLVED' && (
+                      <button
+                        id="btn-incident-quick-resolve"
+                        type="button"
+                        onClick={() => onUpdateStatus(incident.incidentId, 'RESOLVED')}
+                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-600/20"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Resolve Incident</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-900">
+                  {(['NEW', 'ACKNOWLEDGED', 'INVESTIGATING', 'CONTAINED', 'RESOLVED'] as IncidentStatus[]).map(st => (
                     <button
                       key={st}
                       id={`btn-incident-status-${st.toLowerCase()}`}
