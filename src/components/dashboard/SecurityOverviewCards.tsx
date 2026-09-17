@@ -27,7 +27,7 @@ import { SecurityOverviewData } from '../../services/unifiedAnalyticsService';
 import { NavPageId } from '../../types';
 
 interface SecurityOverviewCardsProps {
-  overview: SecurityOverviewData;
+  overview?: SecurityOverviewData | null;
   isRealData: boolean;
   onNavigate?: (page: NavPageId) => void;
   onSelectQuickFilter?: (filterType: 'CRITICAL' | 'HIGH' | 'ALERTS' | 'INCIDENTS') => void;
@@ -39,6 +39,10 @@ export const SecurityOverviewCards: React.FC<SecurityOverviewCardsProps> = ({
   onNavigate,
   onSelectQuickFilter
 }) => {
+  if (!overview) {
+    return null;
+  }
+
   const getPostureColor = (posture: string) => {
     switch (posture) {
       case 'HIGH ACTIVITY':

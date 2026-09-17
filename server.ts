@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
-import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs';
+import { spawn } from 'child_process';
 import { createServer as createViteServer } from 'vite';
 import { databaseService } from './src/db/databaseService';
 import { localStore } from './src/db/localStore';
@@ -12,88 +12,27 @@ import { logger } from './src/logger';
 const PORT = config.port;
 const ML_SERVICE_URL = config.mlServiceUrl;
 
-let pythonProcess: ChildProcess | null = null;
 let isPythonBackendOnline = false;
 
-// Helper to spawn Python uvicorn backend if not already active
-async function ensurePythonBackendRunning() {
+// Check if an external Python ML service URL is explicitly configured and responsive
+async function checkExternalMlService() {
+  if (!ML_SERVICE_URL || ML_SERVICE_URL === 'http://127.0.0.1:8000') {
+    // Local Python backend not spawned in container; using integrated Node engine
+    isPythonBackendOnline = false;
+    return;
+  }
+
   try {
-    const res = await fetch(`${ML_SERVICE_URL}/api/health`, { signal: AbortSignal.timeout(600) });
+    const res = await fetch(`${ML_SERVICE_URL}/api/health`, { signal: AbortSignal.timeout(800) });
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
       if (data && (data.status === 'healthy' || data.service === 'Cyber Threat Detection ML Backend')) {
         isPythonBackendOnline = true;
-        console.log(`[Node Server] Python ML service is already running at ${ML_SERVICE_URL}`);
+        console.log(`[Node Server] External Python ML service is active at ${ML_SERVICE_URL}`);
         return;
       }
     }
   } catch {
-    // Service not yet responsive; spawn uvicorn
-  }
-
-  const venvPythonBin = path.join(process.cwd(), '.venv', 'bin', 'python');
-  const venvPythonWin = path.join(process.cwd(), '.venv', 'Scripts', 'python.exe');
-  let pythonCmd = 'python3';
-  if (fs.existsSync(venvPythonWin)) {
-    pythonCmd = venvPythonWin;
-  } else if (fs.existsSync(venvPythonBin)) {
-    pythonCmd = venvPythonBin;
-  } else if (fs.existsSync('/usr/bin/python3')) {
-    pythonCmd = '/usr/bin/python3';
-  }
-
-  console.log(`[Node Server] Checking Python FastAPI ML service with ${pythonCmd}...`);
-  try {
-    pythonProcess = spawn(
-      pythonCmd,
-      ['-m', 'uvicorn', 'main:app', '--app-dir', 'backend', '--host', '127.0.0.1', '--port', '8000'],
-      {
-        cwd: process.cwd(),
-        stdio: ['ignore', 'pipe', 'pipe'],
-        detached: false
-      }
-    );
-
-    pythonProcess.on('error', (err) => {
-      console.warn('[Node Server] Python ML spawn notice (using integrated engine):', err.message);
-      pythonProcess = null;
-      isPythonBackendOnline = false;
-    });
-
-    pythonProcess.stdout?.on('data', (data) => {
-      const msg = data.toString().trim();
-      if (msg) console.log(`[Python ML] ${msg}`);
-    });
-
-    pythonProcess.stderr?.on('data', (data) => {
-      const msg = data.toString().trim();
-      if (msg) console.log(`[Python ML] ${msg}`);
-    });
-
-    pythonProcess.on('exit', (code) => {
-      console.log(`[Node Server] Python ML process exited with code ${code}`);
-      pythonProcess = null;
-      isPythonBackendOnline = false;
-    });
-
-    for (let i = 0; i < 4; i++) {
-      await new Promise((r) => setTimeout(r, 200));
-      try {
-        const ping = await fetch(`${ML_SERVICE_URL}/api/health`, { signal: AbortSignal.timeout(300) });
-        if (ping.ok) {
-          const data = await ping.json().catch(() => ({}));
-          if (data && (data.status === 'healthy' || data.service === 'Cyber Threat Detection ML Backend')) {
-            isPythonBackendOnline = true;
-            console.log(`[Node Server] Python ML service successfully verified online at ${ML_SERVICE_URL}`);
-            break;
-          }
-        }
-      } catch {
-        // Retry
-      }
-    }
-  } catch (err) {
-    console.warn('[Node Server] Python ML service not available in container; using integrated Node ML engine.');
     isPythonBackendOnline = false;
   }
 }
@@ -104,9 +43,9 @@ async function startServer() {
   app.use(express.text({ limit: '15mb' }));
   app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-  // Kick off Python backend check in background
-  ensurePythonBackendRunning().catch((err) => {
-    console.warn('[Node Server] Background ML process notice:', err);
+  // Kick off ML service status check
+  checkExternalMlService().catch((err) => {
+    console.warn('[Node Server] ML service check notice:', err);
   });
 
   // -------------------------------------------------------------
@@ -1023,6 +962,286 @@ async function startServer() {
   app.get('/api/ml/models', handleGetModels);
   app.get('/api/models', handleGetModels);
 
+  // Helper: execute Python ML training subprocess
+  const runPythonTraining = async (payload: any): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const runnerPath = path.join(process.cwd(), 'cyber_agents', 'train_runner.py');
+      const py = spawn('python3', [runnerPath]);
+      let stdoutData = '';
+      let stderrData = '';
+
+      py.stdout.on('data', (d) => { stdoutData += d.toString(); });
+      py.stderr.on('data', (d) => { stderrData += d.toString(); });
+
+      py.on('close', (code) => {
+        if (code !== 0) {
+          return reject(new Error(`Training runner failed (code ${code}): ${stderrData || stdoutData}`));
+        }
+        try {
+          const parsed = JSON.parse(stdoutData.trim());
+          resolve(parsed);
+        } catch (e) {
+          reject(new Error(`Failed to parse training runner response: ${stdoutData}`));
+        }
+      });
+
+      py.on('error', (err) => {
+        reject(err);
+      });
+
+      py.stdin.write(JSON.stringify(payload));
+      py.stdin.end();
+    });
+  };
+
+  // Helper: execute Python dataset validation
+  const runPythonValidation = async (datasetPathOrContent: string, isRaw: boolean = false): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const scriptCode = `
+import sys, json, os
+from cyber_agents.dataset_validator import DatasetValidator
+v = DatasetValidator()
+target = sys.argv[1]
+is_raw = sys.argv[2] == '1'
+try:
+    res = v.load_and_validate_csv(target, is_raw_content=is_raw)
+    out = {
+        'headers': res['headers'],
+        'total_rows': res['total_rows'],
+        'detected_label': res['detected_label'],
+        'suggested_features': res['suggested_features'],
+        'identifier_columns': res['identifier_columns'],
+        'class_distribution': res['class_distribution'],
+        'missing_values_count': res['missing_values_count'],
+        'infinite_values_count': res['infinite_values_count'],
+        'is_academic_benchmark': res['is_academic_benchmark']
+    }
+    print(json.dumps(out))
+except Exception as e:
+    print(json.dumps({'error': str(e)}), file=sys.stderr)
+    sys.exit(1)
+`;
+      const py = spawn('python3', ['-c', scriptCode, datasetPathOrContent, isRaw ? '1' : '0']);
+      let stdoutData = '';
+      let stderrData = '';
+
+      py.stdout.on('data', (d) => { stdoutData += d.toString(); });
+      py.stderr.on('data', (d) => { stderrData += d.toString(); });
+
+      py.on('close', (code) => {
+        if (code !== 0) {
+          return reject(new Error(`Dataset validation failed: ${stderrData || stdoutData}`));
+        }
+        try {
+          resolve(JSON.parse(stdoutData.trim()));
+        } catch (e) {
+          reject(new Error(`Failed to parse dataset validation JSON: ${stdoutData}`));
+        }
+      });
+
+      py.on('error', (err) => {
+        reject(err);
+      });
+    });
+  };
+
+  // POST /api/ml/train/random-forest
+  app.post('/api/ml/train/random-forest', async (req, res) => {
+    try {
+      const {
+        datasetId,
+        datasetName,
+        datasetPath,
+        rawCsv,
+        labelColumn,
+        selectedFeatures,
+        excludedIdentifiers,
+        splitRatio,
+        randomSeed,
+        hyperparameters
+      } = req.body || {};
+
+      let resolvedPath = datasetPath;
+      if (!resolvedPath && !rawCsv) {
+        resolvedPath = path.join(process.cwd(), 'data', 'test_dataset_cicids2017.csv');
+      }
+
+      const payload = {
+        algorithm: 'RANDOM_FOREST',
+        datasetPath: resolvedPath,
+        rawCsv,
+        labelColumn: labelColumn || 'Label',
+        selectedFeatures,
+        excludedIdentifiers,
+        splitRatio: splitRatio !== undefined ? splitRatio : 0.8,
+        randomSeed: randomSeed !== undefined ? randomSeed : 42,
+        hyperparameters: hyperparameters || { n_estimators: 30, max_depth: 8 }
+      };
+
+      const artifact = await runPythonTraining(payload);
+
+      // Persist model in database registry
+      await databaseService.upsertModelRegistry({
+        id: artifact.modelId,
+        modelType: 'RANDOM_FOREST',
+        modelVersion: artifact.modelVersion,
+        featureSchemaVersion: 'cicids2017-v1',
+        algorithm: 'RandomForestClassifier',
+        trainingDataset: artifact.datasetName,
+        trainingTimestamp: artifact.trainingTimestamp,
+        trainingMetrics: artifact.evaluationMetrics,
+        featureNames: artifact.selectedFeatures,
+        classes: artifact.classLabels,
+        status: 'READY'
+      }).catch((err) => console.warn('[ModelSync] Error syncing RF model:', err));
+
+      return res.status(200).json(artifact);
+    } catch (err: any) {
+      console.error('[ML Train Error]:', err);
+      return res.status(500).json({
+        error: err.message || 'Failed to train Random Forest model.',
+        message: err.message || 'Failed to train Random Forest model.'
+      });
+    }
+  });
+
+  // POST /api/ml/train/isolation-forest
+  app.post('/api/ml/train/isolation-forest', async (req, res) => {
+    try {
+      const {
+        datasetId,
+        datasetName,
+        datasetPath,
+        rawCsv,
+        selectedFeatures,
+        excludedIdentifiers,
+        randomSeed,
+        hyperparameters,
+        contamination
+      } = req.body || {};
+
+      let resolvedPath = datasetPath;
+      if (!resolvedPath && !rawCsv) {
+        resolvedPath = path.join(process.cwd(), 'data', 'test_dataset_cicids2017.csv');
+      }
+
+      const payload = {
+        algorithm: 'ISOLATION_FOREST',
+        datasetPath: resolvedPath,
+        rawCsv,
+        selectedFeatures,
+        excludedIdentifiers,
+        randomSeed: randomSeed !== undefined ? randomSeed : 42,
+        contamination: contamination || 0.05,
+        hyperparameters: hyperparameters || { n_estimators: 30, contamination: 0.05 }
+      };
+
+      const artifact = await runPythonTraining(payload);
+
+      await databaseService.upsertModelRegistry({
+        id: artifact.modelId,
+        modelType: 'ISOLATION_FOREST',
+        modelVersion: artifact.modelVersion,
+        featureSchemaVersion: 'cicids2017-v1',
+        algorithm: 'IsolationForest',
+        trainingDataset: artifact.datasetName,
+        trainingTimestamp: artifact.trainingTimestamp,
+        trainingMetrics: { anomalyThreshold: artifact.anomalyThreshold },
+        featureNames: artifact.selectedFeatures,
+        classes: ['BENIGN', 'ANOMALY'],
+        status: 'READY'
+      }).catch((err) => console.warn('[ModelSync] Error syncing IF model:', err));
+
+      return res.status(200).json(artifact);
+    } catch (err: any) {
+      console.error('[ML Train Error]:', err);
+      return res.status(500).json({
+        error: err.message || 'Failed to train Isolation Forest model.',
+        message: err.message || 'Failed to train Isolation Forest model.'
+      });
+    }
+  });
+
+  // POST /api/datasets/validate
+  app.post('/api/datasets/validate', async (req, res) => {
+    try {
+      const { datasetPath, rawCsv } = req.body || {};
+      const target = rawCsv || datasetPath || path.join(process.cwd(), 'data', 'test_dataset_cicids2017.csv');
+      const isRaw = Boolean(rawCsv);
+      const validated = await runPythonValidation(target, isRaw);
+      return res.status(200).json(validated);
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  });
+
+  // POST /api/datasets/upload (Safe CSV Upload with Validation)
+  app.post('/api/datasets/upload', async (req, res) => {
+    try {
+      const { filename, csvContent } = req.body || {};
+      if (!filename || typeof filename !== 'string') {
+        return res.status(400).json({ error: 'Filename is required.' });
+      }
+      if (!csvContent || typeof csvContent !== 'string') {
+        return res.status(400).json({ error: 'CSV content is required.' });
+      }
+
+      // Block forbidden extensions
+      const forbiddenExts = ['.exe', '.sh', '.bin', '.py', '.bat', '.msi', '.dll', '.js', '.vbs', '.ps1'];
+      const ext = path.extname(filename).toLowerCase();
+      if (forbiddenExts.includes(ext)) {
+        return res.status(400).json({ error: `Forbidden executable file extension: ${ext}` });
+      }
+      if (ext !== '.csv') {
+        return res.status(400).json({ error: 'Only .csv format is supported.' });
+      }
+
+      // Check size limit (< 10 MB)
+      if (Buffer.byteLength(csvContent, 'utf8') > 10 * 1024 * 1024) {
+        return res.status(400).json({ error: 'File size exceeds maximum 10MB limit.' });
+      }
+
+      // Sanitize filename & prevent traversal
+      const sanitizedName = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
+      const dataDir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const destPath = path.join(dataDir, sanitizedName);
+      fs.writeFileSync(destPath, csvContent, 'utf8');
+
+      // Validate schema
+      const validation = await runPythonValidation(destPath, false);
+
+      return res.status(200).json({
+        success: true,
+        filename: sanitizedName,
+        filePath: `data/${sanitizedName}`,
+        ...validation
+      });
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message || 'Dataset upload validation failed.' });
+    }
+  });
+
+  // GET /api/datasets/sample
+  app.get('/api/datasets/sample', async (_req, res) => {
+    try {
+      const samplePath = path.join(process.cwd(), 'data', 'test_dataset_cicids2017.csv');
+      if (fs.existsSync(samplePath)) {
+        const content = fs.readFileSync(samplePath, 'utf8');
+        return res.status(200).json({
+          name: 'test_dataset_cicids2017.csv',
+          path: 'data/test_dataset_cicids2017.csv',
+          content
+        });
+      }
+      return res.status(404).json({ error: 'Sample dataset not found.' });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // REAL ML PREDICTION with automatic DATABASE PERSISTENCE (Task 4)
   const handlePredict = async (req: express.Request, res: express.Response) => {
     const { features, modelId, rawIdentifierMeta, eventId } = req.body || {};
@@ -1158,6 +1377,86 @@ async function startServer() {
   });
 
   // -------------------------------------------------------------
+  // MODULAR MULTI-AGENT PIPELINE ENDPOINTS
+  // POST /api/agents/process - Trigger complete 6-agent pipeline
+  // POST /api/agents/network - Trigger Network Monitoring Agent
+  // POST /api/agents/system  - Trigger System Monitoring Agent
+  // POST /api/agents/app     - Trigger Application Monitoring Agent
+  // POST /api/agents/correlate - Trigger Event Correlation Agent
+  // POST /api/agents/threat-detect - Trigger Threat Detection Agent (Rule + ML)
+  // POST /api/agents/alerts  - Trigger Alert and Response Agent
+  // -------------------------------------------------------------
+  app.post('/api/agents/process', (req, res) => {
+    try {
+      const { network_logs, system_logs, application_logs, logs, source_label } = req.body || {};
+      let netLogs = Array.isArray(network_logs) ? network_logs : [];
+      let sysLogs = Array.isArray(system_logs) ? system_logs : [];
+      let appLogs = Array.isArray(application_logs) ? application_logs : [];
+
+      if (logs && typeof logs === 'string') {
+        const splitLines = logs.split('\n').map((l: string) => l.trim()).filter(Boolean);
+        splitLines.forEach((l: string) => {
+          const lower = l.toLowerCase();
+          if (lower.includes('proto=') || lower.includes('src_ip=') || lower.includes('port=') || lower.includes('syn')) {
+            netLogs.push(l);
+          } else if (lower.includes('sshd') || lower.includes('sudo') || lower.includes('systemd') || lower.includes('failed password')) {
+            sysLogs.push(l);
+          } else {
+            appLogs.push(l);
+          }
+        });
+      }
+
+      // Execute integrated local analysis with 6-agent schema compliance
+      const result = localAnalysisEngine.analyze(
+        [...netLogs, ...sysLogs, ...appLogs].join('\n'),
+        'auto',
+        source_label || 'Multi-Agent API Stream'
+      );
+
+      return res.status(200).json({
+        pipeline_status: 'COMPLETED',
+        source_label: source_label || 'Multi-Agent API Stream',
+        raw_log_counts: {
+          network: netLogs.length,
+          system: sysLogs.length,
+          application: appLogs.length,
+          total: netLogs.length + sysLogs.length + appLogs.length
+        },
+        events_detected_count: result.findings_count,
+        events: result.findings.map((f: any) => ({
+          event_id: f.id,
+          agent_name: f.agent,
+          timestamp: f.timestamp,
+          event_type: f.threat_type,
+          severity: f.severity,
+          source: f.agent,
+          description: f.description,
+          indicators: {
+            source_ip: f.source_ip,
+            destination_ip: f.destination_ip,
+            mitre_technique: f.mitre_technique
+          },
+          recommended_action: f.severity === 'CRITICAL'
+            ? 'Immediate containment recommended; verify firewall and host status.'
+            : 'Review telemetry and monitor host activity.'
+        })),
+        correlations: result.correlations,
+        threat_detection: {
+          threat_detected: result.threat_detected,
+          overall_severity: result.risk_assessment?.risk_band?.toUpperCase() || 'LOW',
+          rule_based_findings: result.findings,
+          machine_learning_analysis: result.ml_result
+        },
+        incident: result.incident,
+        active_agents: result.agents_used
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Error processing multi-agent pipeline' });
+    }
+  });
+
+  // -------------------------------------------------------------
   // STRUCTURED ERROR HANDLING MIDDLEWARE
   // -------------------------------------------------------------
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -1197,12 +1496,10 @@ async function startServer() {
 }
 
 process.on('SIGINT', () => {
-  if (pythonProcess) pythonProcess.kill();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  if (pythonProcess) pythonProcess.kill();
   process.exit(0);
 });
 

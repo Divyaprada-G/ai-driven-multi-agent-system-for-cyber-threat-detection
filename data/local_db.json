@@ -6,6 +6,96 @@
   "riskAssessments": [],
   "alerts": [
     {
+      "title": "[SystemAgent] Brute Force Attack",
+      "description": "Multiple repeated authentication failures (4 failed attempts) from 203.0.113.50.",
+      "alertType": "Brute Force Attack",
+      "severity": "MEDIUM",
+      "riskScore": 85,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "evidence": [
+        "4 failed SSH/auth attempts detected within sequence"
+      ],
+      "id": "ALT-12811218",
+      "alertId": "ALT-12811218",
+      "createdAt": "2026-09-17T10:03:11.281Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[NetworkAgent] Port Scanning",
+      "description": "Rapid port sweep detected across 5 destination ports from host 203.0.113.50.",
+      "alertType": "Port Scanning",
+      "severity": "HIGH",
+      "riskScore": 90,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [
+        "Scanned ports: 22, 80, 443, 3306, 5432"
+      ],
+      "id": "ALT-12818870",
+      "alertId": "ALT-12818870",
+      "createdAt": "2026-09-17T10:03:11.281Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] Suspicious URL Access",
+      "description": "Unauthorized probing of administrative endpoint.",
+      "alertType": "Suspicious URL Access",
+      "severity": "MEDIUM",
+      "riskScore": 70,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1595"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:05Z 203.0.113.50 GET /admin/console HTTP/1.1 403 text/html"
+      ],
+      "id": "ALT-12816018",
+      "alertId": "ALT-12816018",
+      "createdAt": "2026-09-17T10:03:11.281Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] SQL Injection",
+      "description": "SQL injection payload detected aiming at database enumeration or bypass.",
+      "alertType": "SQL Injection",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "mitreTechniques": [
+        "T1190"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:01Z 203.0.113.50 POST /api/data HTTP/1.1 200 application/json body=1' UNION SELECT * FROM users--"
+      ],
+      "id": "ALT-12813717",
+      "alertId": "ALT-12813717",
+      "createdAt": "2026-09-17T10:03:11.281Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[SystemAgent] Privilege Escalation",
+      "description": "Administrative root shell acquired via sudo execution.",
+      "alertType": "Privilege Escalation",
+      "severity": "HIGH",
+      "riskScore": 92,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1548.003"
+      ],
+      "evidence": [
+        "Sep 17 11:01:11 server01 sudo: admin : TTY=pts/0 ; PWD=/home ; USER=root ; COMMAND=/bin/bash"
+      ],
+      "id": "ALT-12816013",
+      "alertId": "ALT-12816013",
+      "createdAt": "2026-09-17T10:03:11.281Z",
+      "status": "NEW"
+    },
+    {
       "title": "[ApplicationAgent] SQL Injection",
       "description": "SQL injection payload detected aiming at database enumeration or bypass.",
       "alertType": "SQL Injection",
@@ -109,6 +199,26 @@
     }
   ],
   "incidents": [
+    {
+      "incidentId": "INC-391280",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 98.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 98,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003",
+        "T1190",
+        "T1595",
+        "T1046",
+        "T1110"
+      ],
+      "id": "INC-391280",
+      "createdAt": "2026-09-17T10:03:11.280Z"
+    },
     {
       "incidentId": "INC-409413",
       "title": "SQL Injection Intrusion Chain",
@@ -307,5 +417,323 @@
   "incidentHistory": [],
   "auditLogs": [],
   "reports": [],
-  "models": []
+  "models": [
+    {
+      "id": "IF-20260917-101933",
+      "modelType": "ISOLATION_FOREST",
+      "modelVersion": "if-cyber-20260917",
+      "featureSchemaVersion": "cicids2017-v1",
+      "algorithm": "IsolationForest",
+      "trainingDataset": "test_dataset_cicids2017.csv",
+      "trainingTimestamp": "2026-09-17T10:19:33.454398Z",
+      "trainingMetrics": {
+        "anomalyThreshold": 0.5587
+      },
+      "featureNames": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Flow Bytes/s",
+        "Flow Packets/s",
+        "Flow IAT Mean",
+        "Fwd IAT Mean",
+        "Bwd IAT Mean",
+        "FIN Flag Count",
+        "SYN Flag Count",
+        "RST Flag Count",
+        "ACK Flag Count",
+        "Down/Up Ratio",
+        "Average Packet Size",
+        "Init_Win_bytes_forward",
+        "Active Mean",
+        "Idle Mean"
+      ],
+      "classes": [
+        "BENIGN",
+        "ANOMALY"
+      ],
+      "status": "READY",
+      "updatedAt": "2026-09-17T10:19:33.460Z",
+      "createdAt": "2026-09-17T10:19:33.460Z"
+    },
+    {
+      "id": "RF-20260917-101929",
+      "modelType": "RANDOM_FOREST",
+      "modelVersion": "rf-cyber-20260917",
+      "featureSchemaVersion": "cicids2017-v1",
+      "algorithm": "RandomForestClassifier",
+      "trainingDataset": "test_dataset_cicids2017.csv",
+      "trainingTimestamp": "2026-09-17T10:19:29.746638Z",
+      "trainingMetrics": {
+        "accuracy": 1,
+        "macroPrecision": 1,
+        "macroRecall": 1,
+        "macroF1": 1,
+        "weightedPrecision": 1,
+        "weightedRecall": 1,
+        "weightedF1": 1,
+        "confusionMatrix": {
+          "labels": [
+            "BENIGN",
+            "DDoS",
+            "PortScan"
+          ],
+          "matrix": [
+            [
+              2,
+              0,
+              0
+            ],
+            [
+              0,
+              2,
+              0
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "totalSamples": 6
+        },
+        "classificationReport": [
+          {
+            "className": "BENIGN",
+            "precision": 1,
+            "recall": 1,
+            "f1Score": 1,
+            "support": 2
+          },
+          {
+            "className": "DDoS",
+            "precision": 1,
+            "recall": 1,
+            "f1Score": 1,
+            "support": 2
+          },
+          {
+            "className": "PortScan",
+            "precision": 1,
+            "recall": 1,
+            "f1Score": 1,
+            "support": 2
+          }
+        ],
+        "featureImportances": [
+          {
+            "feature": "Flow Packets/s",
+            "importance": 0.1587,
+            "rank": 1
+          },
+          {
+            "feature": "Total Length of Bwd Packets",
+            "importance": 0.1133,
+            "rank": 2
+          },
+          {
+            "feature": "Flow Bytes/s",
+            "importance": 0.1083,
+            "rank": 3
+          },
+          {
+            "feature": "Total Length of Fwd Packets",
+            "importance": 0.1033,
+            "rank": 4
+          },
+          {
+            "feature": "Down/Up Ratio",
+            "importance": 0.0877,
+            "rank": 5
+          },
+          {
+            "feature": "Flow Duration",
+            "importance": 0.0782,
+            "rank": 6
+          },
+          {
+            "feature": "Fwd IAT Mean",
+            "importance": 0.0768,
+            "rank": 7
+          },
+          {
+            "feature": "ACK Flag Count",
+            "importance": 0.0544,
+            "rank": 8
+          },
+          {
+            "feature": "Flow IAT Mean",
+            "importance": 0.0527,
+            "rank": 9
+          },
+          {
+            "feature": "Init_Win_bytes_forward",
+            "importance": 0.0527,
+            "rank": 10
+          },
+          {
+            "feature": "SYN Flag Count",
+            "importance": 0.0402,
+            "rank": 11
+          },
+          {
+            "feature": "RST Flag Count",
+            "importance": 0.0333,
+            "rank": 12
+          },
+          {
+            "feature": "Total Fwd Packets",
+            "importance": 0.0254,
+            "rank": 13
+          },
+          {
+            "feature": "Average Packet Size",
+            "importance": 0.0152,
+            "rank": 14
+          },
+          {
+            "feature": "Destination Port",
+            "importance": 0,
+            "rank": 15
+          },
+          {
+            "feature": "Total Backward Packets",
+            "importance": 0,
+            "rank": 16
+          },
+          {
+            "feature": "Bwd IAT Mean",
+            "importance": 0,
+            "rank": 17
+          },
+          {
+            "feature": "FIN Flag Count",
+            "importance": 0,
+            "rank": 18
+          },
+          {
+            "feature": "Active Mean",
+            "importance": 0,
+            "rank": 19
+          },
+          {
+            "feature": "Idle Mean",
+            "importance": 0,
+            "rank": 20
+          }
+        ],
+        "evaluatedOnTestRows": 6,
+        "evaluatedAt": "2026-09-17T10:19:29.746600Z"
+      },
+      "featureNames": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Flow Bytes/s",
+        "Flow Packets/s",
+        "Flow IAT Mean",
+        "Fwd IAT Mean",
+        "Bwd IAT Mean",
+        "FIN Flag Count",
+        "SYN Flag Count",
+        "RST Flag Count",
+        "ACK Flag Count",
+        "Down/Up Ratio",
+        "Average Packet Size",
+        "Init_Win_bytes_forward",
+        "Active Mean",
+        "Idle Mean"
+      ],
+      "classes": [
+        "BENIGN",
+        "DDoS",
+        "PortScan"
+      ],
+      "status": "READY",
+      "updatedAt": "2026-09-17T10:19:29.754Z",
+      "createdAt": "2026-09-17T10:19:29.754Z"
+    },
+    {
+      "id": "RF-20260917-101449",
+      "modelType": "ISOLATION_FOREST",
+      "featureSchemaVersion": "cicids2017-v1",
+      "trainingTimestamp": "2026-09-17T10:14:49.687686Z",
+      "classes": [
+        "BENIGN",
+        "DDoS",
+        "PortScan"
+      ],
+      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "createdAt": "2026-09-17T10:19:25.998Z"
+    },
+    {
+      "id": "IF-20260917-101457",
+      "modelType": "ISOLATION_FOREST",
+      "featureSchemaVersion": "cicids2017-v1",
+      "trainingTimestamp": "2026-09-17T10:14:57.026194Z",
+      "classes": [
+        "BENIGN",
+        "ANOMALY"
+      ],
+      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "createdAt": "2026-09-17T10:19:25.998Z"
+    },
+    {
+      "id": "RF-20260917-101608",
+      "modelType": "ISOLATION_FOREST",
+      "featureSchemaVersion": "cicids2017-v1",
+      "trainingTimestamp": "2026-09-17T10:16:08.402810Z",
+      "classes": [
+        "BENIGN",
+        "DDoS",
+        "PortScan"
+      ],
+      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "createdAt": "2026-09-17T10:19:25.998Z"
+    },
+    {
+      "id": "RF-20260917-101627",
+      "modelType": "ISOLATION_FOREST",
+      "featureSchemaVersion": "cicids2017-v1",
+      "trainingTimestamp": "2026-09-17T10:16:27.029089Z",
+      "classes": [
+        "BENIGN",
+        "DDoS",
+        "PortScan"
+      ],
+      "updatedAt": "2026-09-17T10:19:25.997Z",
+      "createdAt": "2026-09-17T10:19:25.997Z"
+    },
+    {
+      "id": "IF-20260916-105303",
+      "modelType": "ISOLATION_FOREST",
+      "featureSchemaVersion": "cicids2017-v1",
+      "trainingTimestamp": "2026-09-16T10:53:03.571047Z",
+      "classes": [
+        "BENIGN",
+        "ANOMALY"
+      ],
+      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "createdAt": "2026-09-17T09:57:59.656Z"
+    },
+    {
+      "id": "RF-20260916-105303",
+      "modelType": "ISOLATION_FOREST",
+      "featureSchemaVersion": "cicids2017-v1",
+      "trainingTimestamp": "2026-09-16T10:53:03.355123Z",
+      "classes": [
+        "BENIGN",
+        "DDoS",
+        "PortScan"
+      ],
+      "updatedAt": "2026-09-17T10:19:25.998Z",
+      "createdAt": "2026-09-17T09:57:59.656Z"
+    }
+  ]
 }

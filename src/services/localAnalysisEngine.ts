@@ -451,35 +451,34 @@ export class LocalAnalysisEngine {
   }
 
   public getRegisteredModels(): any[] {
-    const rfMetadataPath = path.join(process.cwd(), 'ml', 'artifacts', 'RF-20260916-105303', 'metadata.json');
-    const ifMetadataPath = path.join(process.cwd(), 'ml', 'artifacts', 'IF-20260916-105303', 'metadata.json');
+    const artifactsDir = path.join(process.cwd(), 'ml', 'artifacts');
+    const models: any[] = [];
 
-    const models = [];
-    if (fs.existsSync(rfMetadataPath)) {
+    if (fs.existsSync(artifactsDir)) {
       try {
-        const rf = JSON.parse(fs.readFileSync(rfMetadataPath, 'utf-8'));
-        models.push(rf);
-      } catch {}
-    }
-    if (fs.existsSync(ifMetadataPath)) {
-      try {
-        const ifMod = JSON.parse(fs.readFileSync(ifMetadataPath, 'utf-8'));
-        models.push(ifMod);
-      } catch {}
+        const entries = fs.readdirSync(artifactsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const metaPath = path.join(artifactsDir, entry.name, 'metadata.json');
+            if (fs.existsSync(metaPath)) {
+              try {
+                const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+                models.push(meta);
+              } catch {}
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Error reading artifacts directory:', err);
+      }
     }
 
-    if (models.length === 0) {
-      models.push({
-        model_id: 'RF-20260916-105303',
-        model_type: 'RANDOM_FOREST',
-        version: 'rf-cyber-20260916',
-        dataset_name: 'test_dataset_cicids2017.csv',
-        classes: ['BENIGN', 'DDoS', 'PortScan'],
-        accuracy: 0.985,
-        f1_score: 0.982,
-        status: 'READY'
-      });
-    }
+    // Sort descending by training timestamp or folder name
+    models.sort((a, b) => {
+      const timeA = a.trainingTimestamp || a.training_timestamp || a.modelId || a.model_id || '';
+      const timeB = b.trainingTimestamp || b.training_timestamp || b.modelId || b.model_id || '';
+      return timeB.localeCompare(timeA);
+    });
 
     return models;
   }
@@ -505,6 +504,16 @@ export class LocalAnalysisEngine {
       anomalyFlag = true;
     }
 
+    const cl = predictedClass.toUpperCase();
+    let severity = 'LOW';
+    if (cl.includes('DDOS') || cl.includes('INFILTRATION')) {
+      severity = confidence >= 0.85 ? 'CRITICAL' : 'HIGH';
+    } else if (cl.includes('PORTSCAN') || cl.includes('BRUTE') || cl.includes('EXPLOIT')) {
+      severity = confidence >= 0.80 ? 'HIGH' : 'MEDIUM';
+    } else if (anomalyFlag) {
+      severity = anomalyScore >= 0.80 ? 'HIGH' : anomalyScore >= 0.60 ? 'MEDIUM' : 'LOW';
+    }
+
     return {
       status: 'SUCCESS',
       modelId: modelId || 'RF-20260916-105303',
@@ -512,6 +521,8 @@ export class LocalAnalysisEngine {
       featureSchemaVersion: 'cicids2017-v1',
       prediction: predictedClass,
       predictedClass,
+      threatCategory: predictedClass,
+      severity,
       confidence,
       classProbabilities: {
         BENIGN: predictedClass === 'BENIGN' ? confidence : 0.05,
@@ -527,6 +538,7 @@ export class LocalAnalysisEngine {
         { feature: 'Init_Win_bytes_forward', value: features['Init_Win_bytes_forward'] || 0, importance: 0.096 },
         { feature: 'Flow Bytes/s', value: features['Flow Bytes/s'] || 0, importance: 0.083 }
       ],
+      explanation: `Classified as '${predictedClass}' with ${(confidence * 100).toFixed(1)}% confidence based on flow telemetry analysis.`,
       inferenceTimestamp: new Date().toISOString()
     };
   }

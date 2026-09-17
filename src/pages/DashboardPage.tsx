@@ -40,7 +40,9 @@ import {
   Search,
   Filter,
   FileText,
-  RotateCcw
+  RotateCcw,
+  BarChart2,
+  FileSpreadsheet
 } from 'lucide-react';
 import {
   DashboardMetrics,
@@ -93,6 +95,15 @@ import { ProjectDemoModal } from '../components/livePipeline/ProjectDemoModal';
 import { livePipelineService } from '../services/livePipelineService';
 import { LivePipelineStatus, LiveSecurityEvent, LiveSimulatorMode } from '../types/livePipeline';
 
+// Modular Cybersecurity Dashboard Sections (Required Project Specification)
+import { OverviewSection } from '../components/dashboard/sections/OverviewSection';
+import { LiveSecurityEventsSection } from '../components/dashboard/sections/LiveSecurityEventsSection';
+import { MultiAgentStatusSection } from '../components/dashboard/sections/MultiAgentStatusSection';
+import { ThreatDetectionSection } from '../components/dashboard/sections/ThreatDetectionSection';
+import { IncidentManagementSection } from '../components/dashboard/sections/IncidentManagementSection';
+import { AnalyticsSection } from '../components/dashboard/sections/AnalyticsSection';
+import { ReportsSection } from '../components/dashboard/sections/ReportsSection';
+
 interface DashboardPageProps {
   metrics: DashboardMetrics;
   agents: AgentStatusInfo[];
@@ -106,7 +117,19 @@ interface DashboardPageProps {
   onToggleAgentStatus?: (agentId: string) => void;
 }
 
-type DashboardTab = 'LIVE_PIPELINE' | 'OVERVIEW' | 'CORRELATIONS' | 'ALERTS_INCIDENTS' | 'TIMELINE' | 'TRACEABILITY' | 'N8N_PREVIEW';
+type DashboardTab =
+  | 'OVERVIEW'
+  | 'LIVE_EVENTS'
+  | 'MULTI_AGENT'
+  | 'THREAT_DETECTION'
+  | 'INCIDENTS'
+  | 'ANALYTICS'
+  | 'REPORTS'
+  | 'LIVE_PIPELINE'
+  | 'CORRELATIONS'
+  | 'TIMELINE'
+  | 'TRACEABILITY'
+  | 'N8N_PREVIEW';
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   metrics,
@@ -356,99 +379,206 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         />
       )}
 
-      {/* Primary Dashboard Navigation Tabs (Stage 10 Structural Architecture) */}
+      {/* Primary Dashboard Navigation Tabs (7 Core Project Specifications + Auxiliary) */}
       <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 border-b border-slate-800 font-mono text-xs">
+        {/* 1. OVERVIEW */}
         <button
-          onClick={() => setActiveTab('LIVE_PIPELINE')}
-          className={`px-3.5 py-2 rounded-t-lg transition-colors flex items-center gap-2 font-bold whitespace-nowrap ${
-            activeTab === 'LIVE_PIPELINE'
-              ? 'bg-slate-900 text-emerald-400 border-t-2 border-emerald-400 border-x border-slate-800'
-              : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
-          }`}
-        >
-          <Radio className="w-4 h-4 text-emerald-400" />
-          <span>Live Pipeline & ML API</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">
-            Live Stream
-          </span>
-        </button>
-
-        <button
+          id="tab-overview"
           onClick={() => setActiveTab('OVERVIEW')}
-          className={`px-3.5 py-2 rounded-t-lg transition-colors flex items-center gap-2 font-bold whitespace-nowrap ${
+          className={`px-3 py-2 rounded-t-lg transition-colors flex items-center gap-1.5 font-bold whitespace-nowrap ${
             activeTab === 'OVERVIEW'
               ? 'bg-slate-900 text-cyan-400 border-t-2 border-cyan-400 border-x border-slate-800'
               : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
           }`}
         >
-          <TrendingUp className="w-4 h-4" />
-          <span>Security & Threat Analytics</span>
+          <TrendingUp className="w-3.5 h-3.5" />
+          <span>1. Overview</span>
         </button>
 
+        {/* 2. LIVE SECURITY EVENTS */}
         <button
-          onClick={() => setActiveTab('CORRELATIONS')}
-          className={`px-3.5 py-2 rounded-t-lg transition-colors flex items-center gap-2 font-bold whitespace-nowrap ${
-            activeTab === 'CORRELATIONS'
+          id="tab-live-events"
+          onClick={() => setActiveTab('LIVE_EVENTS')}
+          className={`px-3 py-2 rounded-t-lg transition-colors flex items-center gap-1.5 font-bold whitespace-nowrap ${
+            activeTab === 'LIVE_EVENTS'
               ? 'bg-slate-900 text-cyan-400 border-t-2 border-cyan-400 border-x border-slate-800'
               : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
           }`}
         >
-          <Layers className="w-4 h-4" />
-          <span>Multi-Stage Attack Chains</span>
+          <Activity className="w-3.5 h-3.5 text-cyan-400" />
+          <span>2. Live Events</span>
+          <span className="text-[9px] px-1 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-mono">
+            Stream
+          </span>
         </button>
 
+        {/* 3. MULTI-AGENT STATUS */}
         <button
-          onClick={() => setActiveTab('ALERTS_INCIDENTS')}
-          className={`px-3.5 py-2 rounded-t-lg transition-colors flex items-center gap-2 font-bold whitespace-nowrap ${
-            activeTab === 'ALERTS_INCIDENTS'
-              ? 'bg-slate-900 text-cyan-400 border-t-2 border-cyan-400 border-x border-slate-800'
+          id="tab-multi-agent"
+          onClick={() => setActiveTab('MULTI_AGENT')}
+          className={`px-3 py-2 rounded-t-lg transition-colors flex items-center gap-1.5 font-bold whitespace-nowrap ${
+            activeTab === 'MULTI_AGENT'
+              ? 'bg-slate-900 text-emerald-400 border-t-2 border-emerald-400 border-x border-slate-800'
               : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
           }`}
         >
-          <ShieldAlert className="w-4 h-4" />
-          <span>Alert & Incident Topology</span>
+          <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+          <span>3. Multi-Agent</span>
+          <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">
+            6 Agents
+          </span>
         </button>
 
+        {/* 4. THREAT DETECTION */}
         <button
-          onClick={() => setActiveTab('TIMELINE')}
-          className={`px-3.5 py-2 rounded-t-lg transition-colors flex items-center gap-2 font-bold whitespace-nowrap ${
-            activeTab === 'TIMELINE'
-              ? 'bg-slate-900 text-cyan-400 border-t-2 border-cyan-400 border-x border-slate-800'
+          id="tab-threat-detection"
+          onClick={() => setActiveTab('THREAT_DETECTION')}
+          className={`px-3 py-2 rounded-t-lg transition-colors flex items-center gap-1.5 font-bold whitespace-nowrap ${
+            activeTab === 'THREAT_DETECTION'
+              ? 'bg-slate-900 text-rose-400 border-t-2 border-rose-400 border-x border-slate-800'
               : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
           }`}
         >
-          <Clock className="w-4 h-4" />
-          <span>Unified Event Timeline</span>
+          <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+          <span>4. Threat Detection</span>
+          <span className="text-[9px] px-1 py-0.2 rounded bg-rose-950 text-rose-300 border border-rose-800 font-mono">
+            ML+Rules
+          </span>
         </button>
 
+        {/* 5. INCIDENT MANAGEMENT */}
         <button
-          onClick={() => setActiveTab('TRACEABILITY')}
-          className={`px-3.5 py-2 rounded-t-lg transition-colors flex items-center gap-2 font-bold whitespace-nowrap ${
-            activeTab === 'TRACEABILITY'
-              ? 'bg-slate-900 text-cyan-400 border-t-2 border-cyan-400 border-x border-slate-800'
+          id="tab-incidents"
+          onClick={() => setActiveTab('INCIDENTS')}
+          className={`px-3 py-2 rounded-t-lg transition-colors flex items-center gap-1.5 font-bold whitespace-nowrap ${
+            activeTab === 'INCIDENTS'
+              ? 'bg-slate-900 text-purple-400 border-t-2 border-purple-400 border-x border-slate-800'
               : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
           }`}
         >
-          <Radio className="w-4 h-4" />
-          <span>End-to-End Traceability</span>
+          <Layers className="w-3.5 h-3.5 text-purple-400" />
+          <span>5. Incidents</span>
         </button>
 
+        {/* 6. ANALYTICS */}
         <button
-          onClick={() => setActiveTab('N8N_PREVIEW')}
-          className={`px-3.5 py-2 rounded-t-lg transition-colors flex items-center gap-2 font-bold whitespace-nowrap ${
-            activeTab === 'N8N_PREVIEW'
+          id="tab-analytics"
+          onClick={() => setActiveTab('ANALYTICS')}
+          className={`px-3 py-2 rounded-t-lg transition-colors flex items-center gap-1.5 font-bold whitespace-nowrap ${
+            activeTab === 'ANALYTICS'
               ? 'bg-slate-900 text-indigo-400 border-t-2 border-indigo-400 border-x border-slate-800'
               : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
           }`}
         >
-          <Workflow className="w-4 h-4" />
-          <span>n8n Automation Blueprint</span>
+          <BarChart2 className="w-3.5 h-3.5 text-indigo-400" />
+          <span>6. Analytics</span>
+        </button>
+
+        {/* 7. REPORTS */}
+        <button
+          id="tab-reports"
+          onClick={() => setActiveTab('REPORTS')}
+          className={`px-3 py-2 rounded-t-lg transition-colors flex items-center gap-1.5 font-bold whitespace-nowrap ${
+            activeTab === 'REPORTS'
+              ? 'bg-slate-900 text-emerald-400 border-t-2 border-emerald-400 border-x border-slate-800'
+              : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+          }`}
+        >
+          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+          <span>7. Reports</span>
+          <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">
+            Export
+          </span>
+        </button>
+
+        <div className="h-4 w-[1px] bg-slate-800 mx-1 flex-shrink-0" />
+
+        {/* Auxiliary Tabs for deep inspection */}
+        <button
+          onClick={() => setActiveTab('CORRELATIONS')}
+          className={`px-2.5 py-2 rounded-t-lg transition-colors flex items-center gap-1 font-bold whitespace-nowrap ${
+            activeTab === 'CORRELATIONS'
+              ? 'bg-slate-900 text-cyan-400 border-t-2 border-cyan-400 border-x border-slate-800'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900/50'
+          }`}
+        >
+          <span>Attack Chains</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('LIVE_PIPELINE')}
+          className={`px-2.5 py-2 rounded-t-lg transition-colors flex items-center gap-1 font-bold whitespace-nowrap ${
+            activeTab === 'LIVE_PIPELINE'
+              ? 'bg-slate-900 text-emerald-400 border-t-2 border-emerald-400 border-x border-slate-800'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900/50'
+          }`}
+        >
+          <Radio className="w-3 h-3 text-emerald-400" />
+          <span>Simulator API</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('TRACEABILITY')}
+          className={`px-2.5 py-2 rounded-t-lg transition-colors flex items-center gap-1 font-bold whitespace-nowrap ${
+            activeTab === 'TRACEABILITY'
+              ? 'bg-slate-900 text-cyan-400 border-t-2 border-cyan-400 border-x border-slate-800'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900/50'
+          }`}
+        >
+          <span>Traceability</span>
         </button>
       </div>
 
       {/* TAB CONTENT AREAS */}
 
-      {/* 0. LIVE PIPELINE & LOCAL ML API TAB */}
+      {/* 1. OVERVIEW TAB */}
+      {activeTab === 'OVERVIEW' && (
+        <OverviewSection
+          overview={overview}
+          metrics={metrics}
+          isRealData={logRepository.hasRealData()}
+          onNavigate={onNavigate}
+          onSelectSection={(s) => setActiveTab(s as any)}
+        />
+      )}
+
+      {/* 2. LIVE SECURITY EVENTS TAB */}
+      {activeTab === 'LIVE_EVENTS' && (
+        <LiveSecurityEventsSection
+          onSelectEvent={(evt) => setSelectedLiveEvent(evt)}
+        />
+      )}
+
+      {/* 3. MULTI-AGENT STATUS TAB */}
+      {activeTab === 'MULTI_AGENT' && (
+        <MultiAgentStatusSection
+          onNavigate={onNavigate}
+        />
+      )}
+
+      {/* 4. THREAT DETECTION TAB */}
+      {activeTab === 'THREAT_DETECTION' && (
+        <ThreatDetectionSection />
+      )}
+
+      {/* 5. INCIDENT MANAGEMENT TAB */}
+      {activeTab === 'INCIDENTS' && (
+        <IncidentManagementSection />
+      )}
+
+      {/* 6. ANALYTICS TAB */}
+      {activeTab === 'ANALYTICS' && (
+        <AnalyticsSection
+          eventsOverTime={eventsOverTime}
+        />
+      )}
+
+      {/* 7. REPORTS TAB */}
+      {activeTab === 'REPORTS' && (
+        <ReportsSection />
+      )}
+
+      {/* AUX: LIVE PIPELINE & LOCAL ML API TAB */}
       {activeTab === 'LIVE_PIPELINE' && (
         <div className="space-y-6">
           <LivePipelineStatusCard
@@ -485,64 +615,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             events={liveEvents}
             onSelectEvent={(evt) => setSelectedLiveEvent(evt)}
           />
-        </div>
-      )}
-
-      {/* 1. OVERVIEW & ANALYTICS TAB */}
-      {activeTab === 'OVERVIEW' && (
-        <div className="space-y-6">
-          {/* Threat Analytics (Sections 5 & 6) */}
-          <ThreatAnalyticsPanel
-            classifications={threatClassifications}
-            trend={threatTrend}
-            hasHistoricalData={hasHistoricalThreats}
-            activeTimeRange={filters.timeRange}
-            onTimeRangeChange={range => setFilters(prev => ({ ...prev, timeRange: range }))}
-            evaluationMetrics={{
-              isAvailable: false // Section 44: Explicitly not available
-            }}
-          />
-
-          {/* Risk Analytics (Sections 7, 8, 9, 10) */}
-          {riskData && (
-            <RiskAnalyticsPanel
-              riskData={riskData}
-              assessments={rawAssessments}
-              onSelectRisk={assessment => setSelectedAssessment(assessment)}
-            />
-          )}
-
-          {/* Multi-Agent Activity Panel (Sections 11 & 12) */}
-          {agentDetails.length > 0 && (
-            <MultiAgentActivityPanel
-              agents={agentDetails}
-              comparativeNote={comparativeNote}
-              onNavigate={onNavigate}
-            />
-          )}
-
-          {/* Legacy Recent Telemetry Table for continuity */}
-          <section aria-label="Recent Security Events" id="section-recent-events">
-            <div className="flex items-center justify-between mb-3 font-mono">
-              <div>
-                <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-cyan-400" />
-                  REAL-TIME TELEMETRY EVENT STREAM
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Ingested security events with active agent validation and containment state.
-                </p>
-              </div>
-              <button
-                onClick={() => onNavigate('threat-detection')}
-                className="text-xs text-cyan-400 hover:text-cyan-300 underline underline-offset-4"
-              >
-                Explore All Detections →
-              </button>
-            </div>
-
-            <RecentEventsTable events={recentEvents} />
-          </section>
         </div>
       )}
 

@@ -20,6 +20,8 @@ export interface ServerConfig {
   requestBodyLimit: string;
   dataDir: string;
   corsOrigins: string[];
+  mongodbUri?: string;
+  mongodbDbName: string;
 }
 
 export const config: ServerConfig = {
@@ -33,13 +35,18 @@ export const config: ServerConfig = {
   logLevel: (process.env.LOG_LEVEL as any) || 'info',
   requestBodyLimit: '15mb',
   dataDir: path.join(process.cwd(), 'data'),
-  corsOrigins: ['*']
+  corsOrigins: ['*'],
+  mongodbUri: process.env.MONGODB_URI || undefined,
+  mongodbDbName: process.env.MONGODB_DB_NAME || 'cyber_threat_detection'
 };
 
 export function validateConfig(): { valid: boolean; warnings: string[] } {
   const warnings: string[] = [];
   if (!process.env.ML_SERVICE_URL) {
     warnings.push('ML_SERVICE_URL not set in environment; defaulting to local proxy http://127.0.0.1:8000');
+  }
+  if (!process.env.MONGODB_URI) {
+    warnings.push('MONGODB_URI not set; MongoDB will run in mock/standby mode with fallback to local persistent store.');
   }
   if (!process.env.SQL_HOST && !process.env.DATABASE_URL) {
     warnings.push('SQL database environment variables not provided; local persistent JSON storage active.');
