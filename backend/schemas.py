@@ -156,7 +156,66 @@ class SimulatorControlRequest(BaseModel):
     eventRate: int = Field(default=2, description="Events per second: 1, 2, 5, or 10")
     mode: str = Field(default="mixed", description="'mixed', 'normal', 'suspicious', 'multistage'")
 
+class SecurityEventInput(BaseModel):
+    event_id: Optional[str] = Field(default=None, description="Unique identifier for the event")
+    timestamp: Optional[str] = Field(default=None, description="ISO timestamp")
+    source: str = Field(..., description="'network', 'system', or 'application'")
+    source_type: Optional[str] = Field(default=None, description="Detailed source category e.g. syslog, auth, suricata")
+    src_ip: Optional[str] = Field(default=None, description="Source IP address")
+    dst_ip: Optional[str] = Field(default=None, description="Destination IP address")
+    src_port: Optional[int] = Field(default=None, description="Source Port number")
+    dst_port: Optional[int] = Field(default=None, description="Destination Port number")
+    protocol: Optional[str] = Field(default="TCP", description="Transport protocol TCP/UDP/ICMP")
+    username: Optional[str] = Field(default=None, description="User or service account associated")
+    event_type: str = Field(..., description="Classification of event e.g. PortScan, FailedAuth, SQLi")
+    message: Optional[str] = Field(default=None, description="Log message or narrative")
+    severity: Optional[str] = Field(default="INFO", description="LOW, MEDIUM, HIGH, CRITICAL, INFO")
+    features: Dict[str, Any] = Field(default_factory=dict, description="Extracted numerical & categorical ML features")
+    raw_log: Optional[str] = Field(default=None, description="Raw unparsed log line")
+
+class AgentStatus(BaseModel):
+    agent_name: str
+    agent_type: str
+    status: str
+    description: str
+    events_monitored: int
+    threats_flagged: int
+    active_heuristics: List[str]
+    mitre_tactics: List[str]
+    last_active: str
+
+class N8nWebhookPayload(BaseModel):
+    action: Optional[str] = Field(default="triage", description="Action name: triage, contain, escalate, note")
+    alert_id: Optional[str] = Field(default=None, description="Associated Alert ID")
+    incident_id: Optional[str] = Field(default=None, description="Associated Incident ID")
+    status_update: Optional[str] = Field(default=None, description="New lifecycle status e.g. CONTAINED, RESOLVED")
+    notes: Optional[str] = Field(default=None, description="Remediation or analyst notes from n8n")
+    target_ip: Optional[str] = Field(default=None, description="IP address to contain/isolate")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Custom workflow execution metadata")
+
+class N8nWebhookResponse(BaseModel):
+    status: str
+    message: str
+    execution_id: str
+    action_applied: Optional[str] = None
+    timestamp: str
+
+class StatisticsResponse(BaseModel):
+    status: str = "ok"
+    totalEvents: int
+    threatsDetected: int
+    criticalThreats: int
+    highThreats: int
+    mediumThreats: int
+    lowThreats: int
+    activeIncidents: int
+    totalAlerts: int
+    pipelineStatus: str
+    activeModel: str
+    modelStatus: str
+    timestamp: str
+
 class IntegrationEventPlaceholder(BaseModel):
     status: str = "RESERVED"
-    message: str = "Reserved for future n8n workflow integration. Not active in Prompt 12."
+    message: str = "Reserved for future n8n workflow integration."
     receivedData: Dict[str, Any] = {}

@@ -23,6 +23,8 @@ import { logRepository } from './services/logRepository';
 import { networkAgentService } from './services/networkAgentService';
 import { systemAgentService } from './services/systemAgentService';
 import { applicationAgentService } from './services/applicationAgentService';
+import { alertManager } from './services/alertIncident/alertManager';
+import { incidentManager } from './services/alertIncident/incidentManager';
 
 import {
   DashboardMetrics,
@@ -97,6 +99,8 @@ export default function App() {
       setThreatCategories(tc);
       setRecentEvents(recEvts);
       setLogFiles(files);
+      alertManager.syncWithBackend();
+      incidentManager.syncWithBackend();
     } catch (err) {
       console.error('Failed to load telemetry state', err);
     }

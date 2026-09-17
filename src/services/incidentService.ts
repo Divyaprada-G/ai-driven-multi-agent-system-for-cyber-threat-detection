@@ -135,13 +135,13 @@ class IncidentServiceImpl implements IIncidentService {
         priority: inc.priority || 'P2',
         status: inc.status,
         riskScore: inc.riskScore,
-        assignee: inc.assignee,
-        primaryIp: inc.primaryIp,
-        affectedHost: inc.affectedHost,
+        assignee: inc.assignedTo || 'Unassigned',
+        primaryIp: (inc.affectedEntities && inc.affectedEntities[0]) || '192.168.1.100',
+        affectedHost: inc.affectedSource || 'server01',
         alertIds: inc.alertIds || [],
         correlationIds: [correlatedEvent.id],
-        mitreTechniques: inc.mitreTechniques || [],
-        investigationNotes: inc.investigationNotes || [],
+        mitreTechniques: inc.mitreTechnique ? [inc.mitreTechnique] : [],
+        investigationNotes: inc.analystNotes || [],
         timeline: inc.timeline || []
       });
     } catch (err) {

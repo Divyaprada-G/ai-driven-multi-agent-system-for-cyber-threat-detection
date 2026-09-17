@@ -487,6 +487,73 @@ export class AlertManager {
     if (lower.includes('anomaly') || lower.includes('tunnel') || lower.includes('entropy')) return 'ANOMALY';
     return 'SUSPICIOUS';
   }
+
+  /**
+   * Sync persistent alerts from backend API
+   */
+  public async syncWithBackend(): Promise<void> {
+    try {
+      const resp = await fetch('/api/alerts');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const backendAlerts = Array.isArray(data) ? data : (data.alerts || []);
+      if (!Array.isArray(backendAlerts) || backendAlerts.length === 0) return;
+
+      for (const bAlert of backendAlerts) {
+        const id = bAlert.id || bAlert.alertId;
+        const existing = this.alerts.find(a => a.id === id || a.alertId === id);
+        if (existing) {
+          if (bAlert.status && existing.status !== bAlert.status) {
+            existing.status = bAlert.status as AlertLifecycleStatus;
+          }
+        } else {
+          const newAlert: SecurityAlert = {
+            id,
+            alertId: id,
+            alertType: this.mapClassificationToAlertType(bAlert.alertType || bAlert.title || 'SUSPICIOUS'),
+            title: bAlert.title || 'Security Alert',
+            threat: bAlert.title || 'Detected Security Threat',
+            description: bAlert.description || 'Threat detected by multi-agent analysis',
+            timestamp: bAlert.createdAt ? new Date(bAlert.createdAt).toLocaleString() : new Date().toLocaleString(),
+            source: bAlert.sourceIp || bAlert.affectedHost || 'server01',
+            threatClassification: bAlert.alertType || 'Anomalous Threat Pattern',
+            severity: bAlert.severity || 'HIGH',
+            riskScore: bAlert.riskScore || 80,
+            priority: bAlert.priority || (bAlert.riskScore >= 90 ? 'P1' : bAlert.riskScore >= 70 ? 'P2' : 'P3'),
+            confidence: 90,
+            correlationStrength: 0.85,
+            affectedEntities: [bAlert.sourceIp || bAlert.affectedHost || 'server01'],
+            participatingAgents: ['NETWORK_AGENT', 'SYSTEM_AGENT', 'APPLICATION_AGENT'],
+            evidence: bAlert.evidence || [`Rule: ${bAlert.title}`],
+            explanation: bAlert.description || 'Observed telemetry indicates active security risk.',
+            recommendedAction: 'Isolate affected host, analyze telemetry, block source indicator.',
+            status: (bAlert.status as AlertLifecycleStatus) || 'NEW',
+            incidentId: bAlert.incidentId || undefined,
+            isRead: false,
+            deduplicationCount: bAlert.burstCount || 1,
+            lastSeenTimestamp: bAlert.createdAt ? new Date(bAlert.createdAt).toLocaleString() : new Date().toLocaleString(),
+            history: [
+              {
+                id: `hist-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                timestamp: bAlert.createdAt ? new Date(bAlert.createdAt).toLocaleString() : new Date().toLocaleString(),
+                action: 'ALERT_GENERATED',
+                actor: 'Multi-Agent Security Engine',
+                details: `Alert generated with risk score ${bAlert.riskScore || 80}/100.`
+              }
+            ],
+            simulatedResponses: [],
+            notificationStatus: 'SENT',
+            targetChannels: ['#soc-alerts'],
+            ruleTriggered: bAlert.alertType || 'RULE_SECURITY'
+          };
+          this.alerts.unshift(newAlert);
+        }
+      }
+      this.notify();
+    } catch (err) {
+      console.warn('[AlertManager] Backend sync warning:', err);
+    }
+  }
 }
 
 export const alertManager = new AlertManager();

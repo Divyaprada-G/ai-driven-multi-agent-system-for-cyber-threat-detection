@@ -32,7 +32,12 @@ from schemas import (
     SecurityEventResponse,
     PipelineStatusResponse,
     SimulatorControlRequest,
-    IntegrationEventPlaceholder
+    IntegrationEventPlaceholder,
+    SecurityEventInput,
+    AgentStatus,
+    N8nWebhookPayload,
+    N8nWebhookResponse,
+    StatisticsResponse
 )
 
 from services.model_service import model_service

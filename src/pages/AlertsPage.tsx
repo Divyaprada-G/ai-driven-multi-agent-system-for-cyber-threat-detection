@@ -62,6 +62,7 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({
   const [scenarioMessage, setScenarioMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    alertManager.syncWithBackend();
     const update = () => {
       setAlerts(alertManager.getAlerts());
     };

@@ -401,7 +401,7 @@ export class DatabaseService {
     notificationStatus?: string;
     burstCount?: number;
   }) {
-    const id = alertData.id || alertData.alertId || `ALT-${Date.now().toString().slice(-6)}`;
+    const id = alertData.id || alertData.alertId || `ALT-${Date.now().toString().slice(-4)}${Math.floor(1000 + Math.random() * 9000)}`;
     const alertId = alertData.alertId || id;
     if (!isDbConfigured()) {
       return localStore.insertAlert({

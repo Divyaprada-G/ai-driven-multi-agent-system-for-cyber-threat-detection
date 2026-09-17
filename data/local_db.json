@@ -1,0 +1,311 @@
+{
+  "rawEvents": [],
+  "securityFindings": [],
+  "detections": [],
+  "correlations": [],
+  "riskAssessments": [],
+  "alerts": [
+    {
+      "title": "[ApplicationAgent] SQL Injection",
+      "description": "SQL injection payload detected aiming at database enumeration or bypass.",
+      "alertType": "SQL Injection",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "mitreTechniques": [
+        "T1190"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:01Z 203.0.113.50 POST /api/data HTTP/1.1 200 application/json body=1 UNION SELECT * FROM users--"
+      ],
+      "id": "ALT-94139025",
+      "alertId": "ALT-94139025",
+      "createdAt": "2026-09-17T08:56:49.413Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[NetworkAgent] Port Scanning",
+      "description": "Rapid port sweep detected across 8 destination ports from host 192.168.1.105.",
+      "alertType": "Port Scanning",
+      "severity": "HIGH",
+      "riskScore": 90,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [
+        "Scanned ports: 22, 23, 80, 443, 3306, 5432, 8080, 3389"
+      ],
+      "id": "ALT-73422737",
+      "alertId": "ALT-73422737",
+      "createdAt": "2026-09-17T08:56:37.342Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[NetworkAgent] Port Scanning",
+      "description": "Rapid port sweep",
+      "alertType": "Port Scanning",
+      "severity": "HIGH",
+      "riskScore": 90,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [
+        "ports 22, 80"
+      ],
+      "id": "ALT-26352083",
+      "alertId": "ALT-26352083",
+      "createdAt": "2026-09-17T08:56:02.636Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[SystemAgent] Privilege Escalation",
+      "description": "Administrative root shell acquired via sudo execution.",
+      "alertType": "Privilege Escalation",
+      "severity": "HIGH",
+      "riskScore": 92,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1548.003"
+      ],
+      "evidence": [
+        "Sep 17 11:01:11 server01 sudo: admin : TTY=pts/0 ; PWD=/home ; USER=root ; COMMAND=/bin/bash"
+      ],
+      "id": "ALT-124469",
+      "alertId": "ALT-124469",
+      "createdAt": "2026-09-17T08:52:04.469Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] SQL Injection",
+      "description": "SQL injection payload detected",
+      "alertType": "SQL Injection",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "mitreTechniques": [
+        "T1190"
+      ],
+      "evidence": [
+        "select * from users"
+      ],
+      "id": "ALT-023353",
+      "alertId": "ALT-023353",
+      "createdAt": "2026-09-17T08:50:23.353Z",
+      "status": "NEW"
+    },
+    {
+      "title": "Test Alert",
+      "description": "Testing alert creation",
+      "alertType": "Network",
+      "severity": "HIGH",
+      "riskScore": 80,
+      "priority": "P1",
+      "id": "ALT-948494",
+      "alertId": "ALT-948494",
+      "createdAt": "2026-09-17T08:49:08.494Z",
+      "status": "NEW"
+    }
+  ],
+  "incidents": [
+    {
+      "incidentId": "INC-409413",
+      "title": "SQL Injection Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 1 security anomaly events with risk score 45.",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 45,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1190"
+      ],
+      "investigationNotes": [
+        {
+          "id": "note-1789635409413",
+          "author": "Multi-Agent Security Engine",
+          "note": "Auto-generated incident. Agents involved: ApplicationAgent. Risk Score: 45.",
+          "timestamp": "2026-09-17T08:56:49.413Z"
+        }
+      ],
+      "id": "INC-409413",
+      "createdAt": "2026-09-17T08:56:49.413Z"
+    },
+    {
+      "incidentId": "INC-397342",
+      "title": "Port Scanning Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 1 security anomaly events with risk score 33.",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 33,
+      "primaryIp": "192.168.1.105",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "id": "INC-397342",
+      "createdAt": "2026-09-17T08:56:37.342Z"
+    },
+    {
+      "incidentId": "INC-331953",
+      "title": "Port Scanning Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 1 security anomaly events with risk score 33.",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 33,
+      "primaryIp": "192.168.1.105",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "id": "INC-331953",
+      "createdAt": "2026-09-17T08:55:31.953Z"
+    },
+    {
+      "incidentId": "INC-251149",
+      "title": "SQL Injection Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 65.",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 65,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1190",
+        "T1595",
+        "T1083",
+        "T1059.007"
+      ],
+      "id": "INC-251149",
+      "createdAt": "2026-09-17T08:54:11.149Z"
+    },
+    {
+      "incidentId": "INC-124468",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 1 security anomaly events with risk score 33.",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 33,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003"
+      ],
+      "investigationNotes": [
+        {
+          "id": "note-1789635124468",
+          "author": "Multi-Agent Security Engine",
+          "note": "Auto-generated incident. Agents involved: SystemAgent. Risk Score: 33.",
+          "timestamp": "2026-09-17T08:52:04.468Z"
+        }
+      ],
+      "id": "INC-124468",
+      "createdAt": "2026-09-17T08:52:04.468Z"
+    },
+    {
+      "incidentId": "INC-990555",
+      "title": "SQL Injection Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 65.",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 65,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1190",
+        "T1595",
+        "T1083",
+        "T1059.007"
+      ],
+      "id": "INC-990555",
+      "createdAt": "2026-09-17T08:49:50.556Z"
+    },
+    {
+      "incidentId": "INC-985168",
+      "title": "SQL Injection Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 65.",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 65,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1190",
+        "T1595",
+        "T1083",
+        "T1059.007"
+      ],
+      "id": "INC-985168",
+      "createdAt": "2026-09-17T08:49:45.168Z"
+    },
+    {
+      "incidentId": "INC-958772",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 2 security anomaly events with risk score 38.",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 38,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003",
+        "T1110"
+      ],
+      "id": "INC-958772",
+      "createdAt": "2026-09-17T08:49:18.772Z"
+    },
+    {
+      "incidentId": "INC-902915",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 98.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 98,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003",
+        "T1190",
+        "T1595",
+        "T1046",
+        "T1110"
+      ],
+      "id": "INC-902915",
+      "createdAt": "2026-09-17T08:48:22.915Z"
+    },
+    {
+      "incidentId": "INC-852615",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 98.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 98,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003",
+        "T1190",
+        "T1595",
+        "T1046",
+        "T1110"
+      ],
+      "id": "INC-852615",
+      "createdAt": "2026-09-17T08:47:32.616Z"
+    }
+  ],
+  "incidentHistory": [],
+  "auditLogs": [],
+  "reports": [],
+  "models": []
+}

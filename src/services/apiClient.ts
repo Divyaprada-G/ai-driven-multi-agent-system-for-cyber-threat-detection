@@ -119,6 +119,15 @@ class LocalApiClient {
     return await res.json();
   }
 
+  public async getDetailedSystemStatus(): Promise<any> {
+    const res = await fetch(`${this.baseUrl}/api/system/status`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error(`System Status failed: ${res.statusText}`);
+    return await res.json();
+  }
+
   public async getMlHealth(): Promise<any> {
     const res = await fetch(`${this.baseUrl}/api/ml/health`, {
       method: 'GET',
@@ -351,6 +360,58 @@ class LocalApiClient {
     });
     if (!res.ok) throw new Error(`Get reports failed: ${res.statusText}`);
     return await res.json();
+  }
+
+  // -------------------------------------------------------------
+  // PIPELINE & SIMULATOR CONTROL (Task 7 & 8)
+  // -------------------------------------------------------------
+  public async startPipeline(): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/pipeline/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public async stopPipeline(): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/pipeline/stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public async startSimulator(eventRate: number = 2, mode: string = 'mixed'): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/simulator/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventRate, mode }),
+      });
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public async stopSimulator(): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/simulator/stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
   }
 
   public isOnline(): boolean {
