@@ -95,6 +95,17 @@ export interface ApplicationMetricsPacket {
   }>;
 }
 
+export interface SourceMetadata {
+  source_type: string;
+  hostname: string;
+  collector_name: string;
+  event_id: string;
+  timestamp: string;
+  raw_message: string;
+  collection_status: string;
+  [key: string]: any;
+}
+
 export interface NormalizedTelemetryEvent {
   eventId: string;
   timestamp: string;
@@ -119,6 +130,7 @@ export interface NormalizedTelemetryEvent {
     assignedAgent: string;
     assignedAgentId: string;
   };
+  sourceMetadata?: SourceMetadata;
 }
 
 export interface TelemetryIngestRequest {
@@ -131,3 +143,72 @@ export interface TelemetryIngestRequest {
   destinationIp?: string;
   isSimulated?: boolean;
 }
+
+/**
+ * Real-Time Telemetry Streaming Protocol Types
+ */
+export type TelemetryStreamStatus =
+  | 'LIVE'
+  | 'CONNECTING'
+  | 'DISCONNECTED'
+  | 'SIMULATION'
+  | 'ERROR';
+
+export type TelemetryStreamEventType =
+  | 'INIT_STATUS'
+  | 'NEW_TELEMETRY_EVENT'
+  | 'AGENT_STATUS_UPDATE'
+  | 'THREAT_DETECTION'
+  | 'CORRELATION_EVENT'
+  | 'RISK_ASSESSMENT'
+  | 'ALERT_GENERATED'
+  | 'INCIDENT_CREATED'
+  | 'COLLECTOR_HEALTH_UPDATE'
+  | 'DATABASE_HEALTH_UPDATE'
+  | 'HEARTBEAT';
+
+export interface TelemetryStreamEnvelope<T = any> {
+  type: TelemetryStreamEventType;
+  sequence: number;
+  timestamp: string;
+  data: T;
+}
+
+export interface StreamInitPayload {
+  sequence: number;
+  telemetryState: 'LIVE' | 'SIMULATION' | 'OFFLINE' | 'PARTIAL' | 'ERROR';
+  collectorHealth: {
+    overallState: string;
+    activeCollectorsCount: number;
+    totalCollectors: number;
+    collectors: CollectorHealth[];
+    externalCollectors: any[];
+    metrics: {
+      totalLiveEvents: number;
+      totalSimulatedEvents: number;
+      totalThreatsDetected: number;
+      totalAlertsGenerated: number;
+      totalIncidentsCreated: number;
+      currentEps: number;
+      connectedSseClients: number;
+      uptimeSeconds: number;
+    };
+  };
+  databaseHealth: {
+    status: string;
+    connected: boolean;
+    mode?: string;
+    details?: string;
+  };
+  agentStatuses: any[];
+  recentEvents: NormalizedTelemetryEvent[];
+  metrics: {
+    totalLiveEvents: number;
+    totalSimulatedEvents: number;
+    totalThreatsDetected: number;
+    totalAlertsGenerated: number;
+    totalIncidentsCreated: number;
+    currentEps: number;
+  };
+}
+

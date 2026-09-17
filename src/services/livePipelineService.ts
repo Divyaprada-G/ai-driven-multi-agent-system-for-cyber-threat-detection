@@ -20,6 +20,7 @@ import { mlTrainingService } from './mlTrainingService';
 import { riskScoringEngine } from './riskScoring/riskScoringEngine';
 import { alertManager } from './alertIncident/alertManager';
 import { auditService } from './auditService';
+import { realtimeTelemetryStream } from './telemetry/realtimeTelemetryStream';
 
 class LivePipelineService {
   private isRunning: boolean = false;
@@ -47,6 +48,7 @@ class LivePipelineService {
   private totalSimulatedEventsCount: number = 0;
   private liveCollectorsActive: number = 0;
   private collectorHealthList: any[] = [];
+  private externalCollectorsList: any[] = [];
   private isLiveStreaming: boolean = false;
   private eventSource: any = null;
 
@@ -71,6 +73,64 @@ class LivePipelineService {
     // Initial health check
     this.checkBackendHealth();
     this.refreshCollectors();
+
+    // Subscribe to real-time SSE stream events
+    realtimeTelemetryStream.onCompositeEvent((composite) => {
+      const { event, isThreat, finding, alert, incident, riskAssessment } = composite;
+      if (!event) return;
+
+      const liveEvent: LiveSecurityEvent = {
+        eventId: event.eventId,
+        receivedAt: event.timestamp,
+        processedAt: event.timestamp,
+        status: 'COMPLETED',
+        source: event.source,
+        eventType: event.eventType || (event.isSimulated ? `[SIMULATED] ${event.source} telemetry` : `[LIVE] ${event.source} telemetry`),
+        sourceIp: event.sourceIp || event.host,
+        destinationIp: event.destinationIp || '127.0.0.1',
+        protocol: event.protocol || 'TCP',
+        features: (event.features as any) || {},
+        isSimulated: event.isSimulated,
+        telemetrySource: event.telemetrySource,
+        collectorState: event.isSimulated ? 'SIMULATED' : 'LIVE',
+        agentId: event.agentRouting?.assignedAgentId || `${event.source.toUpperCase()}_AGENT`,
+        agentType: event.agentRouting?.assignedAgent || `${event.source.toUpperCase()} Agent`,
+        findingId: finding?.id,
+        threatDetectionId: finding?.id,
+        riskScore: riskAssessment?.risk_score || (isThreat ? 75 : 20),
+        severity: event.severity || 'LOW',
+        alertId: alert?.id,
+        incidentId: incident?.id,
+        latencyMs: 1.5,
+        details: event.details || (typeof event.rawPayload === 'string' ? event.rawPayload.slice(0, 100) : ''),
+        safeRecommendedAction: isThreat ? 'Live threat identified by agent pipeline' : 'Normal telemetry activity'
+      };
+
+      this.events.unshift(liveEvent);
+      if (this.events.length > 300) this.events.pop();
+
+      this.totalReceivedCount++;
+      this.totalProcessedCount++;
+      if (event.isSimulated) {
+        this.totalSimulatedEventsCount++;
+      } else {
+        this.totalLiveEventsCount++;
+      }
+      if (isThreat) this.threatsDetectedCount++;
+      if (alert) this.alertsGeneratedCount++;
+      if (incident) this.incidentsCreatedCount++;
+
+      this.notify();
+    });
+
+    realtimeTelemetryStream.onCollectorHealth((health) => {
+      if (health) {
+        this.liveCollectorsActive = health.activeCollectorsCount ?? 0;
+        this.collectorHealthList = health.collectors || [];
+        this.externalCollectorsList = health.externalCollectors || [];
+        this.notify();
+      }
+    });
   }
 
   public subscribe(listener: () => void): () => void {
@@ -141,7 +201,8 @@ class LivePipelineService {
       totalLiveEvents: this.totalLiveEventsCount,
       totalSimulatedEvents: this.totalSimulatedEventsCount,
       liveCollectorsActive: this.liveCollectorsActive,
-      collectorHealth: this.collectorHealthList
+      collectorHealth: this.collectorHealthList,
+      externalCollectors: this.externalCollectorsList
     };
   }
 
@@ -150,6 +211,7 @@ class LivePipelineService {
       const status = await localApiClient.getTelemetryStatus();
       if (status && status.collectors) {
         this.collectorHealthList = status.collectors;
+        this.externalCollectorsList = status.externalCollectors || [];
         this.liveCollectorsActive = status.activeCollectorsCount || 0;
         if (status.metrics) {
           if (status.metrics.totalLiveEvents !== undefined) {

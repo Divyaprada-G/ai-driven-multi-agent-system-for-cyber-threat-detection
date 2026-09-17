@@ -26,7 +26,7 @@ export interface ServerConfig {
 
 export const config: ServerConfig = {
   env: (process.env.NODE_ENV as any) || 'development',
-  port: parseInt(process.env.PORT || '3000', 10),
+  port: 3000,
   host: '0.0.0.0',
   serviceName: 'cyber-threat-detection-api',
   version: '1.0.0',

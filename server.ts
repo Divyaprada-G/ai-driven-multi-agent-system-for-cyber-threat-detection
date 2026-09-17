@@ -2220,6 +2220,15 @@ except Exception as e:
 
   app.post('/api/telemetry/ingest', async (req, res) => {
     try {
+      const configuredKey = process.env.BACKEND_API_KEY;
+      if (configuredKey) {
+        const authHeader = (req.headers['x-api-key'] || req.headers['authorization']) as string | undefined;
+        const providedKey = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : undefined;
+        if (!providedKey || providedKey !== configuredKey) {
+          return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key for telemetry ingestion' });
+        }
+      }
+
       const payload = req.body || {};
       const result = await telemetryManager.ingestExternalTelemetry(payload);
       return res.status(200).json(result);
@@ -2228,13 +2237,30 @@ except Exception as e:
     }
   });
 
+  app.get('/api/telemetry/windows-collector/status', (_req, res) => {
+    try {
+      const status = telemetryManager.getStatus();
+      return res.status(200).json({
+        service: 'Windows Security Telemetry Ingestion Gateway',
+        status: status.externalCollectors.length > 0 ? 'ACTIVE' : 'READY',
+        registeredCollectors: status.externalCollectors,
+        ingestEndpoint: '/api/telemetry/ingest',
+        requiresApiKey: !!process.env.BACKEND_API_KEY
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   app.get('/api/telemetry/stream', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders?.();
 
-    telemetryManager.addSseClient(res);
+    const lastEventId = (req.headers['last-event-id'] || req.query.lastEventId) as string | undefined;
+    telemetryManager.addSseClient(res, lastEventId);
 
     req.on('close', () => {
       telemetryManager.removeSseClient(res);
@@ -2245,6 +2271,19 @@ except Exception as e:
   // STRUCTURED ERROR HANDLING MIDDLEWARE
   // -------------------------------------------------------------
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (
+      err?.name === 'MongooseError' ||
+      err?.name === 'MongoNetworkError' ||
+      err?.name === 'MongoServerSelectionError' ||
+      err?.message?.includes('buffering timed out') ||
+      err?.message?.includes('ECONNREFUSED')
+    ) {
+      logger.warn('[AI Studio] Database offline — returning mock/fallback response');
+      if (req.method === 'GET') {
+        return res.json(req.path.endsWith('s') || req.path.endsWith('s/') ? [] : {});
+      }
+      return res.status(503).json({ error: 'Service temporarily unavailable (database offline)' });
+    }
     logger.error(`Unhandled API Error on ${req.method} ${req.path}`, err);
     if (res.headersSent) {
       return next(err);

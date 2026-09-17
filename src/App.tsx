@@ -25,6 +25,7 @@ import { systemAgentService } from './services/systemAgentService';
 import { applicationAgentService } from './services/applicationAgentService';
 import { alertManager } from './services/alertIncident/alertManager';
 import { incidentManager } from './services/alertIncident/incidentManager';
+import { realtimeTelemetryStream } from './services/telemetry/realtimeTelemetryStream';
 
 import {
   DashboardMetrics,
@@ -108,10 +109,108 @@ export default function App() {
 
   useEffect(() => {
     fetchTelemetry();
-    const unsubscribe = logRepository.subscribe(() => {
+    const unsubLog = logRepository.subscribe(() => {
       fetchTelemetry();
     });
-    return () => unsubscribe();
+
+    // Real-Time Telemetry Stream: Live reactive dashboard updates without manual refresh
+    const unsubComposite = realtimeTelemetryStream.onCompositeEvent((composite) => {
+      const { event, isThreat, finding, alert, incident, riskAssessment } = composite;
+      if (!event) return;
+
+      // 1. Prepend to Recent Events
+      const newItem: RecentEventItem = {
+        id: event.eventId,
+        timestamp: event.timestamp.replace('T', ' ').substring(0, 19),
+        source: event.sourceIp || event.host || event.source,
+        agent: event.agentRouting?.assignedAgent || `${event.source.toUpperCase()} Agent`,
+        eventType: event.eventType || 'Telemetry Event Ingested',
+        severity: (event.severity || 'LOW') as any,
+        riskScore: riskAssessment?.risk_score || (isThreat ? 75 : 20),
+        status: isThreat ? 'Threat Flagged' : 'Normalized',
+        action: finding ? `Detected: ${finding.threatType || finding.threat_type}` : 'Parsed & Ingested',
+        detail: event.details || (typeof event.rawPayload === 'string' ? event.rawPayload.slice(0, 100) : '')
+      };
+
+      setRecentEvents(prev => [newItem, ...prev.slice(0, 49)]);
+
+      // 2. Increment Dashboard Metrics
+      setMetrics(prev => {
+        if (!prev) return prev;
+        const isNet = event.source === 'network';
+        const isSys = event.source === 'system';
+        const isApp = event.source === 'application';
+        return {
+          ...prev,
+          totalEvents: prev.totalEvents + 1,
+          suspiciousEvents: prev.suspiciousEvents + (isThreat ? 1 : 0),
+          activeThreats: prev.activeThreats + (finding ? 1 : 0),
+          criticalIncidents: prev.criticalIncidents + (incident ? 1 : 0),
+          networkEvents: prev.networkEvents + (isNet ? 1 : 0),
+          systemEvents: prev.systemEvents + (isSys ? 1 : 0),
+          applicationEvents: prev.applicationEvents + (isApp ? 1 : 0),
+          lastUpdated: new Date().toISOString()
+        };
+      });
+
+      // 3. Update Severity Distribution
+      if (event.severity) {
+        setSeverityDistribution(prev =>
+          prev.map(p => p.severity === event.severity ? { ...p, count: p.count + 1 } : p)
+        );
+      }
+
+      // 4. Update Events by Source
+      setEventsBySource(prev => {
+        const src = event.source;
+        return prev.map(p => {
+          const match = (src === 'network' && p.source.toLowerCase().includes('network')) ||
+                        (src === 'system' && p.source.toLowerCase().includes('host')) ||
+                        (src === 'application' && p.source.toLowerCase().includes('app'));
+          return match ? { ...p, count: p.count + 1, threats: p.threats + (isThreat ? 1 : 0) } : p;
+        });
+      });
+
+      // 5. Update Agent Activity Timeline
+      setAgentActivity(prev => {
+        if (prev.length === 0) return prev;
+        const copy = [...prev];
+        const last = { ...copy[copy.length - 1] };
+        if (event.source === 'network') last.networkAgent = (last.networkAgent || 0) + 1;
+        else if (event.source === 'system') last.systemAgent = (last.systemAgent || 0) + 1;
+        else if (event.source === 'application') last.applicationAgent = (last.applicationAgent || 0) + 1;
+        copy[copy.length - 1] = last;
+        return copy;
+      });
+
+      // 6. Sync Alerts and Incidents if triggered
+      if (alert) {
+        alertManager.syncWithBackend();
+      }
+      if (incident) {
+        incidentManager.syncWithBackend();
+      }
+    });
+
+    // Real-Time Agent Status listener
+    const unsubAgent = realtimeTelemetryStream.onAgentStatus((agentUpdate) => {
+      if (!agentUpdate || !agentUpdate.agentId) return;
+      setAgents(prev =>
+        prev.map(ag => ag.agentId === agentUpdate.agentId ? {
+          ...ag,
+          status: agentUpdate.status || ag.status,
+          eventsProcessed: agentUpdate.eventsProcessed ?? ag.eventsProcessed,
+          threatsDetected: agentUpdate.threatsDetected ?? ag.threatsDetected,
+          lastActivity: agentUpdate.lastActivity || new Date().toISOString()
+        } : ag)
+      );
+    });
+
+    return () => {
+      unsubLog();
+      unsubComposite();
+      unsubAgent();
+    };
   }, [fetchTelemetry]);
 
   // Refresh handler (simulates live poll)

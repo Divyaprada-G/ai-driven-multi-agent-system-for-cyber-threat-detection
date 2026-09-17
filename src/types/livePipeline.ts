@@ -70,6 +70,7 @@ export interface LivePipelineStatus {
   totalSimulatedEvents?: number;
   liveCollectorsActive?: number;
   collectorHealth?: any[];
+  externalCollectors?: any[];
 }
 
 export interface SimulatorConfig {

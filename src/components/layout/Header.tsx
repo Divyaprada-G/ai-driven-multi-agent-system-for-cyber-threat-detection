@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Activity, ShieldCheck, RefreshCw, Radio } from 'lucide-react';
+import { Menu, Activity, ShieldCheck, RefreshCw, Radio, Server } from 'lucide-react';
 import { logRepository } from '../../services/logRepository';
 import { NotificationCenterDropdown } from '../alerts/NotificationCenterDropdown';
 import { SecurityAlert } from '../../types/alertIncident';
+import { TelemetryStatusBadge } from '../telemetry/TelemetryStatusBadge';
+import { realtimeTelemetryStream } from '../../services/telemetry/realtimeTelemetryStream';
 
 interface HeaderProps {
   onOpenMobileMenu: () => void;
@@ -19,16 +21,17 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectAlert,
   onNavigateToAlerts
 }) => {
-  const [hasRealData, setHasRealData] = useState(logRepository.hasRealData());
-  const [totalEvents, setTotalEvents] = useState(logRepository.getStats().totalEvents);
+  const [collectorHealth, setCollectorHealth] = useState<any>(realtimeTelemetryStream.getCollectorHealth());
 
   useEffect(() => {
-    const update = () => {
-      setHasRealData(logRepository.hasRealData());
-      setTotalEvents(logRepository.getStats().totalEvents);
-    };
-    return logRepository.subscribe(update);
+    const unsub = realtimeTelemetryStream.onCollectorHealth((health) => {
+      setCollectorHealth(health);
+    });
+    return () => unsub();
   }, []);
+
+  const activeCollectors = collectorHealth?.activeCollectorsCount ?? 0;
+  const totalCollectors = collectorHealth?.totalCollectors ?? 3;
 
   return (
     <header
@@ -62,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Telemetry Mode Badge & SOC Pipeline Status */}
+        {/* Right: Verified Telemetry Status Badge & Collectors Status */}
         <div className="flex items-center gap-2.5 sm:gap-4">
           {/* Notification Center */}
           <NotificationCenterDropdown
@@ -70,34 +73,19 @@ export const Header: React.FC<HeaderProps> = ({
             onNavigateToAlerts={onNavigateToAlerts}
           />
 
-          {hasRealData ? (
-            <div
-              id="badge-real-data"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-cyan-500/40 bg-cyan-950/40 text-cyan-300 text-xs font-mono font-bold shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-            >
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              <span className="w-2 h-2 rounded-full bg-cyan-400 absolute" />
-              <span className="ml-1.5 tracking-wider">REAL DATA ({totalEvents})</span>
-            </div>
-          ) : (
-            <div
-              id="badge-demo-mode"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-500/40 bg-amber-950/40 text-amber-300 text-xs font-mono font-bold shadow-[0_0_10px_rgba(245,158,11,0.15)]"
-            >
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-              <span className="w-2 h-2 rounded-full bg-amber-400 absolute" />
-              <span className="ml-1.5 tracking-wider">DEMO MODE</span>
-            </div>
-          )}
+          {/* Verified Telemetry Status Badge: LIVE / CONNECTING / DISCONNECTED / SIMULATION / ERROR */}
+          <TelemetryStatusBadge />
 
-          {/* Live SOC Pipeline Status */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300">
-            <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span className="text-slate-400">SOC Pipeline:</span>
-            <span className="text-emerald-400 font-semibold">{hasRealData ? 'REAL INGESTION' : 'SIMULATED'}</span>
+          {/* Verified Host Collectors Status */}
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300">
+            <Server className={`w-3.5 h-3.5 ${activeCollectors > 0 ? 'text-emerald-400 animate-pulse' : 'text-slate-500'}`} />
+            <span className="text-slate-400">Collectors:</span>
+            <span className={activeCollectors > 0 ? 'text-emerald-400 font-semibold' : 'text-slate-400 font-semibold'}>
+              {activeCollectors}/{totalCollectors} ACTIVE
+            </span>
           </div>
 
-          {/* Refresh simulated trigger */}
+          {/* Refresh trigger */}
           {onRefresh && (
             <button
               id="btn-refresh-telemetry"
@@ -114,4 +102,5 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+
 

@@ -145,24 +145,77 @@ export const LiveTelemetryCollectorsPanel: React.FC<LiveTelemetryCollectorsPanel
 
       {/* External Host Collector Script Accordion */}
       {showAgentCommand && (
-        <div className="bg-slate-950 border border-cyan-900/50 rounded-lg p-4 space-y-2 font-mono text-xs">
+        <div className="bg-slate-950 border border-cyan-900/50 rounded-lg p-4 space-y-3 font-mono text-xs">
           <div className="flex items-center justify-between text-cyan-400 font-bold">
             <span className="flex items-center gap-1.5">
               <Terminal className="w-4 h-4" />
-              Run Collector Agent on any Remote Windows or Linux Host
+              Windows Security & Telemetry Collector Service
             </span>
             <span className="text-[10px] bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800 text-cyan-300">
-              Cross-Platform (Node.js & Python)
+              Modular Python Collector
             </span>
           </div>
-          <p className="text-slate-400 text-[11px] font-sans">
-            Stream real operating system metrics, socket states, and connection attempts from external endpoints directly into this SOC instance:
+          <p className="text-slate-300 text-[11px] font-sans">
+            Collects authentic Windows Event Logs (<code className="text-emerald-400">System</code>, <code className="text-emerald-400">Application</code>, and privileged <code className="text-emerald-400">Security</code>), tails application log files, and performs non-intrusive local socket telemetry:
           </p>
-          <div className="bg-slate-900 p-2.5 rounded border border-slate-800 text-slate-200 select-all">
-            node backend/collector_agent.js --server {window?.location?.origin || 'http://localhost:3000'} --interval 4000
+
+          <div className="space-y-2">
+            <div className="text-[11px] text-slate-400 font-semibold font-sans">
+              1. Run Complete Windows Collector (CLI runner):
+            </div>
+            <div className="bg-slate-900 p-2.5 rounded border border-slate-800 text-emerald-300 select-all font-mono text-[11px]">
+              python run_windows_collector.py --backend-url {window?.location?.origin || 'http://localhost:3000'} --channels System,Application,Security --interval 4.0
+            </div>
+
+            <div className="text-[11px] text-slate-400 font-semibold font-sans">
+              2. Run with Custom Application Logs directory & Passive Network Monitoring:
+            </div>
+            <div className="bg-slate-900 p-2.5 rounded border border-slate-800 text-cyan-300 select-all font-mono text-[11px]">
+              python run_windows_collector.py --app-log-dirs "C:\inetpub\logs\LogFiles,C:\AppLogs" --enabled-collectors event_log,file_tail,network
+            </div>
+
+            <div className="text-[10px] text-slate-400 font-sans flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Permission Note: Reading the <code>Security</code> event log requires Administrator elevation. <code>System</code>, <code>Application</code>, file tailing, and passive network telemetry run under standard user permissions.</span>
+            </div>
           </div>
-          <div className="text-[11px] text-slate-500">
-            Or with Python standard library: <code className="text-emerald-400">python backend/collector_agent.py --server {window?.location?.origin || 'http://localhost:3000'}</code>
+        </div>
+      )}
+
+      {/* Registered External Windows Collectors */}
+      {status.externalCollectors && status.externalCollectors.length > 0 && (
+        <div className="bg-slate-950/70 border border-emerald-500/30 rounded-lg p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                Active External Windows Telemetry Agents ({status.externalCollectors.length})
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/40">
+              AUTHENTIC TELEMETRY STREAMING
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
+            {status.externalCollectors.map((ec: any, idx: number) => (
+              <div key={idx} className="bg-slate-900/90 border border-slate-800 rounded p-2.5 text-xs font-mono">
+                <div className="flex items-center justify-between text-slate-200 font-bold">
+                  <span>{ec.hostname}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300">
+                    {ec.status}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1 truncate">
+                  Collector: {ec.collectorName}
+                </div>
+                <div className="flex justify-between items-center text-[10px] text-slate-500 mt-2 pt-1 border-t border-slate-800">
+                  <span>Events: <strong className="text-white">{ec.eventsCount}</strong></span>
+                  <span>{new Date(ec.lastSeen).toLocaleTimeString()}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
