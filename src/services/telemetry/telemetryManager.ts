@@ -26,6 +26,7 @@ import {
 } from './telemetryTypes';
 import { databaseService } from '../../db/databaseService';
 import { localAnalysisEngine } from '../localAnalysisEngine';
+import { sixAgentPipeline, PipelineProcessingResult } from './pipelineOrchestrator';
 import crypto from 'crypto';
 
 export class TelemetryManager {
@@ -54,7 +55,7 @@ export class TelemetryManager {
   private readonly maxBufferKeep: number = 150;
   private heartbeatTimer: any = null;
   private lastDbCheckTime: number = 0;
-  private cachedDbHealth: any = { status: 'DATABASE_CONNECTED', connected: true, mode: 'PostgreSQL / Local Store' };
+  private cachedDbHealth: any = { status: 'DATABASE_UNAVAILABLE', connected: false, mode: 'MongoDB', details: 'Database connection not verified yet.' };
 
   // Agent metrics tracking
   private agentStats: Record<string, { events: number; threats: number; lastActive: string }> = {
@@ -310,7 +311,7 @@ export class TelemetryManager {
         this.cachedDbHealth = dbHealth;
         this.broadcastSse('DATABASE_HEALTH_UPDATE', dbHealth);
       } catch (err: any) {
-        this.cachedDbHealth = { status: 'DATABASE_ERROR', connected: false, error: err.message };
+        this.cachedDbHealth = { status: 'DATABASE_UNAVAILABLE', connected: false, error: err.message || 'Database health check failed' };
         this.broadcastSse('DATABASE_HEALTH_UPDATE', this.cachedDbHealth);
       }
     }
@@ -328,7 +329,7 @@ export class TelemetryManager {
       try {
         this.cachedDbHealth = await databaseService.checkConnection();
       } catch {
-        this.cachedDbHealth = { status: 'DATABASE_STANDBY', connected: true };
+        this.cachedDbHealth = { status: 'DATABASE_UNAVAILABLE', connected: false, error: 'Database service unavailable or unverified' };
       }
     }
 
@@ -553,105 +554,81 @@ export class TelemetryManager {
       console.warn(`[TelemetryManager] Failed saving event ${event.eventId} to DB:`, err.message);
     }
 
-    // 3. Multi-Agent Analysis & ML Threat Evaluation
+    // 3. Multi-Agent Analysis & ML Threat Evaluation using SixAgentPipeline (Requirements 1-14)
     let isThreat = false;
-    let mlDetection: any = null;
     let finding: any = null;
     let alert: any = null;
     let incident: any = null;
-    let analysis: any = null;
+    let pipelineOutcome: PipelineProcessingResult | null = null;
 
     try {
-      // Analyze with rule engine and models
-      analysis = localAnalysisEngine.analyze(event.rawPayload, event.source, event.eventId);
-      
-      if (analysis.threat_detected && analysis.findings.length > 0) {
+      pipelineOutcome = await sixAgentPipeline.processEvent(event);
+
+      if (pipelineOutcome.status === 'DUPLICATE') {
+        return; // Suppressed duplicate
+      }
+
+      if (pipelineOutcome.threatClassification.isConfirmedThreat) {
         isThreat = true;
         this.totalThreatsDetected++;
-        const topFinding = analysis.findings[0];
 
-        finding = {
+        const topFinding = pipelineOutcome.agentRouting.findings[0];
+        finding = topFinding ? {
           eventId: event.eventId,
           agentType: event.agentRouting.assignedAgent,
-          threatType: topFinding.threat_type,
+          threatType: topFinding.threatType,
           severity: topFinding.severity,
           confidence: topFinding.confidence,
           evidence: topFinding.evidence,
-          indicators: [event.sourceIp, event.destinationIp, topFinding.mitre_technique].filter(Boolean),
-          mitreTechnique: topFinding.mitre_technique,
+          indicators: topFinding.indicators,
+          mitreTechnique: 'T1078',
           timestamp: event.timestamp,
           metadata: { isSimulated: event.isSimulated, telemetrySource: event.telemetrySource }
-        };
+        } : null;
 
-        // Persist Security Finding
-        try {
-          await databaseService.insertFinding(finding);
-        } catch {}
-
-        // Calculate 7-Factor Risk Score
-        const riskScore = analysis.risk_assessment?.risk_score || 75;
-        const riskBand = analysis.risk_assessment?.risk_band || 'High';
-
-        // 4. Generate Alert if High/Critical or Risk >= 50
-        if (riskScore >= 50 || topFinding.severity === 'HIGH' || topFinding.severity === 'CRITICAL') {
+        if (pipelineOutcome.alert.generated) {
           this.totalAlertsGenerated++;
-          const alertId = `ALT-${Date.now().toString().slice(-6)}`;
-          
           alert = {
-            id: alertId,
-            title: `${topFinding.threat_type} on ${event.host}`,
-            severity: topFinding.severity,
+            id: pipelineOutcome.alert.alertId,
+            title: pipelineOutcome.alert.title,
+            severity: pipelineOutcome.alert.severity,
             source: event.source,
-            category: topFinding.threat_type,
+            category: pipelineOutcome.threatClassification.threatCategories[0] || 'Security Anomaly',
             status: 'NEW',
-            description: topFinding.description,
-            mitreTechnique: topFinding.mitre_technique || 'T1078',
+            description: pipelineOutcome.riskAssessment.explanation,
+            mitreTechnique: 'T1078',
             mitreTactic: 'Defense Evasion',
             sourceIp: event.sourceIp,
             targetIp: event.destinationIp,
             affectedHost: event.host,
-            riskScore,
-            associatedFindingIds: [topFinding.id],
-            recommendedActions: [
-              `Isolate host ${event.host} or block source IP ${event.sourceIp}.`,
-              `Inspect active processes and check authentication logs.`
-            ],
+            riskScore: pipelineOutcome.riskAssessment.riskScore,
+            associatedFindingIds: topFinding ? [topFinding.id] : [],
+            recommendedActions: pipelineOutcome.alert.recommendedActions,
             isSimulated: event.isSimulated,
             timestamp: event.timestamp
           };
+        }
 
-          try {
-            await databaseService.insertAlert(alert);
-          } catch {}
-
-          // 5. Escalate to Incident if Critical or Multi-vector
-          if (riskScore >= 80 || topFinding.severity === 'CRITICAL') {
-            this.totalIncidentsCreated++;
-            const incidentId = `INC-${Date.now().toString().slice(-6)}`;
-            
-            incident = {
-              id: incidentId,
-              title: `High Priority Threat: ${topFinding.threat_type} on ${event.host}`,
-              severity: 'CRITICAL',
-              status: 'NEW',
-              summary: `Automated incident triggered from live telemetry on ${event.host}. Source IP ${event.sourceIp}.`,
-              associatedAlertIds: [alertId],
-              affectedAssets: [event.host, event.destinationIp].filter(Boolean),
-              sourceIps: [event.sourceIp],
-              assignedTo: 'SOC L2 Analyst',
-              containmentStatus: 'REQUIRES_IMMEDIATE_ACTION',
-              isSimulated: event.isSimulated,
-              createdAt: event.timestamp
-            };
-
-            try {
-              await databaseService.insertIncident(incident);
-            } catch {}
-          }
+        if (pipelineOutcome.incident.created) {
+          this.totalIncidentsCreated++;
+          incident = {
+            id: pipelineOutcome.incident.incidentId,
+            title: pipelineOutcome.incident.title,
+            severity: pipelineOutcome.incident.severity,
+            status: 'NEW',
+            summary: `Automated incident triggered from live telemetry on ${event.host}. Source IP ${event.sourceIp}.`,
+            associatedAlertIds: alert ? [alert.id] : [],
+            affectedAssets: [event.host, event.destinationIp].filter(Boolean),
+            sourceIps: [event.sourceIp],
+            assignedTo: 'SOC L2 Analyst',
+            containmentStatus: pipelineOutcome.incident.containmentStatus || 'REQUIRES_IMMEDIATE_ACTION',
+            isSimulated: event.isSimulated,
+            createdAt: event.timestamp
+          };
         }
       }
     } catch (err: any) {
-      console.warn(`[TelemetryManager] Pipeline processing error for ${event.eventId}:`, err.message);
+      console.warn(`[TelemetryManager] Six-Agent Pipeline processing error for ${event.eventId}:`, err.message);
     }
 
     // Track agent statistics
@@ -668,10 +645,13 @@ export class TelemetryManager {
       event,
       isThreat,
       finding,
-      correlations: analysis?.correlations || [],
-      riskAssessment: analysis?.risk_assessment || null,
+      pipelineOutcome,
+      correlations: pipelineOutcome?.correlation ? [pipelineOutcome.correlation] : [],
+      riskAssessment: pipelineOutcome?.riskAssessment || null,
       alert,
       incident,
+      persistence: pipelineOutcome?.persistence,
+      databaseHealth: this.cachedDbHealth,
       agentStatus: {
         agentId: event.agentRouting.assignedAgentId,
         agentName: event.agentRouting.assignedAgent,
@@ -685,19 +665,22 @@ export class TelemetryManager {
 
     // 7. Broadcast Individual Domain Events to satisfy granular subscribers
     if (isThreat && finding) {
-      this.broadcastSse('THREAT_DETECTION', finding);
+      this.broadcastSse('THREAT_DETECTION', {
+        ...finding,
+        threatClassification: pipelineOutcome?.threatClassification,
+        riskAssessment: pipelineOutcome?.riskAssessment
+      });
     }
 
-    if (analysis?.correlations && analysis.correlations.length > 0) {
-      for (const corr of analysis.correlations) {
-        this.broadcastSse('CORRELATION_EVENT', corr);
-      }
+    if (pipelineOutcome?.correlation) {
+      this.broadcastSse('CORRELATION_EVENT', pipelineOutcome.correlation);
     }
 
-    if (analysis?.risk_assessment) {
+    if (pipelineOutcome?.riskAssessment) {
       this.broadcastSse('RISK_ASSESSMENT', {
         eventId: event.eventId,
-        ...analysis.risk_assessment
+        correlationId: pipelineOutcome.correlationId,
+        ...pipelineOutcome.riskAssessment
       });
     }
 

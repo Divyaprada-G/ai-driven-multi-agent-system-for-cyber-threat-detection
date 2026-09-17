@@ -18,6 +18,7 @@ import { notificationDispatcher } from './src/services/alertIncident/notificatio
 import { auditService } from './src/services/auditService';
 import { runWorkflowTestSuite } from './src/services/alertIncident/workflowTestSuite';
 import { telemetryManager } from './src/services/telemetry/telemetryManager';
+import { sixAgentPipeline } from './src/services/telemetry/pipelineOrchestrator';
 
 const PORT = config.port;
 const ML_SERVICE_URL = config.mlServiceUrl;
@@ -2246,6 +2247,65 @@ except Exception as e:
         registeredCollectors: status.externalCollectors,
         ingestEndpoint: '/api/telemetry/ingest',
         requiresApiKey: !!process.env.BACKEND_API_KEY
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // SIX-AGENT CYBERSECURITY PIPELINE DIRECT API
+  // Required Flow: Real Collector Event -> Schema Validation -> Preprocessor ->
+  // Correct Agent Routing -> Event Correlation -> Random Forest / Isolation Forest ->
+  // Threat Classification -> Risk Assessment -> Alert Generation -> Incident Management ->
+  // MongoDB Persistence (Verified) -> Dashboard Streaming
+  // -------------------------------------------------------------
+  app.post('/api/pipeline/process', async (req, res) => {
+    try {
+      const payload = req.body;
+      if (!payload) {
+        return res.status(400).json({ error: 'Missing telemetry event payload in request body' });
+      }
+
+      // Check if batch of events
+      if (Array.isArray(payload.events)) {
+        const results = [];
+        for (const ev of payload.events) {
+          const outcome = await sixAgentPipeline.processEvent(ev);
+          results.push(outcome);
+        }
+        return res.status(200).json({
+          batch: true,
+          count: results.length,
+          results
+        });
+      }
+
+      const result = await sixAgentPipeline.processEvent(payload);
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({
+        error: err.message || 'Pipeline processing execution failed',
+        status: 'ERROR'
+      });
+    }
+  });
+
+  app.get('/api/pipeline/status', (_req, res) => {
+    try {
+      const status = sixAgentPipeline.getPipelineStatus();
+      return res.status(200).json(status);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/pipeline/audit', (_req, res) => {
+    try {
+      const logs = auditService.getAuditLogs();
+      return res.status(200).json({
+        count: logs.length,
+        logs
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

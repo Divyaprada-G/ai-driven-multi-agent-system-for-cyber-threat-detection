@@ -37,7 +37,10 @@ export function generateContentHash(event: {
 
 export class DatabaseService {
   /**
-   * Health Check: Distinguishes DATABASE_CONNECTED vs DATABASE_UNAVAILABLE / LOCAL_STORE / MONGODB
+   * Health Check: Distinguishes DATABASE_CONNECTED vs DATABASE_UNAVAILABLE
+   * Strictly adheres to Requirements 13 & 14:
+   * 13. Use MongoDB only when the connection is verified.
+   * 14. If MongoDB is unavailable, display DATABASE_UNAVAILABLE instead of falsely claiming successful persistence.
    */
   async checkConnection(): Promise<{ status: string; connected: boolean; details?: string; mode?: string }> {
     if (mongoConnection.isConfigured()) {
@@ -49,29 +52,64 @@ export class DatabaseService {
           mode: 'MongoDB',
           details: `Connected to MongoDB database '${mongoHealth.database}' with ${mongoHealth.collections?.securityEvents ?? 0} events`
         };
+      } else {
+        return {
+          status: 'DATABASE_UNAVAILABLE',
+          connected: false,
+          mode: 'MongoDB',
+          details: mongoHealth.details || 'MongoDB connection unverified or server unreachable'
+        };
       }
     }
 
-    if (!isDbConfigured()) {
+    if (isDbConfigured()) {
+      try {
+        await db.execute(sql`SELECT 1 as ping`);
+        return { status: 'DATABASE_CONNECTED', connected: true, mode: 'PostgreSQL' };
+      } catch (err: any) {
+        console.warn('[DatabaseService] PostgreSQL ping failed:', err.message);
+        return {
+          status: 'DATABASE_UNAVAILABLE',
+          connected: false,
+          mode: 'PostgreSQL',
+          details: `PostgreSQL connection failed: ${err.message}`
+        };
+      }
+    }
+
+    // When neither verified MongoDB nor PostgreSQL is connected
+    return {
+      status: 'DATABASE_UNAVAILABLE',
+      connected: false,
+      mode: 'MongoDB',
+      details: 'MongoDB connection is unverified or unavailable. Persistence cannot claim connected state.'
+    };
+  }
+
+  async checkMongoConnection(): Promise<{ status: 'DATABASE_CONNECTED' | 'DATABASE_UNAVAILABLE'; connected: boolean; details?: string; mode: string }> {
+    if (!mongoConnection.isConfigured()) {
+      return {
+        status: 'DATABASE_UNAVAILABLE',
+        connected: false,
+        mode: 'MongoDB',
+        details: 'MongoDB environment variables or connection string not configured'
+      };
+    }
+    const mongoHealth = await mongoConnection.checkHealth();
+    if (mongoHealth.connected) {
       return {
         status: 'DATABASE_CONNECTED',
         connected: true,
-        mode: 'JSON_STORE',
-        details: 'PostgreSQL/MongoDB not configured. Persistent JSON local storage active.'
+        mode: 'MongoDB',
+        details: `Connected to MongoDB database '${mongoHealth.database}' with ${mongoHealth.collections?.securityEvents ?? 0} events`
       };
     }
-    try {
-      await db.execute(sql`SELECT 1 as ping`);
-      return { status: 'DATABASE_CONNECTED', connected: true, mode: 'PostgreSQL' };
-    } catch (err: any) {
-      console.warn('[DatabaseService] PostgreSQL ping failed, falling back to local JSON store:', err.message);
-      return {
-        status: 'DATABASE_CONNECTED',
-        connected: true,
-        mode: 'JSON_STORE',
-        details: `PostgreSQL connection error (${err.message}); persistent JSON local storage active.`
-      };
-    }
+    return {
+      status: 'DATABASE_UNAVAILABLE',
+      connected: false,
+      mode: 'MongoDB',
+      details: mongoHealth.details || 'MongoDB connection is unverified or server is unreachable'
+    };
   }
 
   // ==========================================

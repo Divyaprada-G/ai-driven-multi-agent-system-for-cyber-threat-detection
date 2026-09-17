@@ -39,13 +39,18 @@ export type AuditActionType =
   | 'TRAINING_FAILED'
   | 'MODEL_SAVED'
   | 'MODEL_LOADED'
-  | 'PREDICTION_EXECUTED';
+  | 'PREDICTION_EXECUTED'
+  | 'TELEMETRY_INGESTED'
+  | 'PIPELINE_EXECUTED'
+  | 'DUPLICATE_DROPPED'
+  | 'AGENT_ERROR'
+  | 'DATABASE_AUDIT';
 
 export interface AuditLogEntry {
   id: string;
   timestamp: string;
   action: AuditActionType;
-  entityType: 'ALERT' | 'INCIDENT' | 'RISK' | 'THREAT' | 'SYSTEM' | 'DEMO' | 'CONFIG' | 'MODEL' | 'DATASET';
+  entityType: 'ALERT' | 'INCIDENT' | 'RISK' | 'THREAT' | 'SYSTEM' | 'DEMO' | 'CONFIG' | 'MODEL' | 'DATASET' | 'PIPELINE' | 'DATABASE' | 'AGENT' | 'EVENT';
   entityId: string;
   actor: string;
   details: string;
