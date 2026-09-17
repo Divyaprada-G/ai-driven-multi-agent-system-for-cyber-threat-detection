@@ -15,13 +15,15 @@ import {
   ShieldCheck,
   ChevronRight,
   Database,
-  Radio
+  Radio,
+  Search
 } from 'lucide-react';
 import { alertManager } from '../../services/alertIncident/alertManager';
 import { incidentManager } from '../../services/alertIncident/incidentManager';
 
 export type NavPageId =
   | 'dashboard'
+  | 'analyze-logs'
   | 'live-pipeline'
   | 'log-explorer'
   | 'network-agent'
@@ -77,6 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'analyze-logs', label: 'Analyze Logs', icon: Search, badge: 'Agent AI', badgeColor: 'bg-cyan-500/20 text-cyan-300' },
     { id: 'live-pipeline', label: 'Live Pipeline', icon: Radio, badge: 'Live API', badgeColor: 'bg-emerald-500/20 text-emerald-300' },
     { id: 'log-explorer', label: 'Log Explorer', icon: FileText, badge: 'Ingest' },
     { id: 'network-agent', label: 'Network Agent', icon: Network },

@@ -19,6 +19,7 @@ export type ValidationStatus = 'VALID' | 'INVALID';
 
 export type NavPageId =
   | 'dashboard'
+  | 'analyze-logs'
   | 'live-pipeline'
   | 'log-explorer'
   | 'network-agent'

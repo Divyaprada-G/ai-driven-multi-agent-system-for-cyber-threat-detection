@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from './components/layout/Layout';
 import { NavPageId } from './components/layout/Sidebar';
 import { DashboardPage } from './pages/DashboardPage';
+import { AnalyzeLogsPage } from './pages/AnalyzeLogsPage';
 import { LivePipelinePage } from './pages/LivePipelinePage';
 import { LogExplorerPage } from './pages/LogExplorerPage';
 import { NetworkAgentPage } from './pages/NetworkAgentPage';
@@ -166,6 +167,13 @@ export default function App() {
           recentEvents={recentEvents}
           onNavigate={setCurrentPage}
           onToggleAgentStatus={handleToggleAgentStatus}
+        />
+      )}
+
+      {currentPage === 'analyze-logs' && (
+        <AnalyzeLogsPage
+          onNavigate={setCurrentPage}
+          onNavigateToIncident={handleNavigateToIncident}
         />
       )}
 

@@ -5,6 +5,7 @@ import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { databaseService } from './src/db/databaseService.ts';
+import { localStore } from './src/db/localStore.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,8 +27,14 @@ async function ensurePythonBackendRunning() {
     // Service not yet responsive; spawn uvicorn
   }
 
-  const venvPython = path.join(process.cwd(), '.venv', 'bin', 'python');
-  const pythonCmd = fs.existsSync(venvPython) ? venvPython : 'python3';
+  const venvPythonBin = path.join(process.cwd(), '.venv', 'bin', 'python');
+  const venvPythonWin = path.join(process.cwd(), '.venv', 'Scripts', 'python.exe');
+  let pythonCmd = 'python';
+  if (fs.existsSync(venvPythonWin)) {
+    pythonCmd = venvPythonWin;
+  } else if (fs.existsSync(venvPythonBin)) {
+    pythonCmd = venvPythonBin;
+  }
 
   console.log(`[Node Server] Spawning Python FastAPI ML service with ${pythonCmd}...`);
   try {
@@ -76,10 +83,294 @@ async function ensurePythonBackendRunning() {
 async function startServer() {
   const app = express();
   app.use(express.json({ limit: '15mb' }));
+  app.use(express.text({ limit: '15mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
   // Kick off Python backend check in background
   ensurePythonBackendRunning().catch((err) => {
     console.warn('[Node Server] Background ML process error:', err);
+  });
+
+  // -------------------------------------------------------------
+  // UNIFIED HEALTH CHECK ENDPOINT
+  // -------------------------------------------------------------
+  app.get('/api/health', async (_req, res) => {
+    const dbHealth = await databaseService.checkConnection();
+    let pyOnline = false;
+    let pyDetails: any = null;
+    try {
+      const pyResp = await fetch(`${ML_SERVICE_URL}/api/health`, { signal: AbortSignal.timeout(1500) });
+      if (pyResp.ok) {
+        pyOnline = true;
+        pyDetails = await pyResp.json();
+      }
+    } catch {
+      pyOnline = false;
+    }
+
+    const isHealthy = pyOnline || dbHealth.connected;
+    return res.status(isHealthy ? 200 : 503).json({
+      status: isHealthy ? 'ONLINE' : 'DEGRADED',
+      service: 'Cyber Threat Detection Platform',
+      timestamp: new Date().toISOString(),
+      nodeServer: 'ONLINE',
+      pythonMLBackend: pyOnline ? 'ONLINE' : 'OFFLINE',
+      database: dbHealth.status,
+      databaseMode: (dbHealth as any).mode || (dbHealth.connected ? 'PostgreSQL' : 'JSON_STORE'),
+      details: {
+        python: pyDetails,
+        db: dbHealth
+      }
+    });
+  });
+
+  // -------------------------------------------------------------
+  // CORE LOG ANALYSIS ENDPOINT: POST /api/analyze
+  // -------------------------------------------------------------
+  app.post('/api/analyze', async (req, res) => {
+    const { log_text, logs, raw_text, source_type, scenario, filename } = req.body || {};
+    const textToAnalyze = log_text || logs || raw_text || '';
+
+    try {
+      const pyResp = await fetch(`${ML_SERVICE_URL}/api/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          log_text: textToAnalyze,
+          source_type: source_type || 'auto',
+          scenario,
+          filename
+        }),
+        signal: AbortSignal.timeout(30000)
+      });
+
+      if (!pyResp.ok) {
+        const errData = await pyResp.json().catch(() => ({ detail: 'Analysis failed on backend' }));
+        return res.status(pyResp.status).json(errData);
+      }
+
+      const result = await pyResp.json();
+
+      // Automatically persist threat incidents and alerts
+      if (result.threat_detected && result.incident) {
+        try {
+          const inc = result.incident;
+          await databaseService.insertIncident({
+            incidentId: inc.id || `INC-${Date.now()}`,
+            title: inc.title || 'Multi-Agent Security Incident',
+            description: inc.description || 'Threat detected during log analysis',
+            severity: inc.severity || 'HIGH',
+            priority: inc.priority || 'P1',
+            status: 'NEW',
+            riskScore: result.risk_assessment?.risk_score || 75,
+            primaryIp: inc.primary_ip || (result.findings && result.findings[0]?.indicators?.find((i: string) => i.includes('.'))) || '192.168.1.100',
+            affectedHost: inc.affected_host || 'server01',
+            mitreTechniques: inc.mitre_techniques || [],
+            investigationNotes: [
+              {
+                id: `note-${Date.now()}`,
+                author: 'Multi-Agent Security Engine',
+                note: `Auto-generated incident. Agents involved: ${(result.agents_used || []).join(', ')}. Risk Score: ${result.risk_assessment?.risk_score || 0}.`,
+                timestamp: new Date().toISOString()
+              }
+            ]
+          });
+
+          // Also insert alerts
+          if (Array.isArray(result.findings)) {
+            for (const finding of result.findings) {
+              await databaseService.insertAlert({
+                title: `[${finding.agent || 'Agent'}] ${finding.threat_type}`,
+                description: finding.description || 'Security threat detected',
+                alertType: finding.threat_type || 'Security Alert',
+                severity: finding.severity || 'MEDIUM',
+                riskScore: Math.round((finding.confidence || 0.8) * 100),
+                priority: finding.severity === 'CRITICAL' ? 'P1' : finding.severity === 'HIGH' ? 'P2' : 'P3',
+                mitreTechniques: finding.mitre_technique ? [finding.mitre_technique] : [],
+                evidence: finding.evidence || []
+              });
+            }
+          }
+        } catch (dbErr) {
+          console.warn('[Node Server] Non-fatal incident persistence warning:', dbErr);
+        }
+      }
+
+      return res.status(200).json(result);
+    } catch (err: any) {
+      console.error('[Node Server] /api/analyze error:', err);
+      return res.status(503).json({
+        status: 'BACKEND_UNAVAILABLE',
+        error: `Python backend unreachable at ${ML_SERVICE_URL}: ${err.message || err}`,
+        message: 'Could not connect to Python analysis engine. Ensure Python FastAPI is running.'
+      });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // LOG UPLOAD ENDPOINT: POST /api/logs/upload
+  // -------------------------------------------------------------
+  app.post('/api/logs/upload', async (req, res) => {
+    let logText = '';
+    let filename = 'uploaded_log.txt';
+    let sourceType = 'auto';
+
+    if (typeof req.body === 'string') {
+      logText = req.body;
+    } else if (req.body && typeof req.body === 'object') {
+      logText = req.body.log_text || req.body.content || req.body.logs || req.body.raw_text || '';
+      filename = req.body.filename || filename;
+      sourceType = req.body.source_type || sourceType;
+    }
+
+    if (!logText.trim()) {
+      return res.status(400).json({ error: 'No log content received in upload request' });
+    }
+
+    try {
+      const pyResp = await fetch(`${ML_SERVICE_URL}/api/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          log_text: logText,
+          source_type: sourceType,
+          filename
+        }),
+        signal: AbortSignal.timeout(30000)
+      });
+
+      if (!pyResp.ok) {
+        const err = await pyResp.json().catch(() => ({ detail: 'Upload analysis failed' }));
+        return res.status(pyResp.status).json(err);
+      }
+
+      const result = await pyResp.json();
+      result.filename = filename;
+
+      // Persist threat incident if detected
+      if (result.threat_detected && result.incident) {
+        try {
+          await databaseService.insertIncident({
+            incidentId: result.incident.id || `INC-${Date.now()}`,
+            title: result.incident.title || `Threats in ${filename}`,
+            description: result.incident.description || `Detected from uploaded file: ${filename}`,
+            severity: result.incident.severity || 'HIGH',
+            priority: result.incident.priority || 'P1',
+            status: 'NEW',
+            riskScore: result.risk_assessment?.risk_score || 75,
+            primaryIp: result.incident.primary_ip || '192.168.1.100',
+            affectedHost: result.incident.affected_host || 'server01',
+            mitreTechniques: result.incident.mitre_techniques || []
+          });
+        } catch (e) {
+          console.warn('[Node Server] Upload incident persistence warning:', e);
+        }
+      }
+
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(503).json({
+        status: 'BACKEND_UNAVAILABLE',
+        error: `Python backend unreachable: ${err.message || err}`
+      });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // DASHBOARD AGGREGATED STATS: GET /api/dashboard/stats
+  // -------------------------------------------------------------
+  app.get('/api/dashboard/stats', async (_req, res) => {
+    try {
+      let pyStats: any = null;
+      try {
+        const resp = await fetch(`${ML_SERVICE_URL}/api/dashboard/stats`, { signal: AbortSignal.timeout(1500) });
+        if (resp.ok) pyStats = await resp.json();
+      } catch {
+        // Python temporarily offline, continue with local stats
+      }
+
+      const localStats = localStore.getStats();
+
+      const merged = {
+        status: 'ok',
+        totalEvents: Math.max(localStats.totalEvents, pyStats?.totalEvents || 0),
+        threatsDetected: Math.max(localStats.threatsDetected, pyStats?.threatsDetected || 0),
+        criticalThreats: Math.max(localStats.criticalThreats, pyStats?.criticalThreats || 0),
+        highThreats: Math.max(localStats.highThreats, pyStats?.highThreats || 0),
+        mediumThreats: Math.max(localStats.mediumThreats, pyStats?.mediumThreats || 0),
+        lowThreats: Math.max(localStats.lowThreats, pyStats?.lowThreats || 0),
+        activeIncidents: Math.max(localStats.activeIncidents, pyStats?.activeIncidents || 0),
+        totalAlerts: localStats.totalAlerts,
+        pipelineStatus: pyStats?.pipelineStatus || 'READY',
+        activeModel: pyStats?.activeModel || 'Multi-Agent Rule Engine + ML',
+        modelStatus: pyStats?.modelStatus || 'READY',
+        timestamp: new Date().toISOString()
+      };
+
+      return res.status(200).json(merged);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // DEMO SCENARIOS & EXECUTION
+  // -------------------------------------------------------------
+  app.get('/api/demo/scenarios', async (_req, res) => {
+    try {
+      const resp = await fetch(`${ML_SERVICE_URL}/api/demo/scenarios`, { signal: AbortSignal.timeout(1500) });
+      if (resp.ok) {
+        return res.status(200).json(await resp.json());
+      }
+    } catch {
+      // Fallback scenarios list
+    }
+    return res.status(200).json([
+      { id: 'mixed_attack', name: 'Mixed Multi-Agent Attack', source: 'auto', description: 'Network scan + brute force + web attack chain' },
+      { id: 'network_port_scan', name: 'Network Port Scan', source: 'network', description: 'Port scanning from single IP' },
+      { id: 'system_brute_force', name: 'System Brute Force', source: 'system', description: 'SSH brute force + privilege escalation' },
+      { id: 'application_sql_injection', name: 'Application SQL Injection', source: 'application', description: 'SQL injection and XSS attempts' },
+      { id: 'normal_traffic', name: 'Normal Benign Traffic', source: 'auto', description: 'Normal operations with zero false alerts' }
+    ]);
+  });
+
+  app.post('/api/demo', async (req, res) => {
+    const { scenario } = req.body || {};
+    try {
+      const pyResp = await fetch(`${ML_SERVICE_URL}/api/demo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenario: scenario || 'mixed_attack' }),
+        signal: AbortSignal.timeout(30000)
+      });
+      if (!pyResp.ok) {
+        return res.status(pyResp.status).json(await pyResp.json());
+      }
+      const result = await pyResp.json();
+
+      if (result.threat_detected && result.incident) {
+        try {
+          await databaseService.insertIncident({
+            incidentId: result.incident.id || `INC-${Date.now()}`,
+            title: result.incident.title || 'Demo Threat Incident',
+            description: result.incident.description || 'Generated from demo attack scenario',
+            severity: result.incident.severity || 'HIGH',
+            priority: result.incident.priority || 'P1',
+            status: 'NEW',
+            riskScore: result.risk_assessment?.risk_score || 85,
+            primaryIp: result.incident.primary_ip || '203.0.113.50',
+            affectedHost: 'server01',
+            mitreTechniques: result.incident.mitre_techniques || []
+          });
+        } catch (e) {
+          console.warn('[Node Server] Demo incident persistence warning:', e);
+        }
+      }
+
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(503).json({ error: 'Demo execution failed: ' + err.message });
+    }
   });
 
   // -------------------------------------------------------------

@@ -35,6 +35,7 @@ export const IncidentsPage: React.FC<IncidentsPageProps> = ({
   const [simulateTargetIncident, setSimulateTargetIncident] = useState<Incident | null>(null);
 
   useEffect(() => {
+    incidentManager.syncWithBackend();
     const update = () => {
       const current = incidentManager.getIncidents();
       setIncidents(current);

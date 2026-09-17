@@ -162,6 +162,27 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [selectedLiveEvent, setSelectedLiveEvent] = useState<LiveSecurityEvent | null>(null);
   const [isProjectDemoOpen, setIsProjectDemoOpen] = useState<boolean>(false);
 
+  // System Health Status State
+  const [systemHealth, setSystemHealth] = useState<{
+    status: string;
+    nodeServer: string;
+    pythonMLBackend: string;
+    database: string;
+    databaseMode: string;
+  } | null>(null);
+
+  const fetchHealth = useCallback(async () => {
+    try {
+      const resp = await fetch('/api/health');
+      if (resp.ok) {
+        const data = await resp.json();
+        setSystemHealth(data);
+      }
+    } catch {
+      // Backend status unavailable
+    }
+  }, []);
+
   // Load all analytics from unifiedAnalyticsService
   const loadDashboardData = useCallback(async () => {
     setIsLoadingAnalytics(true);

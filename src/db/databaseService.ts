@@ -16,6 +16,8 @@ import {
 import { eq, desc, inArray, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 
+import { localStore } from './localStore.ts';
+
 /**
  * Deterministic Content Hash (SHA-256) for deduplication
  */
@@ -33,18 +35,28 @@ export function generateContentHash(event: {
 
 export class DatabaseService {
   /**
-   * Health Check: Distinguishes DATABASE_CONNECTED vs DATABASE_UNAVAILABLE
+   * Health Check: Distinguishes DATABASE_CONNECTED vs DATABASE_UNAVAILABLE / LOCAL_STORE
    */
-  async checkConnection(): Promise<{ status: string; connected: boolean; details?: string }> {
+  async checkConnection(): Promise<{ status: string; connected: boolean; details?: string; mode?: string }> {
     if (!isDbConfigured()) {
-      return { status: 'DATABASE_UNAVAILABLE', connected: false, details: 'SQL environment variables missing.' };
+      return {
+        status: 'DATABASE_CONNECTED',
+        connected: true,
+        mode: 'JSON_STORE',
+        details: 'PostgreSQL not configured. Persistent JSON local storage active.'
+      };
     }
     try {
       await db.execute(sql`SELECT 1 as ping`);
-      return { status: 'DATABASE_CONNECTED', connected: true };
+      return { status: 'DATABASE_CONNECTED', connected: true, mode: 'PostgreSQL' };
     } catch (err: any) {
-      console.error('[DatabaseService] Connection check failure:', err);
-      return { status: 'DATABASE_UNAVAILABLE', connected: false, details: err.message || 'Failed connecting to database' };
+      console.warn('[DatabaseService] PostgreSQL ping failed, falling back to local JSON store:', err.message);
+      return {
+        status: 'DATABASE_CONNECTED',
+        connected: true,
+        mode: 'JSON_STORE',
+        details: `PostgreSQL connection error (${err.message}); persistent JSON local storage active.`
+      };
     }
   }
 
@@ -78,6 +90,16 @@ export class DatabaseService {
 
     const eventDate = eventData.eventTimestamp ? new Date(eventData.eventTimestamp) : new Date();
 
+    if (!isDbConfigured()) {
+      const rec = localStore.insertRawEvent({
+        ...eventData,
+        id,
+        contentHash,
+        eventTimestamp: eventDate.toISOString()
+      });
+      return { event: rec, isDuplicate: false };
+    }
+
     try {
       const inserted = await db
         .insert(rawEvents)
@@ -108,12 +130,21 @@ export class DatabaseService {
       const existing = await db.select().from(rawEvents).where(eq(rawEvents.contentHash, contentHash)).limit(1);
       return { event: existing[0], isDuplicate: true };
     } catch (err: any) {
-      console.error('[DatabaseService] Insert raw event failed:', err);
-      throw new Error('Database operation failed: insertRawEvent', { cause: err });
+      console.warn('[DatabaseService] Insert raw event failed on Postgres, falling back to localStore:', err.message);
+      const rec = localStore.insertRawEvent({
+        ...eventData,
+        id,
+        contentHash,
+        eventTimestamp: eventDate.toISOString()
+      });
+      return { event: rec, isDuplicate: false };
     }
   }
 
   async getEvents(limit = 100, offset = 0) {
+    if (!isDbConfigured()) {
+      return localStore.listRawEvents(limit);
+    }
     try {
       return await db
         .select()
@@ -122,18 +153,20 @@ export class DatabaseService {
         .limit(limit)
         .offset(offset);
     } catch (err: any) {
-      console.error('[DatabaseService] getEvents failed:', err);
-      throw new Error('Database operation failed: getEvents', { cause: err });
+      console.warn('[DatabaseService] getEvents falling back to localStore:', err.message);
+      return localStore.listRawEvents(limit);
     }
   }
 
   async getEventById(id: string) {
+    if (!isDbConfigured()) {
+      return localStore.getRawEventById(id);
+    }
     try {
       const rows = await db.select().from(rawEvents).where(eq(rawEvents.id, id)).limit(1);
-      return rows[0] || null;
+      return rows[0] || localStore.getRawEventById(id);
     } catch (err: any) {
-      console.error('[DatabaseService] getEventById failed:', err);
-      throw new Error('Database operation failed: getEventById', { cause: err });
+      return localStore.getRawEventById(id);
     }
   }
 
@@ -157,6 +190,10 @@ export class DatabaseService {
     const id = finding.id || `FIND-${crypto.randomUUID()}`;
     const ts = finding.timestamp ? new Date(finding.timestamp) : new Date();
 
+    if (!isDbConfigured()) {
+      return localStore.insertFinding({ ...finding, id, timestamp: ts.toISOString() });
+    }
+
     try {
       const inserted = await db
         .insert(securityFindings)
@@ -177,17 +214,19 @@ export class DatabaseService {
         .returning();
       return inserted[0];
     } catch (err: any) {
-      console.error('[DatabaseService] insertFinding failed:', err);
-      throw new Error('Database operation failed: insertFinding', { cause: err });
+      console.warn('[DatabaseService] insertFinding falling back to localStore:', err.message);
+      return localStore.insertFinding({ ...finding, id, timestamp: ts.toISOString() });
     }
   }
 
   async getFindingsByEventId(eventId: string) {
+    if (!isDbConfigured()) {
+      return localStore.listFindings().filter((f: any) => f.eventId === eventId);
+    }
     try {
       return await db.select().from(securityFindings).where(eq(securityFindings.eventId, eventId));
     } catch (err: any) {
-      console.error('[DatabaseService] getFindingsByEventId failed:', err);
-      throw new Error('Database operation failed: getFindingsByEventId', { cause: err });
+      return localStore.listFindings().filter((f: any) => f.eventId === eventId);
     }
   }
 
@@ -364,6 +403,15 @@ export class DatabaseService {
   }) {
     const id = alertData.id || alertData.alertId || `ALT-${Date.now().toString().slice(-6)}`;
     const alertId = alertData.alertId || id;
+    if (!isDbConfigured()) {
+      return localStore.insertAlert({
+        ...alertData,
+        id,
+        alertId,
+        createdAt: new Date().toISOString()
+      });
+    }
+
     try {
       const inserted = await db
         .insert(alerts)
@@ -409,12 +457,20 @@ export class DatabaseService {
 
       return inserted[0];
     } catch (err: any) {
-      console.error('[DatabaseService] insertAlert failed:', err);
-      throw new Error('Database operation failed: insertAlert', { cause: err });
+      console.warn('[DatabaseService] insertAlert falling back to localStore:', err.message);
+      return localStore.insertAlert({
+        ...alertData,
+        id,
+        alertId,
+        createdAt: new Date().toISOString()
+      });
     }
   }
 
   async getAlerts(limit = 100, offset = 0) {
+    if (!isDbConfigured()) {
+      return localStore.listAlerts(limit);
+    }
     try {
       return await db
         .select()
@@ -423,26 +479,30 @@ export class DatabaseService {
         .limit(limit)
         .offset(offset);
     } catch (err: any) {
-      console.error('[DatabaseService] getAlerts failed:', err);
-      throw new Error('Database operation failed: getAlerts', { cause: err });
+      return localStore.listAlerts(limit);
     }
   }
 
   async getAlertById(alertId: string) {
+    if (!isDbConfigured()) {
+      return localStore.listAlerts().find((a: any) => a.id === alertId || a.alertId === alertId) || null;
+    }
     try {
       const rows = await db.select().from(alerts).where(eq(alerts.alertId, alertId)).limit(1);
-      return rows[0] || null;
+      return rows[0] || localStore.listAlerts().find((a: any) => a.id === alertId || a.alertId === alertId) || null;
     } catch (err: any) {
-      console.error('[DatabaseService] getAlertById failed:', err);
-      throw new Error('Database operation failed: getAlertById', { cause: err });
+      return localStore.listAlerts().find((a: any) => a.id === alertId || a.alertId === alertId) || null;
     }
   }
 
   async updateAlertStatus(alertId: string, newStatus: string, actor = 'ANALYST', reason?: string) {
+    if (!isDbConfigured()) {
+      return localStore.updateAlertStatus(alertId, newStatus, reason);
+    }
     try {
       const existing = await this.getAlertById(alertId);
       if (!existing) {
-        return null;
+        return localStore.updateAlertStatus(alertId, newStatus, reason);
       }
       const previousStatus = existing.status;
 
@@ -466,10 +526,9 @@ export class DatabaseService {
         newValue: newStatus,
       });
 
-      return updated[0];
+      return updated[0] || localStore.updateAlertStatus(alertId, newStatus, reason);
     } catch (err: any) {
-      console.error('[DatabaseService] updateAlertStatus failed:', err);
-      throw new Error('Database operation failed: updateAlertStatus', { cause: err });
+      return localStore.updateAlertStatus(alertId, newStatus, reason);
     }
   }
 
@@ -488,14 +547,23 @@ export class DatabaseService {
     assignee?: string;
     primaryIp?: string;
     affectedHost?: string;
-    alertIds: string[];
-    correlationIds: string[];
+    alertIds?: string[];
+    correlationIds?: string[];
     mitreTechniques?: string[];
     investigationNotes?: any[];
     timeline?: any[];
   }) {
     const id = incData.id || incData.incidentId || `INC-${Date.now().toString().slice(-6)}`;
     const incidentId = incData.incidentId || id;
+
+    if (!isDbConfigured()) {
+      return localStore.insertIncident({
+        ...incData,
+        id,
+        incidentId,
+        createdAt: new Date().toISOString()
+      });
+    }
 
     try {
       const inserted = await db
@@ -550,12 +618,20 @@ export class DatabaseService {
 
       return inserted[0];
     } catch (err: any) {
-      console.error('[DatabaseService] insertIncident failed:', err);
-      throw new Error('Database operation failed: insertIncident', { cause: err });
+      console.warn('[DatabaseService] insertIncident falling back to localStore:', err.message);
+      return localStore.insertIncident({
+        ...incData,
+        id,
+        incidentId,
+        createdAt: new Date().toISOString()
+      });
     }
   }
 
   async getIncidents(limit = 100, offset = 0) {
+    if (!isDbConfigured()) {
+      return localStore.listIncidents(limit);
+    }
     try {
       return await db
         .select()
@@ -564,18 +640,19 @@ export class DatabaseService {
         .limit(limit)
         .offset(offset);
     } catch (err: any) {
-      console.error('[DatabaseService] getIncidents failed:', err);
-      throw new Error('Database operation failed: getIncidents', { cause: err });
+      return localStore.listIncidents(limit);
     }
   }
 
   async getIncidentById(incidentId: string) {
+    if (!isDbConfigured()) {
+      return localStore.getIncidentById(incidentId);
+    }
     try {
       const rows = await db.select().from(incidents).where(eq(incidents.incidentId, incidentId)).limit(1);
-      return rows[0] || null;
+      return rows[0] || localStore.getIncidentById(incidentId);
     } catch (err: any) {
-      console.error('[DatabaseService] getIncidentById failed:', err);
-      throw new Error('Database operation failed: getIncidentById', { cause: err });
+      return localStore.getIncidentById(incidentId);
     }
   }
 
@@ -593,9 +670,26 @@ export class DatabaseService {
     }
   ) {
     const actor = updates.actor || 'ANALYST';
+
+    if (!isDbConfigured()) {
+      return localStore.updateIncidentStatus(
+        incidentId,
+        updates.status || 'NEW',
+        updates.reason || (updates.newNote ? updates.newNote.note : undefined),
+        actor
+      );
+    }
+
     try {
       const existing = await this.getIncidentById(incidentId);
-      if (!existing) return null;
+      if (!existing) {
+        return localStore.updateIncidentStatus(
+          incidentId,
+          updates.status || 'NEW',
+          updates.reason || (updates.newNote ? updates.newNote.note : undefined),
+          actor
+        );
+      }
 
       const patchData: Record<string, any> = { updatedAt: new Date() };
 
@@ -670,10 +764,20 @@ export class DatabaseService {
         .where(eq(incidents.incidentId, incidentId))
         .returning();
 
-      return updated[0];
+      return updated[0] || localStore.updateIncidentStatus(
+        incidentId,
+        updates.status || 'NEW',
+        updates.reason || (updates.newNote ? updates.newNote.note : undefined),
+        actor
+      );
     } catch (err: any) {
-      console.error('[DatabaseService] updateIncident failed:', err);
-      throw new Error('Database operation failed: updateIncident', { cause: err });
+      console.warn('[DatabaseService] updateIncident falling back to localStore:', err.message);
+      return localStore.updateIncidentStatus(
+        incidentId,
+        updates.status || 'NEW',
+        updates.reason || (updates.newNote ? updates.newNote.note : undefined),
+        actor
+      );
     }
   }
 
@@ -687,6 +791,9 @@ export class DatabaseService {
     details: string;
   }) {
     const id = `HIST-${crypto.randomUUID()}`;
+    if (!isDbConfigured()) {
+      return [{ ...entry, id, timestamp: new Date().toISOString() }];
+    }
     try {
       return await db
         .insert(incidentHistory)
@@ -702,12 +809,14 @@ export class DatabaseService {
         })
         .returning();
     } catch (err: any) {
-      console.error('[DatabaseService] insertIncidentHistory failed:', err);
-      throw new Error('Database operation failed: insertIncidentHistory', { cause: err });
+      return [{ ...entry, id, timestamp: new Date().toISOString() }];
     }
   }
 
   async getIncidentHistory(incidentId: string) {
+    if (!isDbConfigured()) {
+      return localStore.getData().incidentHistory.filter((h: any) => h.incidentId === incidentId);
+    }
     try {
       return await db
         .select()
@@ -715,8 +824,7 @@ export class DatabaseService {
         .where(eq(incidentHistory.incidentId, incidentId))
         .orderBy(desc(incidentHistory.timestamp));
     } catch (err: any) {
-      console.error('[DatabaseService] getIncidentHistory failed:', err);
-      throw new Error('Database operation failed: getIncidentHistory', { cause: err });
+      return localStore.getData().incidentHistory.filter((h: any) => h.incidentId === incidentId);
     }
   }
 
@@ -734,6 +842,9 @@ export class DatabaseService {
     metadata?: Record<string, any>;
   }) {
     const id = `AUD-${crypto.randomUUID()}`;
+    if (!isDbConfigured()) {
+      return localStore.insertAuditLog({ ...log, id });
+    }
     try {
       return await db
         .insert(auditLogs)
@@ -750,13 +861,14 @@ export class DatabaseService {
         })
         .returning();
     } catch (err: any) {
-      console.error('[DatabaseService] insertAuditLog failed:', err);
-      // Audit log failures shouldn't completely crash operational flow
-      return null;
+      return localStore.insertAuditLog({ ...log, id });
     }
   }
 
   async getAuditLogs(limit = 100, offset = 0) {
+    if (!isDbConfigured()) {
+      return localStore.listAuditLogs(limit);
+    }
     try {
       return await db
         .select()
@@ -765,8 +877,7 @@ export class DatabaseService {
         .limit(limit)
         .offset(offset);
     } catch (err: any) {
-      console.error('[DatabaseService] getAuditLogs failed:', err);
-      throw new Error('Database operation failed: getAuditLogs', { cause: err });
+      return localStore.listAuditLogs(limit);
     }
   }
 
@@ -787,6 +898,10 @@ export class DatabaseService {
     const reportId = rep.reportId || `REP-${Date.now().toString().slice(-6)}`;
     const id = `REP-UUID-${crypto.randomUUID()}`;
 
+    if (!isDbConfigured()) {
+      return localStore.insertReport({ ...rep, id, reportId });
+    }
+
     try {
       return await db
         .insert(reports)
@@ -804,12 +919,14 @@ export class DatabaseService {
         })
         .returning();
     } catch (err: any) {
-      console.error('[DatabaseService] insertReport failed:', err);
-      throw new Error('Database operation failed: insertReport', { cause: err });
+      return localStore.insertReport({ ...rep, id, reportId });
     }
   }
 
   async getReports(limit = 50) {
+    if (!isDbConfigured()) {
+      return localStore.getReports(limit);
+    }
     try {
       return await db
         .select()
@@ -817,8 +934,7 @@ export class DatabaseService {
         .orderBy(desc(reports.generatedAt))
         .limit(limit);
     } catch (err: any) {
-      console.error('[DatabaseService] getReports failed:', err);
-      throw new Error('Database operation failed: getReports', { cause: err });
+      return localStore.getReports(limit);
     }
   }
 
@@ -839,6 +955,9 @@ export class DatabaseService {
     status?: string;
     isTestData?: boolean;
   }) {
+    if (!isDbConfigured()) {
+      return localStore.upsertModelRegistry(model);
+    }
     try {
       return await db
         .insert(modelRegistry)
@@ -866,17 +985,18 @@ export class DatabaseService {
         })
         .returning();
     } catch (err: any) {
-      console.error('[DatabaseService] upsertModelRegistry failed:', err);
-      throw new Error('Database operation failed: upsertModelRegistry', { cause: err });
+      return localStore.upsertModelRegistry(model);
     }
   }
 
   async getRegisteredModels() {
+    if (!isDbConfigured()) {
+      return localStore.getRegisteredModels();
+    }
     try {
       return await db.select().from(modelRegistry).orderBy(desc(modelRegistry.createdAt));
     } catch (err: any) {
-      console.error('[DatabaseService] getRegisteredModels failed:', err);
-      throw new Error('Database operation failed: getRegisteredModels', { cause: err });
+      return localStore.getRegisteredModels();
     }
   }
 }

@@ -15,9 +15,10 @@ import time
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException, Request, status, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from schemas import (
     HealthResponse,
@@ -37,6 +38,16 @@ from schemas import (
 from services.model_service import model_service
 from services.event_pipeline import LiveEventPipeline
 from services.simulator_service import LiveEventSimulator
+from services.log_analyzer import analyze_logs, get_demo_log, get_available_demos, DEMO_LOGS
+
+class AnalyzeRequest(BaseModel):
+    log_text: Optional[str] = ""
+    source_type: Optional[str] = "auto"
+    scenario: Optional[str] = None
+    filename: Optional[str] = None
+
+# Analysis session tracking
+analysis_history: List[Dict[str, Any]] = []
 
 app = FastAPI(
     title="Cyber Threat Detection Local ML & Security Pipeline API",
@@ -456,16 +467,144 @@ async def future_n8n_events(req: Request):
         receivedData=body
     )
 
-@app.post("/api/integration/alerts", response_model=IntegrationEventPlaceholder)
-async def future_n8n_alerts(req: Request):
-    """Reserved for future n8n workflow integration. Not active in Prompt 12."""
-    body = await req.json() if req.headers.get("content-type") == "application/json" else {}
-    return IntegrationEventPlaceholder(
-        status="RESERVED",
-        message="Reserved for future n8n workflow integration.",
-        receivedData=body
-    )
+# -------------------------------------------------------------
+# 11. END-TO-END MULTI-AGENT LOG ANALYSIS & DASHBOARD APIS
+# -------------------------------------------------------------
+@app.post("/api/analyze")
+async def analyze_log_endpoint(req: AnalyzeRequest):
+    """
+    Core End-to-End Log Analysis Endpoint.
+    Analyzes raw log text using multi-agent detection (Network, System, Application),
+    ML inference, correlation, and risk scoring.
+    """
+    log_text = req.log_text or ""
+    source_type = req.source_type or "auto"
+    
+    if req.scenario and (not log_text or not log_text.strip()):
+        log_text, detected_src = get_demo_log(req.scenario)
+        if source_type == "auto":
+            source_type = detected_src
+
+    if not log_text.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No log text provided. Please provide log_text or a valid scenario."
+        )
+
+    result = analyze_logs(raw_text=log_text, source_type=source_type)
+    if req.filename:
+        result["filename"] = req.filename
+    
+    analysis_history.append(result)
+    if len(analysis_history) > 100:
+        analysis_history.pop(0)
+
+    return result
+
+@app.post("/api/logs/upload")
+async def upload_log_file(
+    file: UploadFile = File(...),
+    source_type: str = Form("auto")
+):
+    """
+    Accepts log file upload (multipart/form-data), extracts text content,
+    and runs multi-agent threat detection.
+    """
+    try:
+        content_bytes = await file.read()
+        try:
+            log_text = content_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            log_text = content_bytes.decode("latin-1", errors="ignore")
+
+        if not log_text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Uploaded file is empty."
+            )
+
+        result = analyze_logs(raw_text=log_text, source_type=source_type)
+        result["filename"] = file.filename
+        analysis_history.append(result)
+        if len(analysis_history) > 100:
+            analysis_history.pop(0)
+
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process log file: {str(e)}"
+        )
+
+@app.get("/api/dashboard/stats")
+async def get_dashboard_stats():
+    """
+    Aggregates metrics across processed events, analysis sessions, and incidents.
+    """
+    pipe_status = pipeline.get_status()
+    total_pipeline_events = pipe_status.get("processedCount", 0)
+    
+    history_events = sum(a.get("events_parsed", 0) for a in analysis_history)
+    total_events = total_pipeline_events + history_events
+    
+    all_findings = []
+    for a in analysis_history:
+        all_findings.extend(a.get("findings", []))
+        
+    threats_detected = sum(1 for a in analysis_history if a.get("threat_detected"))
+    critical_count = sum(1 for f in all_findings if str(f.get("severity", "")).upper() == "CRITICAL")
+    high_count = sum(1 for f in all_findings if str(f.get("severity", "")).upper() == "HIGH")
+    medium_count = sum(1 for f in all_findings if str(f.get("severity", "")).upper() == "MEDIUM")
+    low_count = sum(1 for f in all_findings if str(f.get("severity", "")).upper() == "LOW")
+    
+    incidents_count = sum(1 for a in analysis_history if a.get("incident"))
+
+    m_status = model_service.get_model_status()
+    active_model = m_status.get("activeModelId")
+
+    return {
+        "status": "ok",
+        "totalEvents": total_events,
+        "threatsDetected": threats_detected,
+        "criticalThreats": critical_count,
+        "highThreats": high_count,
+        "mediumThreats": medium_count,
+        "lowThreats": low_count,
+        "activeIncidents": incidents_count,
+        "pipelineStatus": pipe_status.get("status", "STOPPED"),
+        "activeModel": active_model or "None (Rule-Engine Active)",
+        "modelStatus": m_status.get("status", "READY"),
+        "analysisSessionsCount": len(analysis_history),
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
+@app.get("/api/demo/scenarios")
+async def get_demo_scenarios():
+    """Returns available demonstration attack scenarios."""
+    return get_available_demos()
+
+@app.post("/api/demo")
+async def run_demo_scenario(payload: Optional[Dict[str, Any]] = None):
+    """
+    Executes analysis on a predefined demo scenario (e.g. mixed_attack, network_port_scan).
+    """
+    scenario_id = (payload or {}).get("scenario", "mixed_attack")
+    log_text, src = get_demo_log(scenario_id)
+    result = analyze_logs(raw_text=log_text, source_type=src)
+    result["scenario"] = scenario_id
+    analysis_history.append(result)
+    if len(analysis_history) > 100:
+        analysis_history.pop(0)
+    return result
+
+@app.get("/api/analysis/history")
+async def get_analysis_history(limit: int = 20):
+    """Returns recent analysis results."""
+    return list(reversed(analysis_history[-limit:]))
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+

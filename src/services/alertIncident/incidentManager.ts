@@ -438,8 +438,81 @@ export class IncidentManager {
       reason: resolutionNote
     });
 
+    // Sync status change to backend database / local store
+    fetch(`/api/incidents/${incidentId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus, reason: resolutionNote, actor })
+    }).catch(() => {});
+
     this.notify();
     return true;
+  }
+
+  /**
+   * Sync persistent incidents from backend API
+   */
+  public async syncWithBackend(): Promise<void> {
+    try {
+      const resp = await fetch('/api/incidents');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const backendIncidents = Array.isArray(data) ? data : (data.incidents || []);
+      if (!Array.isArray(backendIncidents) || backendIncidents.length === 0) return;
+
+      for (const bInc of backendIncidents) {
+        const id = bInc.incidentId || bInc.id;
+        const existing = this.incidents.find((i) => i.incidentId === id || i.id === id);
+        if (existing) {
+          if (bInc.status && existing.status !== bInc.status) {
+            existing.status = bInc.status;
+          }
+        } else {
+          this.incidents.unshift({
+            id: bInc.id || id,
+            incidentId: id,
+            title: bInc.title || 'Multi-Agent Security Incident',
+            description: bInc.description || 'Threat detected by multi-agent analysis',
+            createdAt: bInc.createdAt ? new Date(bInc.createdAt).toLocaleString() : new Date().toLocaleString(),
+            updatedAt: bInc.updatedAt ? new Date(bInc.updatedAt).toLocaleString() : new Date().toLocaleString(),
+            detectedAt: bInc.createdAt ? new Date(bInc.createdAt).toLocaleString() : new Date().toLocaleString(),
+            severity: bInc.severity || 'HIGH',
+            priority: bInc.priority || 'P1',
+            riskScore: bInc.riskScore || 75,
+            status: (bInc.status as IncidentLifecycleStatus) || 'NEW',
+            alertIds: bInc.alertIds || [],
+            correlationIds: bInc.correlationIds || [],
+            threatTypes: [bInc.title || 'Multi-Agent Threat'],
+            participatingAgents: ['NETWORK_AGENT', 'SYSTEM_AGENT', 'APPLICATION_AGENT'],
+            affectedEntities: [bInc.primaryIp || bInc.affectedHost || 'server01'],
+            affectedSource: bInc.primaryIp || bInc.affectedHost || 'server01',
+            evidence: [`Target Host: ${bInc.affectedHost || 'server01'}`, `Source IP: ${bInc.primaryIp || 'Unknown'}`],
+            timeline: [
+              {
+                id: `tl-${Date.now()}`,
+                time: new Date().toLocaleTimeString(),
+                timestamp: new Date().toLocaleTimeString(),
+                description: `Incident logged with severity ${bInc.severity || 'HIGH'}`,
+                actor: 'Multi-Agent Engine',
+                phase: 'ALERT'
+              }
+            ],
+            analystNotes: bInc.investigationNotes || [],
+            recommendedActions: ['Isolate host', 'Block IP'],
+            assignedTo: bInc.assignee || 'Unassigned',
+            mitreTactic: 'TA0001 - Initial Access',
+            mitreTechnique: (bInc.mitreTechniques && bInc.mitreTechniques[0]) || 'T1190',
+            containmentRecommendation: 'Block offending IP address and inspect affected system.',
+            summary: bInc.description || bInc.title,
+            history: [],
+            simulatedResponses: []
+          });
+        }
+      }
+      this.notify();
+    } catch (err) {
+      console.warn('[IncidentManager] Backend sync non-fatal warning:', err);
+    }
   }
 
   /**
