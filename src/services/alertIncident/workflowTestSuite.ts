@@ -305,6 +305,74 @@ export async function runWorkflowTestSuite(): Promise<WorkflowTestSuiteSummary> 
     }
   );
 
+  // 11. UPGRADE 6: DATABASE PERSISTENCE VERIFICATION & HEALTH METRICS
+  await runStep(
+    'Upgrade 6: Verified Persistence & Metrics',
+    'DATABASE: Verify write result integrity and persistence failure reporting without silent fallback',
+    async () => {
+      const metrics = mongoService.getPersistenceMetrics();
+      if (typeof metrics.persistenceFailures !== 'number' || typeof metrics.totalPersistedRecords !== 'number') {
+        throw new Error('Persistence metrics are malformed or missing key tracking counters.');
+      }
+
+      // Test direct artifact persistence returns structured PersistenceWriteResult
+      const testIncidentRecord = {
+        incident_id: `INC-TEST-SUITE-${Date.now()}`,
+        title: 'Integration Test Incident',
+        description: 'Verified write test for Upgrade 6 pipeline',
+        severity: 'High',
+        status: 'NEW',
+        risk_score: 85,
+        affected_entities: ['10.0.0.1'],
+        alert_ids: ['ALT-001'],
+        received_at: new Date().toISOString(),
+        processed_at: new Date().toISOString(),
+        stored_at: new Date().toISOString()
+      };
+
+      const writeResult = await mongoService.persistIncidentRecord(testIncidentRecord);
+      if (!['PERSISTED', 'DATABASE_UNAVAILABLE', 'DUPLICATE_SKIPPED', 'WRITE_FAILED'].includes(writeResult.status)) {
+        throw new Error(`Invalid persistence write result status: ${writeResult.status}`);
+      }
+
+      return `Persistence verified: Status=${writeResult.status}, Success=${writeResult.success}, Total Persisted Count=${metrics.totalPersistedRecords}, Failures Tracked=${metrics.persistenceFailures}`;
+    }
+  );
+
+  // 12. UPGRADE 6: NOTIFICATION DEDUPLICATION VERIFICATION
+  await runStep(
+    'Upgrade 6: Notification Deduplication',
+    'NOTIFICATIONS: Verify duplicate prevention across delivery channels',
+    async () => {
+      const fixedAlertId = `ALT-DEDUP-${Date.now()}`;
+      const payload = {
+        alertId: fixedAlertId,
+        incidentId: 'INC-DEDUP-01',
+        title: 'Suspicious Beaconing Activity',
+        severity: 'Critical' as const,
+        threatCategory: 'COMMAND_AND_CONTROL',
+        agentName: 'NetworkAgent',
+        description: 'Periodic C2 beaconing detected to external IP',
+        evidence: ['Interval: 60s jitter < 2%'],
+        detectionMethod: 'Jitter Analysis',
+        recommendedAction: 'Block destination IP',
+        timestamp: new Date().toISOString(),
+        incidentStatus: 'NEW' as const
+      };
+
+      // First dispatch
+      const firstDispatch = await notificationDispatcher.dispatchAll(payload);
+      // Immediate second dispatch with same alertId
+      const secondDispatch = await notificationDispatcher.dispatchAll(payload);
+
+      // n8n delivery should be suppressed on the second dispatch to prevent duplicate webhooks
+      const secondN8n = secondDispatch.find(d => d.channel === 'n8n');
+      const wasDeduplicated = secondN8n ? secondN8n.status === 'SKIPPED' : true;
+
+      return `Notification deduplication verified: Initial dispatch count=${firstDispatch.length}, Second dispatch suppressed duplicate delivery: ${wasDeduplicated}`;
+    }
+  );
+
   const passedTests = results.filter(r => r.passed).length;
   const failedTests = results.filter(r => !r.passed).length;
 

@@ -286,6 +286,7 @@ async function startServer() {
         connected: dbHealth.connected,
         mode: dbHealth.mode || 'MongoDB',
         fallbackStore: 'LOCAL_JSON_FALLBACK',
+        persistenceMetrics: mongoService.getPersistenceMetrics(),
         details: dbHealth.details || (dbHealth.connected ? 'MongoDB production replica active' : 'MongoDB unconfigured or unreachable. Zero data loss local fallback active.')
       },
       mlServiceStatus: {
@@ -1100,6 +1101,31 @@ async function startServer() {
     try {
       const suiteResults = await runMongoTestSuite();
       return res.status(200).json(suiteResults);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 9. Database Persistence Metrics: GET
+  app.get('/api/mongo/persistence-metrics', async (_req, res) => {
+    try {
+      const metrics = mongoService.getPersistenceMetrics();
+      const health = await mongoConnection.checkHealth();
+      return res.status(200).json({
+        ...metrics,
+        databaseConnected: health.connected,
+        databaseStatus: health.status
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 10. Reset Database Persistence Metrics: POST
+  app.post('/api/mongo/persistence-metrics/reset', async (_req, res) => {
+    try {
+      mongoService.resetMetrics();
+      return res.status(200).json({ success: true, metrics: mongoService.getPersistenceMetrics() });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

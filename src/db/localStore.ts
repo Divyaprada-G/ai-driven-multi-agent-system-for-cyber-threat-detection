@@ -102,6 +102,10 @@ class LocalStore {
     return this.data.rawEvents.find((e) => e.id === id) || null;
   }
 
+  public findRawEventByHash(contentHash: string): any | null {
+    return this.data.rawEvents.find((e) => e.contentHash === contentHash) || null;
+  }
+
   public getEventById(id: string): any | null {
     return this.getRawEventById(id);
   }
