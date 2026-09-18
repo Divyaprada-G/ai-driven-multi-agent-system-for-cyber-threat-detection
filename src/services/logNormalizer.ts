@@ -17,54 +17,73 @@ export class LogNormalizer {
     const rawKeys = Object.keys(rawRecord);
     const mappedKeys = new Set<string>();
 
-    // Helper to find field value across aliases
-    const findValue = <T = unknown>(aliases: string[]): T | undefined => {
+    // Helper to find field value across aliases (even if value is empty string, zero, or null)
+    const findRawEntry = (aliases: string[]): { key: string; value: unknown } | undefined => {
       // Direct case match
       for (const alias of aliases) {
-        if (rawRecord[alias] !== undefined && rawRecord[alias] !== null && rawRecord[alias] !== '') {
+        if (alias in rawRecord) {
           mappedKeys.add(alias);
-          return rawRecord[alias] as T;
+          return { key: alias, value: rawRecord[alias] };
         }
       }
       // Case-insensitive / underscore-insensitive match
-      const aliasClean = aliases.map(a => a.toLowerCase().replace(/[-_]/g, ''));
+      const aliasClean = aliases.map(a => a.toLowerCase().replace(/[-_ \t]/g, ''));
       for (const key of rawKeys) {
-        const cleanKey = key.toLowerCase().replace(/[-_]/g, '');
+        const cleanKey = key.toLowerCase().replace(/[-_ \t]/g, '');
         if (aliasClean.includes(cleanKey)) {
-          if (rawRecord[key] !== undefined && rawRecord[key] !== null && rawRecord[key] !== '') {
-            mappedKeys.add(key);
-            return rawRecord[key] as T;
-          }
+          mappedKeys.add(key);
+          return { key, value: rawRecord[key] };
         }
       }
       return undefined;
     };
 
-    // 1. Timestamp Normalization
-    const rawTime = findValue<string | number>([
-      'timestamp', '@timestamp', 'time', 'datetime', 'event_time', 'date', 'log_time', 'time_stamp'
+    const findValue = <T = unknown>(aliases: string[]): T | undefined => {
+      const entry = findRawEntry(aliases);
+      if (entry && entry.value !== undefined && entry.value !== null && entry.value !== '') {
+        return entry.value as T;
+      }
+      return undefined;
+    };
+
+    // 1. Timestamp Normalization & Quality Check
+    const rawTimeEntry = findRawEntry([
+      'timestamp', '@timestamp', 'time', 'datetime', 'event_time', 'date', 'log_time', 'time_stamp', 'Timestamp'
     ]);
-    const normalizedTimestamp = this.standardizeTimestamp(rawTime);
+    const rawTime = rawTimeEntry?.value as string | number | undefined;
+    const tsCheck = this.parseAndCheckTimestamp(rawTime);
+    const normalizedTimestamp = tsCheck.isoTimestamp;
 
     // 2. Determine Log Type
     const logType: LogType = options.logType || 'NETWORK';
 
     // 3. Extract Normalized Domain Fields
-    const normalizedFields: NormalizedFields = {};
+    const normalizedFields: NormalizedFields = {
+      originalTimestamp: rawTime !== undefined && rawTime !== null ? String(rawTime) : undefined,
+      hasInvalidTimestamp: !tsCheck.isValid
+    };
 
     // --- Network Fields ---
-    const rawSrcIp = findValue<string>([
-      'sourceIp', 'src_ip', 'srcip', 'source_ip', 'ip_src', 'src_addr', 'client_ip', 'src', 'sourceIPAddress'
+    const rawSrcIpEntry = findRawEntry([
+      'sourceIp', 'src_ip', 'srcip', 'source_ip', 'ip_src', 'src_addr', 'client_ip', 'src', 'sourceIPAddress', 'Source IP', 'Src IP'
     ]);
-    if (rawSrcIp) normalizedFields.sourceIp = String(rawSrcIp).trim();
+    if (rawSrcIpEntry) {
+      normalizedFields.sourceIp = rawSrcIpEntry.value !== undefined && rawSrcIpEntry.value !== null
+        ? String(rawSrcIpEntry.value).trim()
+        : '';
+    }
 
-    const rawDstIp = findValue<string>([
-      'destinationIp', 'dest_ip', 'dst_ip', 'dstip', 'destination_ip', 'ip_dst', 'dst_addr', 'server_ip', 'dst', 'destinationIPAddress'
+    const rawDstIpEntry = findRawEntry([
+      'destinationIp', 'dest_ip', 'dst_ip', 'dstip', 'destination_ip', 'ip_dst', 'dst_addr', 'server_ip', 'dst', 'destinationIPAddress', 'Destination IP', 'Dst IP'
     ]);
-    if (rawDstIp) normalizedFields.destinationIp = String(rawDstIp).trim();
+    if (rawDstIpEntry) {
+      normalizedFields.destinationIp = rawDstIpEntry.value !== undefined && rawDstIpEntry.value !== null
+        ? String(rawDstIpEntry.value).trim()
+        : '';
+    }
 
     const rawSrcPort = findValue<number | string>([
-      'sourcePort', 'src_port', 'srcport', 'source_port', 'sport', 'srcPort', 'client_port'
+      'sourcePort', 'src_port', 'srcport', 'source_port', 'sport', 'srcPort', 'client_port', 'Source Port'
     ]);
     if (rawSrcPort !== undefined) {
       const port = Number(rawSrcPort);
@@ -72,20 +91,24 @@ export class LogNormalizer {
     }
 
     const rawDstPort = findValue<number | string>([
-      'destinationPort', 'dest_port', 'dst_port', 'dstport', 'destination_port', 'dport', 'dstPort', 'server_port'
+      'destinationPort', 'dest_port', 'dst_port', 'dstport', 'destination_port', 'dport', 'dstPort', 'server_port', 'Destination Port'
     ]);
     if (rawDstPort !== undefined) {
       const port = Number(rawDstPort);
       if (!isNaN(port)) normalizedFields.destinationPort = port;
     }
 
-    const rawProto = findValue<string>([
-      'protocol', 'proto', 'transport', 'network_protocol'
+    const rawProtoEntry = findRawEntry([
+      'protocol', 'proto', 'transport', 'network_protocol', 'Protocol', 'protocol_type'
     ]);
-    if (rawProto) normalizedFields.protocol = String(rawProto).toUpperCase().trim();
+    if (rawProtoEntry) {
+      normalizedFields.protocol = rawProtoEntry.value !== undefined && rawProtoEntry.value !== null
+        ? String(rawProtoEntry.value).toUpperCase().trim()
+        : '';
+    }
 
     const rawPacketSize = findValue<number | string>([
-      'packetSize', 'packet_size', 'length', 'bytes', 'size', 'tot_len', 'bytes_toserver'
+      'packetSize', 'packet_size', 'length', 'bytes', 'size', 'tot_len', 'bytes_toserver', 'Total Length of Fwd Packets'
     ]);
     if (rawPacketSize !== undefined) {
       const size = Number(rawPacketSize);
@@ -101,6 +124,15 @@ export class LogNormalizer {
       } else {
         normalizedFields.flags = String(rawFlags).split(/[,|\s]+/).map(f => f.trim()).filter(Boolean);
       }
+    }
+
+    // Flow duration
+    const rawFlowDuration = findValue<number | string>([
+      'flowDuration', 'flow_duration', 'duration', 'Flow Duration'
+    ]);
+    if (rawFlowDuration !== undefined) {
+      const dur = Number(rawFlowDuration);
+      if (!isNaN(dur)) normalizedFields.flowDuration = dur;
     }
 
     // --- System / Host Fields ---
@@ -176,6 +208,31 @@ export class LogNormalizer {
     ]);
     if (rawPayload) normalizedFields.payloadSnippet = String(rawPayload).trim();
 
+    // --- Security Telemetry & Dataset Specific Fields ---
+    const rawFailedLoginsEntry = findRawEntry([
+      'num_failed_logins', 'num_failed_login', 'failed_logins', 'failed_login', 'failedLogins', 'failed_login_count', 'failedLoginCount'
+    ]);
+    if (rawFailedLoginsEntry && rawFailedLoginsEntry.value !== undefined && rawFailedLoginsEntry.value !== null) {
+      const parsedNum = Number(rawFailedLoginsEntry.value);
+      normalizedFields.numFailedLogins = isNaN(parsedNum) ? (rawFailedLoginsEntry.value as any) : parsedNum;
+      normalizedFields.failedLogins = normalizedFields.numFailedLogins;
+    }
+
+    const rawLabelEntry = findRawEntry([
+      'label', 'Label', 'attack_cat', 'class', 'target', 'threat_class', 'category'
+    ]);
+    if (rawLabelEntry) {
+      normalizedFields.label = rawLabelEntry.value !== undefined && rawLabelEntry.value !== null
+        ? String(rawLabelEntry.value).trim()
+        : '';
+    }
+
+    // Check for malformed or parser errors recorded during ingestion
+    if (rawRecord.parseError || rawRecord.isMalformed || rawRecord.hasMalformedRecord) {
+      normalizedFields.hasMalformedRecord = true;
+      normalizedFields.parseError = String(rawRecord.parseError || rawRecord.message || 'Malformed record syntax');
+    }
+
     // 4. Source Determination
     let source = findValue<string>(['source', 'src_host', 'origin', 'facility']);
     if (!source) {
@@ -226,11 +283,13 @@ export class LogNormalizer {
     const event: LogEvent = {
       id,
       timestamp: normalizedTimestamp,
+      originalTimestamp: normalizedFields.originalTimestamp,
       ingestionTimestamp: new Date().toISOString(),
       source: String(source).trim(),
       logType,
       message: String(message).trim(),
       rawData: options.rawString || JSON.stringify(rawRecord),
+      originalData: rawRecord,
       format: options.format || 'JSON',
       normalizedFields,
       metadata: unmappedKeys.length > 0 ? { unmapped: Object.fromEntries(unmappedKeys.map(k => [k, rawRecord[k]])) } : undefined
@@ -240,38 +299,68 @@ export class LogNormalizer {
   }
 
   /**
-   * Safely standardizes various date formats into an ISO 8601 string.
+   * Deeply validates and standardizes date formats without silently swallowing invalid values.
    */
-  static standardizeTimestamp(input: string | number | undefined): string {
-    if (!input) {
-      return new Date().toISOString();
+  static parseAndCheckTimestamp(input: string | number | undefined): {
+    isValid: boolean;
+    isoTimestamp: string;
+    originalValue: string | number | undefined;
+    error?: string;
+  } {
+    if (input === undefined || input === null || String(input).trim() === '') {
+      return {
+        isValid: false,
+        isoTimestamp: new Date().toISOString(),
+        originalValue: input,
+        error: 'Missing or blank timestamp value'
+      };
     }
 
     // Epoch timestamp (seconds or milliseconds)
-    if (typeof input === 'number' || /^\d{10,13}$/.test(String(input))) {
+    if (typeof input === 'number' || /^\d{10,13}$/.test(String(input).trim())) {
       const num = Number(input);
       const millis = num < 10000000000 ? num * 1000 : num;
       const d = new Date(millis);
-      if (!isNaN(d.getTime())) return d.toISOString();
+      if (!isNaN(d.getTime())) {
+        return { isValid: true, isoTimestamp: d.toISOString(), originalValue: input };
+      }
     }
 
     const str = String(input).trim();
 
-    // Standard ISO 8601 string
-    const isoDate = new Date(str);
-    if (!isNaN(isoDate.getTime())) {
-      return isoDate.toISOString();
+    // Explicit invalid checks (e.g., placeholder tokens, NaN, non-dates)
+    if (/^(invalid|nan|null|undefined|none|unknown|-)$/i.test(str)) {
+      return {
+        isValid: false,
+        isoTimestamp: new Date().toISOString(),
+        originalValue: input,
+        error: `Invalid timestamp literal: "${str}"`
+      };
     }
 
-    // Apache / Nginx format: 11/Sep/2026:22:19:58 +0000
-    const apacheMatch = str.match(/^(\d{1,2})\/([a-zA-Z]{3})\/(\d{4}):(\d{2}):(\d{2}):(\d{2})\s*([+-]\d{4})?/);
+    // Standard ISO 8601 or Date parse
+    const isoDate = new Date(str);
+    if (!isNaN(isoDate.getTime())) {
+      // Guard against nonsensical single numbers that Date parses as years or epoch
+      if (!/^\d{1,4}$/.test(str)) {
+        return { isValid: true, isoTimestamp: isoDate.toISOString(), originalValue: input };
+      }
+    }
+
+    // Apache / Nginx format: 11/Sep/2026:22:19:58 +0000 or 11/09/2026 22:19:58
+    const apacheMatch = str.match(/^(\d{1,2})\/([a-zA-Z]{3}|\d{1,2})\/(\d{4}):?(\d{2}):(\d{2}):(\d{2})\s*([+-]\d{4})?/);
     if (apacheMatch) {
-      const [, day, month, year, h, m, s, tz] = apacheMatch;
+      const [, day, month, year, h, m, s] = apacheMatch;
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const monthIndex = monthNames.findIndex(mn => mn.toLowerCase() === month.toLowerCase());
-      if (monthIndex !== -1) {
+      let monthIndex = monthNames.findIndex(mn => mn.toLowerCase() === month.toLowerCase());
+      if (monthIndex === -1 && !isNaN(Number(month))) {
+        monthIndex = Number(month) - 1;
+      }
+      if (monthIndex >= 0 && monthIndex <= 11) {
         const d = new Date(Date.UTC(Number(year), monthIndex, Number(day), Number(h), Number(m), Number(s)));
-        if (!isNaN(d.getTime())) return d.toISOString();
+        if (!isNaN(d.getTime())) {
+          return { isValid: true, isoTimestamp: d.toISOString(), originalValue: input };
+        }
       }
     }
 
@@ -284,11 +373,24 @@ export class LogNormalizer {
       if (monthIndex !== -1) {
         const year = new Date().getFullYear();
         const d = new Date(Date.UTC(year, monthIndex, Number(day), Number(h), Number(m), Number(s)));
-        if (!isNaN(d.getTime())) return d.toISOString();
+        if (!isNaN(d.getTime())) {
+          return { isValid: true, isoTimestamp: d.toISOString(), originalValue: input };
+        }
       }
     }
 
-    // Fallback
-    return new Date().toISOString();
+    return {
+      isValid: false,
+      isoTimestamp: new Date().toISOString(),
+      originalValue: input,
+      error: `Unparseable timestamp format: "${str}"`
+    };
+  }
+
+  /**
+   * Backwards compatible standardization helper.
+   */
+  static standardizeTimestamp(input: string | number | undefined): string {
+    return this.parseAndCheckTimestamp(input).isoTimestamp;
   }
 }

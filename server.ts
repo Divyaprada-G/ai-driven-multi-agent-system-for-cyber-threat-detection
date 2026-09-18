@@ -1920,7 +1920,17 @@ try:
         'class_distribution': res['class_distribution'],
         'missing_values_count': res['missing_values_count'],
         'infinite_values_count': res['infinite_values_count'],
-        'is_academic_benchmark': res['is_academic_benchmark']
+        'is_academic_benchmark': res['is_academic_benchmark'],
+        'valid_rows_count': res.get('valid_rows_count', res['total_rows']),
+        'invalid_rows_count': res.get('invalid_rows_count', 0),
+        'warning_rows_count': res.get('warning_rows_count', 0),
+        'duplicate_rows_count': res.get('duplicate_rows_count', 0),
+        'validation_percentage': res.get('validation_percentage', 100.0),
+        'errors_by_code': res.get('errors_by_code', {}),
+        'schema_warnings': res.get('schema_warnings', []),
+        'row_errors': res.get('row_errors', []),
+        'error_sample': res.get('error_sample', []),
+        'columns': res.get('columns', {})
     }
     print(json.dumps(out))
 except Exception as e:

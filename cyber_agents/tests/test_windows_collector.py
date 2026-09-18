@@ -341,6 +341,133 @@ class TestWindowsCollectorService(unittest.TestCase):
         self.assertEqual(health["cycles_completed"], 1)
         self.assertEqual(health["total_events_collected"], res["events_collected"])
 
+    def test_collector_startup_and_shutdown_lifecycle(self):
+        """Verifies safe startup, background worker loop activation, and clean shutdown."""
+        config = CollectorConfig(
+            enabled_collectors=["network"],
+            collection_interval=0.5,
+            health_server_port=0
+        )
+        service = WindowsCollectorService(config)
+        self.assertFalse(service.is_running)
+
+        # Start collection
+        service.start(run_health_server=False)
+        self.assertTrue(service.is_running)
+        self.assertIsNotNone(service.worker_thread)
+        self.assertTrue(service.worker_thread.is_alive())
+
+        # Let it run briefly
+        import time
+        time.sleep(0.6)
+        self.assertGreaterEqual(service.cycles_completed, 1)
+
+        # Stop safely
+        service.stop()
+        self.assertFalse(service.is_running)
+        service.worker_thread.join(timeout=2.0)
+        self.assertFalse(service.worker_thread.is_alive())
+
+
+class TestInvalidEventAndPermissionHandling(unittest.TestCase):
+    def setUp(self):
+        self.normalizer = EventNormalizer(default_hostname="WIN-TEST-NODE")
+        self.collector = WindowsEventLogCollector(self.normalizer)
+
+    def test_invalid_event_handling_malformed_xml(self):
+        """Verifies collector gracefully survives corrupted/malformed XML without crashing or producing bad events."""
+        malformed_xml = "<Events><Event><System><EventID>INVALID"
+        events = self.collector.parse_wevtutil_xml(malformed_xml, "Application")
+        self.assertEqual(len(events), 0)
+
+        # Empty string
+        empty_events = self.collector.parse_wevtutil_xml("", "System")
+        self.assertEqual(len(empty_events), 0)
+
+    def test_permission_failure_handling(self):
+        """Verifies that permission errors when accessing channels set status to PERMISSION_DENIED without crashing."""
+        from unittest.mock import patch, MagicMock
+
+        # Simulate wevtutil returning error 5 (Access is denied)
+        mock_process = MagicMock()
+        mock_process.returncode = 5
+        mock_process.stdout = ""
+        mock_process.stderr = "Failed to open channel Security: Access is denied. Error code 5."
+
+        self.collector.is_windows = True
+        with patch("subprocess.run", return_value=mock_process):
+            events = self.collector.collect()
+
+        self.assertEqual(len(events), 0, "No fabricated events allowed on permission failure")
+        status = self.collector.get_status()
+        self.assertEqual(status["channels"]["Security"]["status"], "PERMISSION_DENIED")
+        self.assertIn("Access Denied", status["channels"]["Security"]["last_error"])
+
+    def test_normalized_event_fields_completeness(self):
+        """Verifies all 10 mandatory fields required by specification are present at top level."""
+        evt = self.normalizer.normalize(
+            source_type="windows_event_log",
+            collector_name="WindowsEventLogCollector",
+            raw_message="Test raw event log text",
+            collection_status="COLLECTED",
+            event_id="WIN-SYS-987654",
+            timestamp="2026-09-17T18:00:00Z",
+            source="system",
+            event_type="Windows System Event 7045: Service Installed",
+            severity="HIGH",
+            event_id_windows=7045
+        )
+        self.assertIsNotNone(evt)
+        # Verify mandatory specification fields
+        expected_fields = [
+            "event_id",
+            "timestamp",
+            "source_type",
+            "hostname",
+            "collector_name",
+            "event_type",
+            "event_id_windows",
+            "severity",
+            "raw_message",
+            "collection_status"
+        ]
+        for field in expected_fields:
+            self.assertIn(field, evt, f"Missing required specification field: {field}")
+
+        self.assertEqual(evt["event_id_windows"], 7045)
+        self.assertEqual(evt["severity"], "HIGH")
+        self.assertEqual(evt["collection_status"], "COLLECTED")
+        self.assertEqual(evt["collector_name"], "WindowsEventLogCollector")
+        self.assertEqual(evt["source_type"], "windows_event_log")
+
+
+class TestBackendCommunication(unittest.TestCase):
+    def test_backend_transmission_error_handling(self):
+        """Verifies service records transmission errors and does not crash when backend is unreachable."""
+        config = CollectorConfig(
+            enabled_collectors=["network"],
+            backend_api_url="http://127.0.0.1:59999",  # Non-existent port
+            health_server_port=0
+        )
+        service = WindowsCollectorService(config)
+        test_events = [{
+            "event_id": "TEST-EVT-001",
+            "timestamp": "2026-09-17T18:00:00Z",
+            "source_type": "windows_event_log",
+            "hostname": "TEST-HOST",
+            "collector_name": "TestCollector",
+            "event_type": "Test Event",
+            "event_id_windows": 100,
+            "severity": "LOW",
+            "raw_message": "Test raw log",
+            "collection_status": "COLLECTED"
+        }]
+
+        result = service._transmit_events(test_events)
+        self.assertFalse(result["success"])
+        self.assertIn("error", result)
+        self.assertEqual(service.total_transmission_errors, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

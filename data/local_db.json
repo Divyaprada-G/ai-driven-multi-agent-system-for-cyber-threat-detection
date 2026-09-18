@@ -1,6 +1,390 @@
 {
   "rawEvents": [
     {
+      "id": "WIN-NET-59023b06",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-59023b06",
+          "timestamp": "2026-09-18T09:36:26.999961+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "event_id_windows": null,
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T09:36:26.999Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "2f9afd0e663b66cc41dd0fff7b0e88ea5cf70f86d8ddb6e75d468b8e6fc56342",
+      "createdAt": "2026-09-18T09:36:27.002Z"
+    },
+    {
+      "id": "WIN-NET-c7b2243b",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-c7b2243b",
+          "timestamp": "2026-09-18T09:36:26.490410+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "event_id_windows": null,
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T09:36:26.490Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "af41e8674a05360916c2498c7c959e67b6cdd5f9291a61dcb04446a94f41d86f",
+      "createdAt": "2026-09-18T09:36:26.493Z"
+    },
+    {
+      "id": "WIN-NET-37f7b772",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-37f7b772",
+          "timestamp": "2026-09-18T09:36:25.982789+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "event_id_windows": null,
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T09:36:25.982Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "1d977648fdd4236b9c82070b62dd170e15f3a0bdbc95dfd1f68345a0c46c4f4d",
+      "createdAt": "2026-09-18T09:36:25.984Z"
+    },
+    {
+      "id": "WIN-NET-849940a2",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-849940a2",
+          "timestamp": "2026-09-18T09:36:03.956456+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "event_id_windows": null,
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T09:36:03.956Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "80f5e31127a4bc1769a2fcc909fafcb4e8ed568c8dc26eb365cf55e99f78c310",
+      "createdAt": "2026-09-18T09:36:03.958Z"
+    },
+    {
+      "id": "WIN-NET-bd90f6e3",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-bd90f6e3",
+          "timestamp": "2026-09-18T09:36:03.448751+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "event_id_windows": null,
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T09:36:03.448Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "20fa581ae22ca94a7df9d8ead3529fd132e43e1b6f2793cedc42880ad8066dca",
+      "createdAt": "2026-09-18T09:36:03.450Z"
+    },
+    {
+      "id": "WIN-NET-3a55484f",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-3a55484f",
+          "timestamp": "2026-09-18T09:36:02.940748+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "event_id_windows": null,
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T09:36:02.940Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "3f4beee3b603f94b7bef93a349791c6f32ae42ca221a53c5e499a678c2b49b64",
+      "createdAt": "2026-09-18T09:36:02.943Z"
+    },
+    {
+      "id": "WIN-NET-7f3f1ee2",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-7f3f1ee2",
+          "timestamp": "2026-09-18T09:35:23.230047+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T09:35:23.230Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "9849936adb1e0aab3a7f4e4d07bfbc5fd5e33562c4e4d922e7c1c24fb00bbcda",
+      "createdAt": "2026-09-18T09:35:23.248Z"
+    },
+    {
+      "id": "WIN-1789721244081-4625",
+      "source": "system",
+      "eventType": "Windows Logon Failure (Event 4625)",
+      "rawPayload": "EVENT 4625: An account failed to log on. Subject: S-1-0-0 Account: Administrator Failure Reason: Unknown user name or bad password.",
+      "normalizedFields": {
+        "host": "WIN-SRV-2022",
+        "severity": "HIGH",
+        "details": "Structured telemetry ingested via REST API.",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "hostname": "WIN-SRV-2022",
+          "collector_name": "WindowsCollector-Production",
+          "source_type": "windows_security_event_log",
+          "collection_status": "COLLECTED"
+        }
+      },
+      "eventTimestamp": "2026-09-18T08:47:24.082Z",
+      "sourceIp": "192.168.1.189",
+      "destinationIp": "127.0.0.1",
+      "host": "WIN-SRV-2022",
+      "username": "Administrator",
+      "severity": "HIGH",
+      "isTestEvent": false,
+      "contentHash": "61ddae78ef75081f0233c4283b14381af33ca8235cf82fb7d296ad89346a8461",
+      "createdAt": "2026-09-18T08:47:24.083Z"
+    },
+    {
+      "id": "WIN-NET-22bfd542",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-22bfd542",
+          "timestamp": "2026-09-18T08:47:18.149366+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T08:47:18.149Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "0fc0dc0da4e0738d9149758573d3abd1fb9f3eca96f37b501a2faf6973d54293",
+      "createdAt": "2026-09-18T08:47:18.173Z"
+    },
+    {
+      "id": "WIN-1789720906139-4625",
+      "source": "system",
+      "eventType": "Windows Logon Failure (Event 4625)",
+      "rawPayload": "EVENT 4625: An account failed to log on. Subject: S-1-0-0 Account: Administrator Failure Reason: Unknown user name or bad password.",
+      "normalizedFields": {
+        "host": "WIN-SRV-2022",
+        "severity": "HIGH",
+        "details": "Structured telemetry ingested via REST API.",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "hostname": "WIN-SRV-2022",
+          "collector_name": "WindowsCollector-Production",
+          "source_type": "windows_security_event_log",
+          "collection_status": "COLLECTED"
+        }
+      },
+      "eventTimestamp": "2026-09-18T08:41:46.139Z",
+      "sourceIp": "192.168.1.189",
+      "destinationIp": "127.0.0.1",
+      "host": "WIN-SRV-2022",
+      "username": "Administrator",
+      "severity": "HIGH",
+      "isTestEvent": false,
+      "contentHash": "db9936ed1e6dd6a6cd130ff4bdca80aa71ecab24f546980309398446c5df5f9d",
+      "createdAt": "2026-09-18T08:41:46.140Z"
+    },
+    {
       "id": "EXT-1789719486944-5eb2",
       "source": "NETWORK",
       "eventType": "External Structured Telemetry",
@@ -6094,7 +6478,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T08:05:38.619Z",
+      "updatedAt": "2026-09-18T09:31:10.076Z",
       "createdAt": "2026-09-18T07:25:31.997Z"
     },
     {
@@ -6106,7 +6490,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T08:05:38.618Z",
+      "updatedAt": "2026-09-18T09:31:10.075Z",
       "createdAt": "2026-09-18T07:25:31.996Z"
     },
     {
@@ -6154,7 +6538,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T08:05:38.620Z",
+      "updatedAt": "2026-09-18T09:31:10.078Z",
       "createdAt": "2026-09-17T10:19:33.460Z"
     },
     {
@@ -6167,7 +6551,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T08:05:38.621Z",
+      "updatedAt": "2026-09-18T09:31:10.079Z",
       "createdAt": "2026-09-17T10:19:29.754Z"
     },
     {
@@ -6180,7 +6564,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T08:05:38.625Z",
+      "updatedAt": "2026-09-18T09:31:10.085Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -6192,7 +6576,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T08:05:38.624Z",
+      "updatedAt": "2026-09-18T09:31:10.083Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -6205,7 +6589,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T08:05:38.623Z",
+      "updatedAt": "2026-09-18T09:31:10.082Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -6218,7 +6602,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T08:05:38.622Z",
+      "updatedAt": "2026-09-18T09:31:10.080Z",
       "createdAt": "2026-09-17T10:19:25.997Z"
     },
     {
@@ -6230,7 +6614,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T08:05:38.626Z",
+      "updatedAt": "2026-09-18T09:31:10.086Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     },
     {
@@ -6243,7 +6627,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T08:05:38.628Z",
+      "updatedAt": "2026-09-18T09:31:10.088Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     }
   ]

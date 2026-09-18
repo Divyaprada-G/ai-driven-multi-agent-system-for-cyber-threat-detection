@@ -9,6 +9,9 @@ import {
   Clock,
   Eye,
   CheckCircle2,
+  AlertCircle,
+  Bug,
+  Filter,
   Table as TableIcon
 } from 'lucide-react';
 import { DatasetSchema, ColumnInspectionMeta } from '../../types/datasetMl';
@@ -19,21 +22,47 @@ interface Props {
 }
 
 export const DatasetSchemaViewer: React.FC<Props> = ({ schema, onLabelChange }) => {
-  const [activeTab, setActiveTab] = useState<'columns' | 'distribution' | 'sample'>('columns');
+  const [activeTab, setActiveTab] = useState<'columns' | 'distribution' | 'sample' | 'errors'>('columns');
   const [searchColumn, setSearchColumn] = useState('');
+  const [selectedErrorFilter, setSelectedErrorFilter] = useState<string>('ALL');
 
   const filteredColumns = schema.columns.filter(c =>
     c.name.toLowerCase().includes(searchColumn.toLowerCase())
   );
 
+  const validationPercentage = schema.validationPercentage ?? 100;
+  const invalidCount = schema.invalidRowCount ?? (schema.rowErrors ? schema.rowErrors.filter(r => r.status === 'INVALID').length : 0);
+  const rowErrors = schema.rowErrors || [];
+
+  const filteredRowErrors = rowErrors.filter(r => {
+    if (selectedErrorFilter === 'ALL') return true;
+    return r.errors.some(e => e.code === selectedErrorFilter);
+  });
+
   return (
     <div id="dataset-schema-viewer" className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-5">
       {/* Top Metric Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/50">
           <span className="text-[11px] text-slate-400 block font-medium">Total Samples</span>
           <span className="text-base font-bold text-slate-100 font-mono">
             {schema.rowCount.toLocaleString()}
+          </span>
+        </div>
+
+        {/* Schema Validation Conformity Card */}
+        <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/50" id="metric-schema-validation">
+          <span className="text-[11px] text-slate-400 block font-medium">Schema Validation</span>
+          <span className={`text-base font-bold font-mono ${validationPercentage === 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
+            {validationPercentage}% Valid
+          </span>
+        </div>
+
+        {/* Error Detection Metric Card */}
+        <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/50" id="metric-error-detection">
+          <span className="text-[11px] text-slate-400 block font-medium">Error Detection</span>
+          <span className={`text-base font-bold font-mono ${invalidCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+            {invalidCount > 0 ? `${invalidCount} invalid` : 'No errors'}
           </span>
         </div>
 
@@ -53,17 +82,6 @@ export const DatasetSchemaViewer: React.FC<Props> = ({ schema, onLabelChange }) 
           <span className="text-[11px] text-slate-400 block font-medium">Identifiers Excluded</span>
           <span className="text-base font-bold text-amber-400 font-mono">
             {schema.identifierColumns.length}
-          </span>
-        </div>
-
-        <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/50">
-          <span className="text-[11px] text-slate-400 block font-medium">Missing Values</span>
-          <span
-            className={`text-base font-bold font-mono ${
-              schema.missingValuesTotal > 0 ? 'text-amber-400' : 'text-emerald-400'
-            }`}
-          >
-            {schema.missingValuesTotal}
           </span>
         </div>
 
@@ -88,6 +106,43 @@ export const DatasetSchemaViewer: React.FC<Props> = ({ schema, onLabelChange }) 
             {schema.infiniteValuesCount}
           </span>
         </div>
+      </div>
+
+      {/* Schema Warnings Section */}
+      <div id="dataset-schema-warnings" className="rounded-lg bg-slate-950/80 border border-slate-800 p-3.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className={`w-4 h-4 ${schema.schemaWarnings && schema.schemaWarnings.length > 0 ? 'text-amber-400' : 'text-slate-500'}`} />
+            <span className="text-xs font-semibold text-slate-200">Schema Warnings:</span>
+            {schema.schemaWarnings && schema.schemaWarnings.length > 0 ? (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-medium">
+                {schema.schemaWarnings.length} Issue(s) Detected
+              </span>
+            ) : (
+              <span className="text-xs text-slate-500 font-mono">Empty</span>
+            )}
+          </div>
+          {rowErrors.length > 0 && (
+            <button
+              onClick={() => setActiveTab('errors')}
+              className="text-xs text-cyan-400 hover:text-cyan-300 underline font-mono"
+            >
+              View {rowErrors.length} Offending Row(s)
+            </button>
+          )}
+        </div>
+
+        {schema.schemaWarnings && schema.schemaWarnings.length > 0 ? (
+          <ul className="space-y-1 pt-1 text-xs text-amber-300 font-mono pl-6 list-disc">
+            {schema.schemaWarnings.map((warn, i) => (
+              <li key={i}>{warn}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[11px] text-slate-500 font-mono">
+            No schema warnings present. All values conform to standard network and cyber telemetry schema specifications.
+          </p>
+        )}
       </div>
 
       {/* Target Column Selector & Auto-Detection Status */}
@@ -123,8 +178,8 @@ export const DatasetSchemaViewer: React.FC<Props> = ({ schema, onLabelChange }) 
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setActiveTab('columns')}
@@ -162,6 +217,22 @@ export const DatasetSchemaViewer: React.FC<Props> = ({ schema, onLabelChange }) 
           >
             <TableIcon className="w-3.5 h-3.5" />
             Data Sample Preview (15 Rows)
+          </button>
+
+          <button
+            type="button"
+            id="tab-data-quality"
+            onClick={() => setActiveTab('errors')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              activeTab === 'errors'
+                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                : rowErrors.length > 0
+                ? 'text-rose-400 hover:text-rose-300'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Bug className="w-3.5 h-3.5" />
+            Error Detection ({rowErrors.length})
           </button>
         </div>
 
@@ -326,6 +397,102 @@ export const DatasetSchemaViewer: React.FC<Props> = ({ schema, onLabelChange }) 
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Tab 4: Data Quality & Error Detection */}
+      {activeTab === 'errors' && (
+        <div className="space-y-4">
+          {/* Error Controls & Filter Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-950 rounded-lg border border-slate-800">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-cyan-400" />
+              <span className="text-xs font-semibold text-slate-200">Error Filter:</span>
+              <select
+                id="select-schema-error-filter"
+                value={selectedErrorFilter}
+                onChange={e => setSelectedErrorFilter(e.target.value)}
+                className="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-mono"
+              >
+                <option value="ALL">All Detected Errors ({rowErrors.length})</option>
+                <option value="MISSING_IP">Missing IP Addresses ({schema.errorsByCode?.MISSING_IP || 0})</option>
+                <option value="INVALID_IP">Invalid IP Addresses ({schema.errorsByCode?.INVALID_IP || 0})</option>
+                <option value="INVALID_PROTOCOL">Invalid Protocols ({schema.errorsByCode?.INVALID_PROTOCOL || 0})</option>
+                <option value="NEGATIVE_FAILED_LOGINS">Negative Failed Logins ({schema.errorsByCode?.NEGATIVE_FAILED_LOGINS || 0})</option>
+                <option value="INVALID_TIMESTAMP">Invalid Timestamps ({schema.errorsByCode?.INVALID_TIMESTAMP || 0})</option>
+                <option value="MISSING_LABEL">Missing Labels ({schema.errorsByCode?.MISSING_LABEL || 0})</option>
+                <option value="DUPLICATE_ROW">Duplicate Records ({schema.errorsByCode?.DUPLICATE_ROW || 0})</option>
+                <option value="INVALID_PORT">Port Out of Bounds ({schema.errorsByCode?.INVALID_PORT || 0})</option>
+                <option value="NEGATIVE_METRIC">Negative Metric ({schema.errorsByCode?.NEGATIVE_METRIC || 0})</option>
+              </select>
+            </div>
+
+            <div className="text-xs font-mono text-slate-400">
+              Showing {filteredRowErrors.length} of {rowErrors.length} offending record(s)
+            </div>
+          </div>
+
+          {/* Table of Offending Records */}
+          <div className="overflow-x-auto max-h-96 border border-slate-800 rounded-lg">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800 font-semibold font-mono">
+                <tr>
+                  <th className="py-2.5 px-3">Row #</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Error Code</th>
+                  <th className="py-2.5 px-3">Offending Field</th>
+                  <th className="py-2.5 px-3">Original Problematic Value</th>
+                  <th className="py-2.5 px-3">Diagnostic Description</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                {filteredRowErrors.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-500 font-sans">
+                      {rowErrors.length === 0
+                        ? 'No data quality errors detected in this dataset. Schema is 100% compliant.'
+                        : 'No errors match the selected filter criterion.'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRowErrors.map((rowErr, rIdx) => {
+                    return rowErr.errors.map((err, eIdx) => (
+                      <tr key={`${rIdx}-${eIdx}`} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="py-2 px-3 text-cyan-400 font-bold whitespace-nowrap">
+                          #{rowErr.rowNumber}
+                        </td>
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                              err.severity === 'ERROR'
+                                ? 'bg-rose-950/60 text-rose-400 border-rose-800'
+                                : 'bg-amber-950/60 text-amber-400 border-amber-800'
+                            }`}
+                          >
+                            {rowErr.status}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-rose-300 font-bold whitespace-nowrap">
+                          {err.code}
+                        </td>
+                        <td className="py-2 px-3 text-purple-300 whitespace-nowrap">
+                          {err.field}
+                        </td>
+                        <td className="py-2 px-3 text-amber-300 whitespace-nowrap font-semibold">
+                          {err.originalValue !== undefined && err.originalValue !== ''
+                            ? String(err.originalValue)
+                            : '<EMPTY / MISSING>'}
+                        </td>
+                        <td className="py-2 px-3 text-slate-300 max-w-md">
+                          {err.message}
+                        </td>
+                      </tr>
+                    ));
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

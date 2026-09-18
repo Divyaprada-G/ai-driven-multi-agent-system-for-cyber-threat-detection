@@ -25,6 +25,30 @@ export interface ColumnInspectionMeta {
   mean?: number;
 }
 
+export interface DatasetRowError {
+  rowIndex: number;
+  rowNumber: number;
+  status: 'VALID' | 'INVALID' | 'WARNING' | 'DUPLICATE';
+  errors: {
+    code: string;
+    field: string;
+    severity: 'ERROR' | 'WARNING';
+    message: string;
+    originalValue?: any;
+  }[];
+  rawRow: Record<string, any>;
+}
+
+export interface DatasetValidationSummary {
+  validRowCount: number;
+  invalidRowCount: number;
+  warningRowCount: number;
+  duplicateRowCount: number;
+  validationPercentage: number;
+  errorsByCode: Record<string, number>;
+  schemaWarnings: string[];
+}
+
 export interface DatasetSchema {
   datasetId: string;
   datasetName: string;
@@ -47,6 +71,14 @@ export interface DatasetSchema {
   rawContentSample?: Record<string, any>[];
   uploadedAt: string;
   fileSizeBytes: number;
+  validRowCount?: number;
+  invalidRowCount?: number;
+  warningRowCount?: number;
+  validationPercentage?: number;
+  errorsByCode?: Record<string, number>;
+  schemaWarnings?: string[];
+  rowErrors?: DatasetRowError[];
+  validationSummary?: DatasetValidationSummary;
 }
 
 export interface PreprocessingConfig {

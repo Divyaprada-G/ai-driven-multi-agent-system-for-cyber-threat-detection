@@ -80,7 +80,10 @@ class LogRepositoryImpl {
       totalParsed: parseResult.events.length,
       validCount: parseResult.validCount,
       invalidCount: parseResult.invalidCount,
+      warningCount: parseResult.warningCount,
       duplicateCount: parseResult.duplicateCount,
+      processingErrorCount: parseResult.processingErrorCount,
+      validationPercentage: parseResult.validationPercentage,
       durationMs,
       events: parseResult.events,
       errors: parseResult.parseErrors
@@ -109,7 +112,10 @@ class LogRepositoryImpl {
       numberOfEvents: parseResult.events.length,
       validCount: parseResult.validCount,
       invalidCount: parseResult.invalidCount,
+      warningCount: parseResult.warningCount,
       duplicateCount: parseResult.duplicateCount,
+      processingErrorCount: parseResult.processingErrorCount,
+      validationPercentage: parseResult.validationPercentage,
       detectedFormat: parseResult.format,
       parsedPreview: previewLines,
       parsingDurationMs: durationMs,
@@ -143,16 +149,30 @@ class LogRepositoryImpl {
 
     // Filter by Validation / Duplicate Status
     if (filter.validationStatus && filter.validationStatus !== 'ALL') {
-      if (filter.validationStatus === 'DUPLICATE') {
-        result = result.filter(e => e.isDuplicate);
-      } else {
-        result = result.filter(e => e.validation?.status === filter.validationStatus);
-      }
+      const targetStatus = filter.validationStatus;
+      result = result.filter(e => {
+        const rowStatus = e.structuredValidation?.validation_status;
+        if (targetStatus === 'DUPLICATE') {
+          return e.isDuplicate || rowStatus === 'DUPLICATE';
+        }
+        if (rowStatus) {
+          return rowStatus === targetStatus;
+        }
+        return e.validation?.status === targetStatus;
+      });
+    }
+
+    // Filter by Specific Error Code (e.g. MISSING_IP, INVALID_PROTOCOL, NEGATIVE_FAILED_LOGINS, etc.)
+    if (filter.errorCode && filter.errorCode !== 'ALL') {
+      const code = filter.errorCode.toUpperCase();
+      result = result.filter(e => {
+        return e.structuredValidation?.errors.some(err => err.error_code.toUpperCase() === code);
+      });
     }
 
     // Deduplication filter toggle
     if (filter.deduplicate) {
-      result = result.filter(e => !e.isDuplicate);
+      result = result.filter(e => !e.isDuplicate && e.structuredValidation?.validation_status !== 'DUPLICATE');
     }
 
     // Filter by Source
@@ -178,6 +198,12 @@ class LogRepositoryImpl {
           if (nf.userName && nf.userName.toLowerCase().includes(q)) return true;
           if (nf.endpoint && nf.endpoint.toLowerCase().includes(q)) return true;
         }
+
+        // Also match error codes or messages in search
+        if (e.structuredValidation?.errors.some(err => err.message.toLowerCase().includes(q) || err.error_code.toLowerCase().includes(q))) {
+          return true;
+        }
+
         return false;
       });
     }
@@ -208,7 +234,9 @@ class LogRepositoryImpl {
     const totalEvents = this.events.length;
     let validEvents = 0;
     let invalidEvents = 0;
+    let warningEvents = 0;
     let duplicateEvents = 0;
+    let processingErrorEvents = 0;
     let networkEvents = 0;
     let systemEvents = 0;
     let applicationEvents = 0;
@@ -218,10 +246,14 @@ class LogRepositoryImpl {
     let lastTime: number | null = null;
 
     for (const e of this.events) {
-      if (e.validation?.status === 'VALID') validEvents++;
+      const status = e.structuredValidation?.validation_status || (e.validation?.status === 'VALID' ? 'VALID' : 'INVALID');
+      if (status === 'VALID') validEvents++;
+      else if (status === 'WARNING') warningEvents++;
+      else if (status === 'DUPLICATE') duplicateEvents++;
+      else if (status === 'PROCESSING_ERROR') processingErrorEvents++;
       else invalidEvents++;
 
-      if (e.isDuplicate) duplicateEvents++;
+      if (e.isDuplicate && status !== 'DUPLICATE') duplicateEvents++;
 
       if (e.logType === 'NETWORK') networkEvents++;
       else if (e.logType === 'SYSTEM') systemEvents++;
@@ -237,11 +269,18 @@ class LogRepositoryImpl {
       }
     }
 
+    const validationPercentage = totalEvents > 0
+      ? Number(((validEvents / totalEvents) * 100).toFixed(1))
+      : 100;
+
     return {
       totalEvents,
       validEvents,
       invalidEvents,
+      warningEvents,
       duplicateEvents,
+      processingErrorEvents,
+      validationPercentage,
       networkEvents,
       systemEvents,
       applicationEvents,

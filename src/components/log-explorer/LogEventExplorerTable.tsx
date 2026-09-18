@@ -33,6 +33,7 @@ export const LogEventExplorerTable: React.FC<LogEventExplorerTableProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedValidation, setSelectedValidation] = useState<string>('ALL');
+  const [selectedErrorCode, setSelectedErrorCode] = useState<string>('ALL');
   const [hideDuplicates, setHideDuplicates] = useState(false);
   const [selectedSource, setSelectedSource] = useState<string>('ALL');
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,11 +60,35 @@ export const LogEventExplorerTable: React.FC<LogEventExplorerTableProps> = ({
 
       // Validation filter
       if (selectedValidation !== 'ALL') {
+        const isErr =
+          e.validation?.status === 'INVALID' ||
+          e.validation?.status === 'WARNING' ||
+          e.validation?.status === 'PROCESSING_ERROR' ||
+          (e.validation?.errors && e.validation.errors.length > 0) ||
+          e.structuredValidation?.hasErrors ||
+          (e.validation as any)?.valid === false;
+
         if (selectedValidation === 'DUPLICATE') {
           if (!e.isDuplicate) return false;
-        } else if (e.validation?.status !== selectedValidation) {
-          return false;
+        } else if (selectedValidation === 'VALID') {
+          if (isErr) return false;
+        } else if (selectedValidation === 'INVALID') {
+          if (!isErr) return false;
         }
+      }
+
+      // Specific Error Code Filter
+      if (selectedErrorCode !== 'ALL') {
+        const hasCode =
+          e.structuredValidation?.errors?.some(err => err.code === selectedErrorCode) ||
+          e.validation?.structured?.errors?.some((err: any) => err.code === selectedErrorCode) ||
+          (Array.isArray(e.validation?.errors) &&
+            e.validation.errors.some((err: any) =>
+              typeof err === 'string'
+                ? err.toUpperCase().includes(selectedErrorCode)
+                : err.code === selectedErrorCode
+            ));
+        if (!hasCode) return false;
       }
 
       // Hide duplicates toggle
@@ -112,7 +137,7 @@ export const LogEventExplorerTable: React.FC<LogEventExplorerTableProps> = ({
 
       return true;
     });
-  }, [events, selectedType, selectedValidation, hideDuplicates, selectedSource, searchTerm]);
+  }, [events, selectedType, selectedValidation, selectedErrorCode, hideDuplicates, selectedSource, searchTerm]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage));
@@ -191,7 +216,7 @@ export const LogEventExplorerTable: React.FC<LogEventExplorerTableProps> = ({
         </div>
 
         {/* Filter Controls Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 pt-1">
           {/* Search Box */}
           <div className="relative sm:col-span-2">
             <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -244,8 +269,35 @@ export const LogEventExplorerTable: React.FC<LogEventExplorerTableProps> = ({
             </select>
           </div>
 
-          {/* Source Filter & Deduplicate Toggle */}
-          <div className="flex items-center gap-2">
+          {/* Error Filter */}
+          <div>
+            <select
+              id="select-error-filter"
+              value={selectedErrorCode}
+              onChange={e => {
+                setSelectedErrorCode(e.target.value);
+                if (e.target.value !== 'ALL') {
+                  setSelectedValidation('INVALID');
+                }
+                setCurrentPage(1);
+              }}
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-xs font-mono text-slate-300 focus:outline-none focus:border-cyan-500 truncate"
+            >
+              <option value="ALL">Error Filter: All</option>
+              <option value="MISSING_IP">Missing IP Addresses</option>
+              <option value="INVALID_IP">Invalid IP Addresses</option>
+              <option value="INVALID_PROTOCOL">Invalid Protocols</option>
+              <option value="NEGATIVE_FAILED_LOGINS">Negative Failed Logins</option>
+              <option value="INVALID_TIMESTAMP">Invalid Timestamps</option>
+              <option value="MISSING_LABEL">Missing Labels</option>
+              <option value="DUPLICATE_ROW">Duplicate Records</option>
+              <option value="INVALID_PORT">Port Range Out of Bounds</option>
+              <option value="NEGATIVE_METRIC">Negative Metric Values</option>
+            </select>
+          </div>
+
+          {/* Source Filter */}
+          <div>
             <select
               id="select-filter-source"
               value={selectedSource}
@@ -356,10 +408,26 @@ export const LogEventExplorerTable: React.FC<LogEventExplorerTableProps> = ({
                             VALID
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-950/50 text-rose-400 border border-rose-800/80" title={event.validation?.errors?.join('; ')}>
-                            <AlertCircle className="w-3 h-3" />
-                            INVALID
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-950/50 text-rose-400 border border-rose-800/80"
+                              title={
+                                event.structuredValidation?.errors?.map(e => `[${e.code}] ${e.message}`).join('; ') ||
+                                (Array.isArray(event.validation?.errors)
+                                  ? event.validation.errors.map((e: any) => typeof e === 'string' ? e : `${e.code}: ${e.message}`).join('; ')
+                                  : 'Schema validation error')
+                              }
+                            >
+                              <AlertCircle className="w-3 h-3" />
+                              INVALID
+                            </span>
+                            {event.structuredValidation?.errors && event.structuredValidation.errors.length > 0 && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-900/40 text-rose-300 border border-rose-800/60 font-mono">
+                                {event.structuredValidation.errors[0].code}
+                                {event.structuredValidation.errors.length > 1 && ` +${event.structuredValidation.errors.length - 1}`}
+                              </span>
+                            )}
+                          </div>
                         )}
 
                         {event.isDuplicate && (

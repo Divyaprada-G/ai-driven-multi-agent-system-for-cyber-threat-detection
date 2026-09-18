@@ -111,6 +111,14 @@ class WindowsEventLogCollector:
                 timeout=12,
                 startupinfo=startupinfo
             )
+        except PermissionError as pe:
+            state["status"] = "PERMISSION_DENIED"
+            state["last_error"] = (
+                f"Access Denied for Windows Event Channel '{channel}': {pe}. "
+                "Reading the Security log requires elevated Administrator privileges ('Run as administrator')."
+            )
+            logger.warning(state["last_error"])
+            return []
         except FileNotFoundError:
             state["status"] = "SOURCE_UNAVAILABLE"
             state["last_error"] = "wevtutil.exe not found on system PATH."
@@ -251,7 +259,8 @@ class WindowsEventLogCollector:
                     "provider_name": parsed.get("provider"),
                     "windows_event_id": event_id_num,
                     "record_id": record_id
-                }
+                },
+                event_id_windows=event_id_num
             )
 
             if normalized:

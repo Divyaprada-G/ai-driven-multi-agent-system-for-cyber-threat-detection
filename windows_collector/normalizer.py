@@ -84,7 +84,8 @@ class EventNormalizer:
         username: Optional[str] = None,
         details: Optional[str] = None,
         features: Optional[Dict[str, Any]] = None,
-        custom_metadata: Optional[Dict[str, Any]] = None
+        custom_metadata: Optional[Dict[str, Any]] = None,
+        event_id_windows: Optional[Any] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Creates a NormalizedTelemetryEvent dictionary.
@@ -124,6 +125,8 @@ class EventNormalizer:
             assigned_agent = "System Security Agent"
             assigned_id = "agent-system-1"
 
+        resolved_event_type = event_type or f"{source_type.replace('_', ' ').title()} Event"
+
         # Mandatory Source Metadata as required by specification
         source_metadata = {
             "source_type": source_type,
@@ -132,16 +135,29 @@ class EventNormalizer:
             "event_id": event_id,
             "timestamp": now_ts,
             "raw_message": raw_message,
-            "collection_status": collection_status
+            "collection_status": collection_status,
+            "event_id_windows": event_id_windows
         }
         if custom_metadata:
             source_metadata.update(custom_metadata)
 
         normalized_event = {
-            "eventId": event_id,
+            # Standard specification fields (snake_case)
+            "event_id": event_id,
             "timestamp": now_ts,
+            "source_type": source_type,
+            "hostname": self.hostname,
+            "collector_name": collector_name,
+            "event_type": resolved_event_type,
+            "event_id_windows": event_id_windows,
+            "severity": severity.upper(),
+            "raw_message": raw_message,
+            "collection_status": collection_status,
+
+            # Backwards-compatible camelCase & pipeline fields
+            "eventId": event_id,
             "source": source,
-            "eventType": event_type or f"{source_type.replace('_', ' ').title()} Event",
+            "eventType": resolved_event_type,
             "sourceIp": source_ip or "127.0.0.1",
             "destinationIp": destination_ip or "127.0.0.1",
             "sourcePort": source_port,
@@ -149,7 +165,6 @@ class EventNormalizer:
             "protocol": protocol,
             "host": self.hostname,
             "username": username,
-            "severity": severity.upper(),
             "details": details or f"Telemetry collected via {collector_name} ({collection_status})",
             "rawPayload": raw_message,
             "contentHash": content_hash,

@@ -36,31 +36,45 @@ export const IngestionStatsBar: React.FC<IngestionStatsBarProps> = ({ stats }) =
         </div>
       </div>
 
-      {/* Valid Events */}
-      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1">
+      {/* Schema Validation */}
+      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1" id="stat-schema-validation">
         <div className="flex items-center justify-between text-slate-400">
-          <span className="text-[11px] font-mono uppercase tracking-wider">Schema Valid</span>
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="text-[11px] font-mono uppercase tracking-wider">Schema Validation</span>
+          <CheckCircle2 className={`w-3.5 h-3.5 ${validRate === 100 ? 'text-emerald-400' : 'text-amber-400'}`} />
         </div>
-        <div className="text-xl font-bold text-emerald-400 font-mono">
-          {stats.validEvents.toLocaleString()}
+        <div className={`text-xl font-bold font-mono ${validRate === 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
+          {validRate}% Valid
         </div>
-        <div className="text-[10px] text-emerald-500/80 font-mono">
-          {validRate}% conformity rate
+        <div className="text-[10px] text-slate-500 font-mono">
+          {stats.validEvents.toLocaleString()} of {stats.totalEvents.toLocaleString()} conform
         </div>
       </div>
 
-      {/* Invalid / Malformed */}
-      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1">
+      {/* Error Detection */}
+      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1" id="stat-error-detection">
         <div className="flex items-center justify-between text-slate-400">
-          <span className="text-[11px] font-mono uppercase tracking-wider">Schema Warnings</span>
-          <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+          <span className="text-[11px] font-mono uppercase tracking-wider">Error Detection</span>
+          <AlertCircle className={`w-3.5 h-3.5 ${stats.invalidEvents > 0 ? 'text-rose-400' : 'text-emerald-400'}`} />
         </div>
-        <div className={`text-xl font-bold font-mono ${stats.invalidEvents > 0 ? 'text-rose-400' : 'text-slate-400'}`}>
-          {stats.invalidEvents.toLocaleString()}
+        <div className={`text-xl font-bold font-mono ${stats.invalidEvents > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+          {stats.invalidEvents > 0 ? `${stats.invalidEvents.toLocaleString()} errors` : 'No errors'}
         </div>
         <div className="text-[10px] text-slate-500 font-mono">
-          Malformed / RFC violations
+          {stats.invalidEvents > 0 ? 'Domain & RFC violations' : '0 validation violations'}
+        </div>
+      </div>
+
+      {/* Schema Warnings */}
+      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1" id="stat-schema-warnings">
+        <div className="flex items-center justify-between text-slate-400">
+          <span className="text-[11px] font-mono uppercase tracking-wider">Schema Warnings</span>
+          <AlertCircle className={`w-3.5 h-3.5 ${stats.invalidEvents > 0 ? 'text-amber-400' : 'text-slate-500'}`} />
+        </div>
+        <div className={`text-xl font-bold font-mono ${stats.invalidEvents > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
+          {stats.invalidEvents > 0 ? `${stats.invalidEvents.toLocaleString()} warnings` : 'Empty'}
+        </div>
+        <div className="text-[10px] text-slate-500 font-mono">
+          {stats.invalidEvents > 0 ? 'Non-conforming telemetry' : 'No warnings reported'}
         </div>
       </div>
 

@@ -10,12 +10,16 @@ export interface ParseResult {
   events: LogEvent[];
   validCount: number;
   invalidCount: number;
+  warningCount: number;
   duplicateCount: number;
+  processingErrorCount: number;
+  validationPercentage: number;
   parseErrors: string[];
 }
 
 export class LogParser {
   private duplicateDetector: DuplicateDetector;
+  private lastParsedHeaders: string[] = [];
 
   constructor(duplicateDetector?: DuplicateDetector) {
     this.duplicateDetector = duplicateDetector || new DuplicateDetector();
@@ -156,7 +160,11 @@ export class LogParser {
     const events: LogEvent[] = [];
     let validCount = 0;
     let invalidCount = 0;
+    let warningCount = 0;
     let duplicateCount = 0;
+    let processingErrorCount = 0;
+
+    const datasetHeaders = this.lastParsedHeaders || [];
 
     for (let i = 0; i < rawEvents.length; i++) {
       const { rawRecord, rawString } = rawEvents[i];
@@ -179,28 +187,54 @@ export class LogParser {
         fallbackSource: options.filename || 'log-source'
       });
 
-      // 2. Validation
-      const validation = LogValidator.validate(event);
-      event.validation = validation;
-
-      if (validation.status === 'VALID') {
-        validCount++;
-      } else {
-        invalidCount++;
-      }
-
-      // 3. Deduplication
+      // 2. Deduplication check FIRST
       const dupResult = this.duplicateDetector.checkAndRecord(event);
       event.isDuplicate = dupResult.isDuplicate;
       event.duplicateCount = dupResult.duplicateCount;
       event.fingerprint = dupResult.fingerprint;
 
-      if (dupResult.isDuplicate) {
+      // 3. Validation with Structured Result
+      const isProcessingErr = Boolean(rawRecord.isMalformed || rawRecord.hasMalformedRecord || rawRecord.parseError);
+      const structuredResult = LogValidator.validate(event, {
+        row_id: i + 1,
+        originalRecord: rawRecord,
+        isDuplicate: dupResult.isDuplicate,
+        isProcessingError: isProcessingErr,
+        processingErrorMessage: rawRecord.parseError as string | undefined,
+        datasetHeaders: datasetHeaders.length > 0 ? datasetHeaders : Object.keys(rawRecord),
+        hasLabelColumn: Boolean(
+          datasetHeaders.some(h => /^(label|class|attack_cat|target|threat_class)$/i.test(h)) ||
+          'label' in rawRecord || 'Label' in rawRecord
+        )
+      });
+
+      event.structuredValidation = structuredResult;
+      event.validation = {
+        status: structuredResult.is_valid ? 'VALID' : 'INVALID',
+        errors: structuredResult.errors.map(e => e.message),
+        warnings: structuredResult.warnings.map(w => w.message),
+        structured: structuredResult
+      };
+
+      if (structuredResult.validation_status === 'VALID') {
+        validCount++;
+      } else if (structuredResult.validation_status === 'WARNING') {
+        warningCount++;
+      } else if (structuredResult.validation_status === 'DUPLICATE') {
         duplicateCount++;
+      } else if (structuredResult.validation_status === 'PROCESSING_ERROR') {
+        processingErrorCount++;
+      } else {
+        invalidCount++;
       }
 
       events.push(event);
     }
+
+    const totalProcessed = events.length;
+    const validationPercentage = totalProcessed > 0
+      ? Number(((validCount / totalProcessed) * 100).toFixed(1))
+      : 100;
 
     return {
       format,
@@ -208,7 +242,10 @@ export class LogParser {
       events,
       validCount,
       invalidCount,
+      warningCount,
       duplicateCount,
+      processingErrorCount,
+      validationPercentage,
       parseErrors
     };
   }
@@ -274,6 +311,7 @@ export class LogParser {
     }
 
     const headers = this.parseCsvLine(lines[0]).map(h => h.trim());
+    this.lastParsedHeaders = headers;
     if (headers.length === 0) {
       errors.push('Failed to parse CSV header row');
       return;

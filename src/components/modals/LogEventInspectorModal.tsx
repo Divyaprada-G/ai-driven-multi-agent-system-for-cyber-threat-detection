@@ -346,32 +346,56 @@ export const LogEventInspectorModal: React.FC<LogEventInspectorModalProps> = ({
               </div>
 
               {/* Errors */}
-              {validation.errors.length > 0 && (
+              {(validation.errors?.length > 0 || (validation.structured?.errors && validation.structured.errors.length > 0)) && (
                 <div className="space-y-1.5 pt-2">
                   <span className="text-xs font-mono font-bold text-rose-400 uppercase tracking-wider block">
-                    Errors ({validation.errors.length})
+                    Errors ({validation.structured?.errors?.length || validation.errors?.length || 0})
                   </span>
-                  {validation.errors.map((err, idx) => (
-                    <div key={idx} className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-900/50 text-xs font-mono text-rose-300 flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                      <span>{err}</span>
-                    </div>
-                  ))}
+                  {validation.structured?.errors && validation.structured.errors.length > 0 ? (
+                    validation.structured.errors.map((err, idx) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-900/50 text-xs font-mono text-rose-300 flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                          <span className="font-bold text-rose-200">[{err.code}]</span>
+                          <span className="text-slate-400">Field: {err.field}</span>
+                          {err.originalValue !== undefined && (
+                            <span className="text-amber-400 text-[11px] bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                              Value: {String(err.originalValue)}
+                            </span>
+                          )}
+                        </div>
+                        <span className="pl-6 text-slate-300">{err.message}</span>
+                      </div>
+                    ))
+                  ) : (
+                    validation.errors.map((err: any, idx: number) => {
+                      const text = typeof err === 'string' ? err : `${err.code || ''}: ${err.message || JSON.stringify(err)}`;
+                      return (
+                        <div key={idx} className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-900/50 text-xs font-mono text-rose-300 flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                          <span>{text}</span>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               )}
 
               {/* Warnings */}
-              {validation.warnings.length > 0 && (
+              {(validation.warnings?.length > 0 || (validation.structured?.warnings && validation.structured.warnings.length > 0)) && (
                 <div className="space-y-1.5 pt-2">
                   <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider block">
-                    Warnings ({validation.warnings.length})
+                    Warnings ({validation.structured?.warnings?.length || validation.warnings?.length || 0})
                   </span>
-                  {validation.warnings.map((warn, idx) => (
-                    <div key={idx} className="p-2.5 rounded-lg bg-amber-950/40 border border-amber-900/50 text-xs font-mono text-amber-300 flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                      <span>{warn}</span>
-                    </div>
-                  ))}
+                  {validation.warnings.map((warn: any, idx: number) => {
+                    const text = typeof warn === 'string' ? warn : `${warn.code || ''}: ${warn.message || JSON.stringify(warn)}`;
+                    return (
+                      <div key={idx} className="p-2.5 rounded-lg bg-amber-950/40 border border-amber-900/50 text-xs font-mono text-amber-300 flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <span>{text}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 

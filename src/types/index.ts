@@ -35,11 +35,13 @@ export type NavPageId =
   | 'settings';
 
 export * from './correlation';
+export * from './validation';
 
 export interface LogValidationResult {
   status: ValidationStatus;
   errors: string[];
   warnings: string[];
+  structured?: import('./validation').StructuredValidationResult;
 }
 
 /**
@@ -73,6 +75,15 @@ export interface NormalizedFields {
   userAgent?: string;
   payloadSnippet?: string;
 
+  // Security telemetry and dataset attributes
+  failedLogins?: number;
+  numFailedLogins?: number;
+  label?: string;
+  originalTimestamp?: string;
+  hasInvalidTimestamp?: boolean;
+  hasMalformedRecord?: boolean;
+  parseError?: string;
+
   // Extensible attribute map
   [key: string]: unknown;
 }
@@ -91,9 +102,12 @@ export interface LogEvent {
   format?: LogFileFormat;
   normalizedFields?: NormalizedFields;
   validation?: LogValidationResult;
+  structuredValidation?: import('./validation').StructuredValidationResult;
+  originalData?: Record<string, unknown> | string;
   isDuplicate?: boolean;
   duplicateCount?: number;
   fingerprint?: string;
+  originalTimestamp?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -232,7 +246,10 @@ export interface LogFileRecord {
   numberOfEvents: number;
   validCount?: number;
   invalidCount?: number;
+  warningCount?: number;
   duplicateCount?: number;
+  processingErrorCount?: number;
+  validationPercentage?: number;
   detectedFormat?: LogFileFormat;
   parsedPreview?: string[];
   parsingDurationMs?: number;
@@ -251,7 +268,10 @@ export interface IngestionBatchResult {
   totalParsed: number;
   validCount: number;
   invalidCount: number;
+  warningCount?: number;
   duplicateCount: number;
+  processingErrorCount?: number;
+  validationPercentage?: number;
   durationMs: number;
   events: LogEvent[];
   errors: string[];
@@ -264,7 +284,10 @@ export interface RepositoryStats {
   totalEvents: number;
   validEvents: number;
   invalidEvents: number;
+  warningEvents?: number;
   duplicateEvents: number;
+  processingErrorEvents?: number;
+  validationPercentage?: number;
   networkEvents: number;
   systemEvents: number;
   applicationEvents: number;
@@ -281,7 +304,8 @@ export interface RepositoryStats {
 export interface LogFilterCriteria {
   searchTerm?: string;
   logType?: 'ALL' | LogType;
-  validationStatus?: 'ALL' | ValidationStatus | 'DUPLICATE';
+  validationStatus?: 'ALL' | ValidationStatus | string;
+  errorCode?: string;
   source?: string;
   timeRange?: 'ALL' | '15M' | '1H' | '24H' | '7D';
   deduplicate?: boolean;
