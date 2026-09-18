@@ -1,6 +1,35 @@
 {
   "rawEvents": [
     {
+      "id": "WIN-1789749804253-4625",
+      "source": "system",
+      "eventType": "Windows Logon Failure (Event 4625)",
+      "rawPayload": "EVENT 4625: An account failed to log on. Subject: S-1-0-0 Account: Administrator Failure Reason: Unknown user name or bad password.",
+      "normalizedFields": {
+        "host": "WIN-SRV-2022",
+        "severity": "HIGH",
+        "details": "Structured telemetry ingested via REST API.",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "hostname": "WIN-SRV-2022",
+          "collector_name": "WindowsCollector-Production",
+          "source_type": "windows_security_event_log",
+          "collection_status": "COLLECTED"
+        }
+      },
+      "eventTimestamp": "2026-09-18T16:43:24.254Z",
+      "sourceIp": "192.168.1.189",
+      "destinationIp": "127.0.0.1",
+      "host": "WIN-SRV-2022",
+      "username": "Administrator",
+      "severity": "HIGH",
+      "isTestEvent": false,
+      "contentHash": "ed82b4ca094be70531c0aa401f602902768b6d9c7ff7e05714eb548bc79ad52b",
+      "createdAt": "2026-09-18T16:43:24.254Z"
+    },
+    {
       "id": "WIN-1789745628489-4625",
       "source": "system",
       "eventType": "Windows Logon Failure (Event 4625)",
@@ -7079,7 +7108,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T15:22:01.173Z",
+      "updatedAt": "2026-09-18T16:42:33.285Z",
       "createdAt": "2026-09-18T07:25:31.997Z"
     },
     {
@@ -7091,7 +7120,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T15:22:01.171Z",
+      "updatedAt": "2026-09-18T16:42:33.283Z",
       "createdAt": "2026-09-18T07:25:31.996Z"
     },
     {
@@ -7139,7 +7168,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T15:22:01.177Z",
+      "updatedAt": "2026-09-18T16:42:33.286Z",
       "createdAt": "2026-09-17T10:19:33.460Z"
     },
     {
@@ -7152,7 +7181,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T15:22:01.180Z",
+      "updatedAt": "2026-09-18T16:42:33.288Z",
       "createdAt": "2026-09-17T10:19:29.754Z"
     },
     {
@@ -7165,7 +7194,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T15:22:01.175Z",
+      "updatedAt": "2026-09-18T16:42:33.293Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -7177,7 +7206,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T15:22:01.186Z",
+      "updatedAt": "2026-09-18T16:42:33.292Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -7190,7 +7219,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T15:22:01.184Z",
+      "updatedAt": "2026-09-18T16:42:33.290Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -7203,7 +7232,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T15:22:01.182Z",
+      "updatedAt": "2026-09-18T16:42:33.289Z",
       "createdAt": "2026-09-17T10:19:25.997Z"
     },
     {
@@ -7215,7 +7244,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T15:22:01.190Z",
+      "updatedAt": "2026-09-18T16:42:33.294Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     },
     {
@@ -7228,7 +7257,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T15:22:01.192Z",
+      "updatedAt": "2026-09-18T16:42:33.296Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     }
   ]
