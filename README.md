@@ -1,245 +1,239 @@
 # 🛡️ AI-DRIVEN MULTI-AGENT SYSTEM FOR CYBER THREAT DETECTION
 
 <p align="center">
-  <strong>From Raw Logs → Intelligent Correlation → Threat Detection → Automated Response</strong>
+  <img src="https://img.shields.io/badge/AI-Driven%20Cyber%20Defense-111827?style=for-the-badge&logo=openai&logoColor=white" alt="AI Driven Cyber Defense">
+  <img src="https://img.shields.io/badge/Multi--Agent-Security-7c3aed?style=for-the-badge" alt="Multi Agent Security">
+  <img src="https://img.shields.io/badge/Python-3.10-2563eb?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10">
+  <img src="https://img.shields.io/badge/Suricata-Network%20IDS-dc2626?style=for-the-badge" alt="Suricata">
+  <img src="https://img.shields.io/badge/ML-Threat%20Detection-f59e0b?style=for-the-badge&logo=scikitlearn&logoColor=white" alt="Machine Learning">
+  <img src="https://img.shields.io/badge/n8n-Automated%20Response-ea580c?style=for-the-badge&logo=n8n&logoColor=white" alt="n8n">
 </p>
 
 <p align="center">
-  A multi-agent cybersecurity monitoring architecture that brings together network, system, and application intelligence to identify suspicious activity and prioritize threats.
+  <h3 align="center">Observe. Correlate. Detect. Prioritize. Respond.</h3>
 </p>
 
 <p align="center">
-
-![Python](https://img.shields.io/badge/Python-3.10-blue?style=for-the-badge&logo=python)
-![Cybersecurity](https://img.shields.io/badge/Cybersecurity-Threat%20Detection-red?style=for-the-badge&logo=hackthebox)
-![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Anomaly%20Detection-orange?style=for-the-badge&logo=scikitlearn)
-![Multi Agent](https://img.shields.io/badge/Architecture-Multi--Agent-purple?style=for-the-badge)
-![Suricata](https://img.shields.io/badge/IDS-Suricata-darkred?style=for-the-badge)
-![n8n](https://img.shields.io/badge/Automation-n8n-orange?style=for-the-badge&logo=n8n)
-![Status](https://img.shields.io/badge/Status-Academic%20Project-success?style=for-the-badge)
-
+  A unified cybersecurity framework that combines <b>network, system, and application intelligence</b>
+  through specialized monitoring agents, cross-source event correlation, lightweight machine learning,
+  risk analysis, and automated response workflows.
 </p>
 
 ---
 
-## 🚨 THE PROBLEM
+## ⚡ THE IDEA IN ONE DIAGRAM
 
-Modern cyberattacks rarely appear as one isolated event.
+```text
+                         ┌─────────────────────────────┐
+                         │       DIGITAL ENVIRONMENT   │
+                         └──────────────┬──────────────┘
+                                        │
+              ┌─────────────────────────┼─────────────────────────┐
+              │                         │                         │
+              ▼                         ▼                         ▼
+       🌐 NETWORK LOGS             💻 SYSTEM LOGS            🖥️ APP LOGS
+              │                         │                         │
+              ▼                         ▼                         ▼
+       ┌─────────────┐           ┌─────────────┐           ┌─────────────┐
+       │   NETWORK   │           │   SYSTEM    │           │ APPLICATION │
+       │    AGENT    │           │    AGENT    │           │    AGENT    │
+       └──────┬──────┘           └──────┬──────┘           └──────┬──────┘
+              │                         │                         │
+              └─────────────────────────┼─────────────────────────┘
+                                        ▼
+                              🔗 EVENT CORRELATION
+                                        │
+                                        ▼
+                              🧠 ML THREAT DETECTOR
+                                        │
+                                        ▼
+                                 🎯 RISK ANALYSIS
+                                        │
+                                        ▼
+                                   🚨 ALERTS
+                                        │
+                                        ▼
+                               ⚙️ n8n AUTOMATION
+                                        │
+                                        ▼
+                                 🛡️ RESPONSE
+```
 
-An attacker may:
+---
+
+# 🚨 WHY THIS PROJECT?
+
+A cyberattack is often a **sequence of related events**, not one obvious event.
+
+For example:
 
 ```text
 Failed Login Attempts
         ↓
-Suspicious User Activity
+Successful Authentication
         ↓
 Privilege Escalation
         ↓
-Abnormal Network Traffic
+Abnormal Network Activity
         ↓
-Unauthorized Application Access
+Suspicious Application Access
         ↓
-     🚨 ATTACK
+             🚨
+       POSSIBLE ATTACK CHAIN
 ```
 
-The challenge is that these events can originate from completely different sources.
+If each event is inspected independently, the relationship between them can be missed.
 
-Traditional monitoring approaches may inspect network traffic, system logs, or application activity separately.
+This project approaches the problem differently:
 
-This project explores a unified approach:
-
-> **Let specialized AI agents observe different security layers, then correlate their observations to understand the larger attack story.**
+> **Give each security layer its own monitoring agent, then bring their observations together to understand the attack sequence.**
 
 ---
 
-# 🧠 PROJECT CONCEPT
+# 🧠 PROJECT OVERVIEW
 
-The **AI-Driven Multi-Agent System for Cyber Threat Detection** integrates:
+The **AI-Driven Multi-Agent System for Cyber Threat Detection** is designed to provide a unified platform for monitoring heterogeneous cybersecurity data.
 
-- 🌐 Network security logs
-- 💻 System activity logs
-- 🖥️ Application / web-server logs
-- 📊 Public cybersecurity datasets
-- 🤖 Machine-learning-based threat detection
-- 🔗 Cross-source event correlation
-- ⚠️ Risk-based prioritization
-- 🔔 Alert generation
-- ⚙️ Automated response workflows
+The system:
 
-The architecture is designed around multiple specialized monitoring agents rather than relying on a single detection component.
-
----
-
-# ⚡ CORE IDEA
-
-```text
-┌───────────────────────────────────────────────────────────────┐
-│                    CYBER ENVIRONMENT                          │
-└───────────────────────────────────────────────────────────────┘
-                              │
-             ┌────────────────┼────────────────┐
-             ↓                ↓                ↓
-      🌐 NETWORK         💻 SYSTEM       🖥️ APPLICATION
-         LOGS              LOGS               LOGS
-             │                │                │
-             ↓                ↓                ↓
-      ┌────────────┐   ┌────────────┐   ┌────────────┐
-      │  NETWORK   │   │   SYSTEM   │   │ APPLICATION│
-      │   AGENT    │   │   AGENT    │   │    AGENT   │
-      └─────┬──────┘   └─────┬──────┘   └─────┬──────┘
-            │                 │                 │
-            └─────────────────┼─────────────────┘
-                              ↓
-                    🔗 EVENT CORRELATION
-                              ↓
-                    🤖 ML THREAT DETECTION
-                              ↓
-                       🎯 RISK SCORING
-                              ↓
-                    🚨 ALERT GENERATION
-                              ↓
-                    ⚙️ AUTOMATED RESPONSE
-                              ↓
-                    📋 INCIDENT RECORD
-```
+- Collects network, system, and application logs
+- Cleans and standardizes incoming events
+- Extracts useful security features
+- Assigns events to specialized monitoring agents
+- Correlates suspicious activity across sources
+- Applies lightweight machine-learning techniques
+- Generates risk scores
+- Prioritizes suspicious threats
+- Produces real-time alerts
+- Triggers automated response workflows
+- Stores detected events and incident information
 
 ---
 
-# 🏗️ SYSTEM ARCHITECTURE
+# 🏗️ ARCHITECTURE
 
 ```mermaid
 flowchart TD
 
-    A[🌐 Network Logs] --> D[Preprocessing]
-    B[💻 System Logs] --> D
-    C[🖥️ Application Logs] --> D
-    X[📊 Cybersecurity Datasets] --> D
+    A["🌐 Suricata Network Logs"]
+    B["💻 Windows / Linux Logs"]
+    C["🖥️ Application / Web Logs"]
+    D["📊 Cybersecurity Datasets"]
 
-    D --> E[🤖 Multi-Agent Monitoring]
+    A --> E["📥 Log Collection"]
+    B --> E
+    C --> E
+    D --> E
 
-    E --> E1[🌐 Network Agent]
-    E --> E2[💻 System Agent]
-    E --> E3[🖥️ Application Agent]
+    E --> F["🧹 Preprocessing"]
 
-    E1 --> F[🔗 Event Correlation]
-    E2 --> F
-    E3 --> F
+    F --> G["🔧 Feature Extraction"]
 
-    F --> G[🤖 ML Threat Detection]
+    G --> H["🤖 Multi-Agent Monitoring"]
 
-    G --> H[🎯 Risk Scoring]
+    H --> I["🌐 Network Agent"]
+    H --> J["💻 System Agent"]
+    H --> K["🖥️ Application Agent"]
 
-    H --> I{Threat Detected?}
+    I --> L["🔗 Event Correlation Engine"]
+    J --> L
+    K --> L
 
-    I -->|No| J[Continue Monitoring]
-    I -->|Yes| K[🚨 Alert]
+    L --> M["🧠 ML Threat Detection"]
 
-    K --> L[⚙️ Automated Response]
-    L --> M[📋 Incident Log]
-    M --> N[📊 Monitoring Dashboard]
+    M --> N["🎯 Risk Scoring & Severity Analysis"]
+
+    N --> O["🚨 Alert & Response"]
+
+    O --> P["📊 Dashboard"]
+    O --> Q["📧 Notifications"]
+    O --> R["⚙️ n8n Workflows"]
+    O --> S["📋 Incident Logs"]
 ```
 
 ---
 
-# 🎯 PROJECT OBJECTIVES
-
-### 01 — LOG COLLECTION
-
-Collect security information from:
-
-- Network environments
-- Operating systems
-- Applications
-- Web servers
-- Public cybersecurity datasets
-
-### 02 — EVENT CORRELATION
-
-Connect events from different sources to identify relationships that may indicate an attack.
-
-### 03 — INTELLIGENT DETECTION
-
-Use lightweight machine-learning approaches for suspicious activity and anomaly detection.
-
-### 04 — MULTI-AGENT MONITORING
-
-Assign specialized monitoring responsibilities to independent agents.
-
-### 05 — RISK PRIORITIZATION
-
-Evaluate detected activity using:
+# 🧩 THE SIX-LAYER SECURITY PIPELINE
 
 ```text
-Severity
-   +
-Impact
-   +
-Probability
-   ↓
-Risk Priority
+┌──────────────────────────────────────────────────────────────┐
+│  01  INPUT LAYER                                             │
+│      Network + System + Application + Datasets              │
+├──────────────────────────────────────────────────────────────┤
+│  02  PREPROCESSING LAYER                                     │
+│      Cleaning + Normalization + Feature Extraction          │
+├──────────────────────────────────────────────────────────────┤
+│  03  MULTI-AGENT LAYER                                       │
+│      Network Agent + System Agent + Application Agent       │
+├──────────────────────────────────────────────────────────────┤
+│  04  DECISION LAYER                                          │
+│      Correlation + ML Detection + Risk Scoring              │
+├──────────────────────────────────────────────────────────────┤
+│  05  OUTPUT LAYER                                            │
+│      Alerts + Dashboard + Notifications + Incident Logs     │
+├──────────────────────────────────────────────────────────────┤
+│  06  RESPONSE AUTOMATION                                     │
+│      n8n Workflows + Predefined Security Actions            │
+└──────────────────────────────────────────────────────────────┘
 ```
-
-### 06 — ALERT & RESPONSE
-
-Generate alerts and connect detected threats with automated workflows.
 
 ---
 
-# 🤖 THE THREE SECURITY AGENTS
+# 🤖 MULTI-AGENT INTELLIGENCE
 
 ## 🌐 NETWORK AGENT
 
-Monitors network-level activity.
+The Network Agent focuses on network-level activity.
 
-### Detects / observes:
+### Monitors
 
 - Suspicious packets
 - Abnormal traffic
 - Intrusion attempts
-- Port scans
+- Port scanning
 - Network anomalies
 
 ```text
 NETWORK TRAFFIC
        ↓
-   NETWORK AGENT
+NETWORK AGENT
        ↓
-Suspicious Activity?
+SUSPICIOUS EVENT
        ↓
-   Correlation
+CORRELATION ENGINE
 ```
 
 ---
 
 ## 💻 SYSTEM AGENT
 
-Monitors host and operating-system activity.
+The System Agent focuses on host and operating-system behaviour.
 
-### Observes:
+### Monitors
 
 - Login attempts
 - Repeated failed authentication
 - Privilege escalation
-- CPU anomalies
+- CPU usage anomalies
 - Suspicious host activity
 
 ```text
 SYSTEM EVENTS
-      ↓
- SYSTEM AGENT
-      ↓
-Host Behaviour
-      ↓
-Correlation Engine
+       ↓
+SYSTEM AGENT
+       ↓
+HOST BEHAVIOUR
+       ↓
+CORRELATION ENGINE
 ```
 
 ---
 
 ## 🖥️ APPLICATION AGENT
 
-Monitors application and web-server behaviour.
+The Application Agent focuses on application and web-server activity.
 
-### Observes:
+### Monitors
 
 - Unauthorized access
 - Web attacks
@@ -250,642 +244,399 @@ Monitors application and web-server behaviour.
 ```text
 APPLICATION LOGS
        ↓
- APPLICATION AGENT
+APPLICATION AGENT
        ↓
-Behaviour Analysis
+BEHAVIOUR ANALYSIS
        ↓
-Correlation Engine
+CORRELATION ENGINE
 ```
 
 ---
 
-# 🔗 WHY EVENT CORRELATION MATTERS
+# 🔗 THE CORRELATION ENGINE
 
-A single event may look harmless.
+The correlation engine is the point where separate observations become a connected security picture.
 
-Multiple related events can tell a completely different story.
-
-### Example Attack Chain
+### Example
 
 ```text
-┌───────────────────────────────┐
-│ 1. Multiple Failed Logins     │
-└───────────────┬───────────────┘
-                ↓
-┌───────────────────────────────┐
-│ 2. Successful Authentication  │
-└───────────────┬───────────────┘
-                ↓
-┌───────────────────────────────┐
-│ 3. Privilege Escalation       │
-└───────────────┬───────────────┘
-                ↓
-┌───────────────────────────────┐
-│ 4. Abnormal Network Activity  │
-└───────────────┬───────────────┘
-                ↓
-        🚨 HIGH-RISK CHAIN
+┌──────────────────┐
+│ NETWORK AGENT    │
+│ Port Scan        │
+└────────┬─────────┘
+         │
+         ├────────────────────────┐
+         │                        │
+         ▼                        ▼
+┌──────────────────┐      ┌──────────────────┐
+│ SYSTEM AGENT     │      │ APPLICATION      │
+│ Failed Logins    │      │ Suspicious API   │
+└────────┬─────────┘      └────────┬─────────┘
+         │                         │
+         └────────────┬────────────┘
+                      ▼
+             🔗 CORRELATION
+                      │
+                      ▼
+             POSSIBLE ATTACK
+                  SEQUENCE
 ```
 
-Instead of evaluating each event independently, the system correlates events across monitoring layers.
-
----
-
-# 🧬 THREAT DETECTION PIPELINE
+The report specifically describes a correlation example where:
 
 ```text
-                    RAW SECURITY DATA
-                           │
-                           ▼
-                 ┌──────────────────┐
-                 │  LOG COLLECTION  │
-                 └────────┬─────────┘
-                          ▼
-                 ┌──────────────────┐
-                 │ PREPROCESSING    │
-                 └────────┬─────────┘
-                          ▼
-             ┌─────────────────────────┐
-             │   MULTI-AGENT LAYER     │
-             ├─────────────────────────┤
-             │ Network │ System │ App  │
-             └────────────┬────────────┘
-                          ▼
-                 ┌──────────────────┐
-                 │ EVENT CORRELATION│
-                 └────────┬─────────┘
-                          ▼
-                 ┌──────────────────┐
-                 │ ML THREAT        │
-                 │ DETECTION        │
-                 └────────┬─────────┘
-                          ▼
-                 ┌──────────────────┐
-                 │   RISK SCORING   │
-                 └────────┬─────────┘
-                          ▼
-                 ┌──────────────────┐
-                 │ ALERT GENERATION │
-                 └────────┬─────────┘
-                          ▼
-                 ┌──────────────────┐
-                 │ AUTOMATED        │
-                 │ RESPONSE         │
-                 └────────┬─────────┘
-                          ▼
-                 ┌──────────────────┐
-                 │ INCIDENT RECORD  │
-                 └──────────────────┘
+Repeated Failed Login Attempts
+              +
+Privilege Escalation
+              ↓
+     Possible Brute-Force Attack
 ```
 
 ---
 
-# 🤖 MACHINE LEARNING LAYER
+# 🧠 THREAT DETECTION
 
-The threat-detection layer is designed around lightweight machine-learning techniques.
+The decision layer combines correlated events with machine-learning-based analysis.
 
-The project report identifies approaches such as:
+The project design identifies lightweight approaches such as:
 
-- **Random Forest**
-- **Isolation Forest**
+- Random Forest
+- Isolation Forest
 
-These can support:
+Conceptually:
 
 ```text
-Normal Behaviour
-       ↓
-Feature Extraction
-       ↓
-ML Analysis
-       ↓
-Anomaly / Suspicious Activity
-       ↓
-Threat Classification / Prioritization
+RAW EVENTS
+    ↓
+PREPROCESSING
+    ↓
+FEATURE EXTRACTION
+    ↓
+AGENT OBSERVATIONS
+    ↓
+EVENT CORRELATION
+    ↓
+ML ANALYSIS
+    ↓
+NORMAL / SUSPICIOUS
 ```
 
-The architecture emphasizes lightweight models so that the detection layer can remain practical for continuous monitoring.
+The lightweight approach is intended to keep computational requirements practical for continuous monitoring.
 
 ---
 
 # 🎯 RISK SCORING
 
-Detected events can be prioritized according to:
+A detected event is not only identified — it can also be prioritized.
 
-| Factor | Meaning |
-|---|---|
-| Severity | How serious is the detected activity? |
-| Impact | What could be affected? |
-| Probability | How likely is the activity to represent a threat? |
-
-Conceptually:
+The project architecture considers:
 
 ```text
-              SEVERITY
-                  │
-                  ▼
-IMPACT ───────► RISK ◄────── PROBABILITY
-                  │
-                  ▼
-           PRIORITY LEVEL
+        ┌──────────────┐
+        │   SEVERITY   │
+        └──────┬───────┘
+               │
+               ▼
+┌──────────┐  ┌──────────┐  ┌─────────────┐
+│  IMPACT  │─►│   RISK   │◄─│ PROBABILITY │
+└──────────┘  └────┬─────┘  └─────────────┘
+                   │
+                   ▼
+            THREAT PRIORITY
 ```
 
-This allows security teams to focus attention on events that require greater urgency.
+This helps distinguish routine activity from events that require greater attention.
 
 ---
 
-# 🚨 ALERT & RESPONSE
+# 🚨 FROM DETECTION TO RESPONSE
 
-When suspicious behaviour is identified, the system can generate alerts and connect them with automated workflows.
-
-Possible outputs include:
+The system is designed to continue beyond detection.
 
 ```text
-🚨 Security Alert
-      ↓
-📧 Email / Notification
-      ↓
-📋 Incident Record
-      ↓
-⚙️ Automated Workflow
-      ↓
-🛡️ Response Action
+DETECT
+  ↓
+CORRELATE
+  ↓
+CLASSIFY
+  ↓
+SCORE
+  ↓
+PRIORITIZE
+  ↓
+ALERT
+  ↓
+AUTOMATE
+  ↓
+RESPOND
+  ↓
+RECORD
 ```
 
-The project architecture describes automated actions such as:
+Possible response actions described in the project design include:
 
 - Blocking suspicious IP addresses
 - Generating incident reports
 - Isolating affected systems
+- Sending administrator notifications
 - Recording security incidents
 - Triggering predefined workflows
 
 ---
 
-# ⚙️ AUTOMATION WITH n8n
+# ⚙️ n8n AUTOMATION LAYER
 
-The project incorporates **n8n** for workflow automation.
-
-Conceptually:
+n8n provides the workflow-automation layer.
 
 ```text
-THREAT DETECTED
-      ↓
-ALERT EVENT
-      ↓
-n8n WORKFLOW
-      ↓
-┌───────────────┬────────────────┬─────────────────┐
-│ Notification  │ Incident Log   │ Response Action │
-└───────────────┴────────────────┴─────────────────┘
+                🚨 THREAT DETECTED
+                         │
+                         ▼
+                  ┌──────────────┐
+                  │ n8n WORKFLOW │
+                  └──────┬───────┘
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+      📧 ALERT       📋 REPORT       🛡️ ACTION
+          │              │              │
+          └──────────────┼──────────────┘
+                         ▼
+                  INCIDENT RECORD
 ```
 
-This creates a bridge between:
+This creates the project's central operational chain:
 
-> **Detection → Decision → Automation**
-
----
-
-# 📥 INPUT SOURCES
-
-The system architecture supports multiple security-data sources.
-
-### 🌐 Network
-
-**Suricata IDS logs**
-
-Examples include:
-
-- Network events
-- Suspicious packets
-- Intrusion attempts
-- Port scans
-
-### 💻 Operating System
-
-Windows / Linux system logs.
-
-Examples:
-
-- Authentication events
-- Login failures
-- Privilege changes
-- Host activity
-
-### 🖥️ Applications
-
-Application and web-server logs.
-
-Examples:
-
-- Unauthorized access
-- API activity
-- Web attacks
-- Abnormal behaviour
-
-### 📊 Public Datasets
-
-The project references:
-
-- CICIDS2017
-- UNSW-NB15
-- KDD Cup 99
-- Sample network logs
-- Sample system logs
-- Sample application logs
+> **Detection → Decision → Automation → Response**
 
 ---
 
-# 📊 DATA FLOW
+# 📥 DATA SOURCES
 
-```mermaid
-flowchart LR
-
-    A[Network Logs] --> P[Preprocessing]
-    B[System Logs] --> P
-    C[Application Logs] --> P
-    D[Public Datasets] --> P
-
-    P --> N[Multi-Agent Monitoring]
-
-    N --> NC[Network Agent]
-    N --> SC[System Agent]
-    N --> AC[Application Agent]
-
-    NC --> CR[Correlation]
-    SC --> CR
-    AC --> CR
-
-    CR --> ML[Machine Learning]
-
-    ML --> RS[Risk Scoring]
-
-    RS --> AL[Alerts]
-
-    AL --> AU[Automation]
-
-    AU --> IR[Incident Records]
-```
-
----
-
-# 🧰 TECHNOLOGY STACK
-
-| Category | Technology |
+| Source | Purpose |
 |---|---|
-| Programming | Python 3.10 |
-| IDS | Suricata |
-| Data Processing | Pandas, NumPy |
-| Machine Learning | Scikit-learn |
-| Automation | n8n |
-| Security Analytics | ELK Stack |
-| Host Security | Wazuh |
-| Database | MongoDB / MySQL |
-| Dashboard | Flask / Streamlit |
-| Network Analysis | Wireshark |
-| Operating System | Ubuntu |
-| Virtualization | VirtualBox |
-| Cloud | AWS (optional) |
-| Version Control | Git / GitHub |
+| 🌐 Suricata IDS | Network intrusion and traffic events |
+| 💻 Windows / Linux | System and host activity |
+| 🖥️ Application / Web Logs | Application access and behaviour |
+| 📊 CICIDS2017 | Network intrusion analysis |
+| 📊 UNSW-NB15 | Modern network attack detection |
+| 📊 KDD Cup 99 | Anomaly / intrusion experiments |
+| 🧪 Sample Logs | Testing and module evaluation |
 
 ---
 
-# 🧪 DATASETS
+# 🧹 PREPROCESSING PIPELINE
 
-The project report references the following cybersecurity datasets:
+Raw security logs are transformed before analysis.
 
-### CICIDS2017
+```text
+RAW LOG
+   ↓
+Remove Duplicates
+   ↓
+Handle Missing Values
+   ↓
+Normalize Timestamps
+   ↓
+Parse Log Fields
+   ↓
+Extract Security Features
+   ↓
+STRUCTURED EVENT
+```
 
-A cybersecurity dataset used for network intrusion and traffic analysis.
+Example feature categories include:
 
-### UNSW-NB15
+- IP address
+- Protocol type
+- Login activity
+- Request frequency
+- Event timestamp
+- Suspicious activity indicators
 
-A dataset designed for network intrusion detection research.
+---
 
-### KDD CUP 99
+# 🧪 DATASET REPOSITORY
 
-A classic intrusion-detection dataset referenced for experimentation.
-
-### Custom / Sample Logs
-
-The architecture also supports:
-
-- Network logs
-- System logs
-- Application logs
-
-### Dataset Repository
+The project report references a dedicated dataset repository:
 
 ```text
 https://github.com/Greeshma-Sss/AI-Driven-Cyber-Threat-Detection-Dataset
 ```
 
+The dataset repository contains representative data and references intended to support reproducibility and project evaluation.
+
+---
+
+# 🧰 TECHNOLOGY STACK
+
+| Layer | Technology |
+|---|---|
+| 🐍 Backend / ML | Python 3.10 |
+| 🛡️ Network IDS | Suricata |
+| 📊 Data Processing | Pandas, NumPy |
+| 🧠 Machine Learning | Scikit-learn |
+| 🔎 Security Analytics | ELK Stack |
+| 🖥️ Host Monitoring | Wazuh |
+| ⚙️ Workflow Automation | n8n |
+| 🗄️ Database | MongoDB / MySQL |
+| 📊 Dashboard | Flask / Streamlit |
+| 🛰️ Network Analysis | Wireshark |
+| 🐧 Environment | Ubuntu |
+| 📦 Virtualization | VirtualBox |
+| ☁️ Cloud | AWS (optional) |
+| 🔧 Version Control | Git / GitHub |
+
 ---
 
 # 🔬 RESEARCH GAP
 
-The project is motivated by the observation that cybersecurity research and systems often focus on individual capabilities such as:
+The project is motivated by a gap identified in the literature reviewed for the project.
+
+Existing approaches commonly focus on areas such as:
 
 ```text
 Log Anomaly Detection
-        +
-SIEM Correlation
-        +
-Intrusion Detection
-        +
-Machine Learning
-        +
-Deep Learning
+        │
+        ├── SIEM Correlation
+        │
+        ├── Intrusion Detection
+        │
+        ├── Deep Learning
+        │
+        └── Security Analytics
 ```
 
-The project explores combining these ideas into a unified architecture involving:
+The project combines several of these capabilities into one architecture:
 
 ```text
-Multi-Agent Monitoring
-        +
-Cross-Source Event Correlation
-        +
-Lightweight ML Detection
-        +
-Risk Prioritization
-        +
-Automated Response
+┌───────────────────────────────────────┐
+│       MULTI-AGENT MONITORING          │
+├───────────────────────────────────────┤
+│       CROSS-SOURCE CORRELATION        │
+├───────────────────────────────────────┤
+│       LIGHTWEIGHT ML DETECTION        │
+├───────────────────────────────────────┤
+│       RISK PRIORITIZATION             │
+├───────────────────────────────────────┤
+│       AUTOMATED RESPONSE              │
+└───────────────────────────────────────┘
 ```
 
-The goal is to provide a more connected view of suspicious activity across different security layers.
+The intended outcome is improved visibility into coordinated attacks that may span multiple security layers.
+
+---
+
+# 🖥️ CONCEPTUAL SECURITY OPERATIONS VIEW
+
+```text
+╔══════════════════════════════════════════════════════════════╗
+║                 🛡️ CYBER DEFENSE CONSOLE                   ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║   NETWORK AGENT        SYSTEM AGENT       APP AGENT          ║
+║        ●                    ●                  ●              ║
+║                                                              ║
+║   ───────────────── LIVE EVENT STREAM ─────────────────      ║
+║                                                              ║
+║   10:31:02  Failed Login Burst                     MEDIUM    ║
+║   10:31:04  Privilege Escalation                   HIGH      ║
+║   10:31:06  Abnormal Network Traffic               HIGH      ║
+║                                                              ║
+║   ─────────────── CORRELATED ACTIVITY ────────────────      ║
+║                                                              ║
+║   Failed Login → Privilege Escalation → Network Anomaly     ║
+║                              │                               ║
+║                              ▼                               ║
+║                       🚨 THREAT CHAIN                        ║
+║                                                              ║
+║   ─────────────────── RESPONSE ────────────────────────      ║
+║                                                              ║
+║   Alert ✓     Incident ✓     Workflow ✓     Response ✓      ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+```
 
 ---
 
 # 📋 FUNCTIONAL REQUIREMENTS
 
-The system architecture includes the following functional requirements:
-
-### FR-01 — Log Collection
-
-Collect logs from network, system, and application environments.
-
-### FR-02 — Log Preprocessing
-
-Clean and transform raw security events into usable information.
-
-### FR-03 — Multi-Agent Monitoring
-
-Continuously monitor different security layers using specialized agents.
-
-### FR-04 — Event Correlation
-
-Identify relationships between events from multiple sources.
-
-### FR-05 — ML Threat Detection
-
-Apply machine-learning-based anomaly or threat detection.
-
-### FR-06 — Alert Generation
-
-Generate alerts for suspicious activity.
-
-### FR-07 — Automated Workflows
-
-Trigger predefined actions through automation workflows.
-
-### FR-08 — Result Storage
-
-Store detection results and incident information.
+| ID | Requirement |
+|---|---|
+| FR1 | Collect logs from network, system, and application sources |
+| FR2 | Preprocess raw log data before analysis |
+| FR3 | Continuously monitor logs using multiple agents |
+| FR4 | Correlate related events across multiple sources |
+| FR5 | Detect anomalies using machine-learning techniques |
+| FR6 | Generate alerts for suspicious activities |
+| FR7 | Support automated response workflows |
+| FR8 | Store detected events and results for future analysis |
 
 ---
 
 # 🛡️ NON-FUNCTIONAL REQUIREMENTS
 
-| Requirement | Goal |
+| ID | Requirement |
 |---|---|
-| ⚡ Low Latency | Detect suspicious activity with minimal delay |
-| 📈 Scalability | Support increasing amounts of security data |
-| 🔄 Reliability | Maintain continuous monitoring |
-| 🔐 Security | Protect collected logs and results |
-| 🧩 Maintainability | Keep modules understandable and manageable |
-| 🪶 Lightweight ML | Avoid unnecessarily heavy detection models |
+| NFR1 | Low-latency processing of incoming logs |
+| NFR2 | Scalability for increasing log volume |
+| NFR3 | Reliability during continuous monitoring |
+| NFR4 | Secure handling of log data |
+| NFR5 | User-friendly and maintainable architecture |
+| NFR6 | Lightweight models with low computational cost |
 
 ---
 
-# 🖥️ CONCEPTUAL SECURITY DASHBOARD
-
-The system can expose security information through a monitoring dashboard.
-
-```text
-┌──────────────────────────────────────────────────────────┐
-│                 🛡️ SECURITY MONITOR                     │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│  🔴 CRITICAL     🟠 HIGH       🟡 MEDIUM      🟢 NORMAL │
-│      03             08             21             942   │
-│                                                          │
-├──────────────────────────────────────────────────────────┤
-│                  LIVE SECURITY EVENTS                    │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│ 🌐 Network Agent      Port Scan Detected       HIGH      │
-│ 💻 System Agent       Failed Login Burst       MEDIUM    │
-│ 🖥️ Application Agent  API Anomaly              HIGH      │
-│                                                          │
-├──────────────────────────────────────────────────────────┤
-│                    ATTACK CORRELATION                    │
-├──────────────────────────────────────────────────────────┤
-│ Failed Login → Privilege Escalation → Network Anomaly   │
-│                         ↓                                │
-│                   🚨 THREAT CHAIN                        │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
-```
-
----
-
-# 🧩 SYSTEM MODULES
-
-```text
-AI-DRIVEN MULTI-AGENT SYSTEM
-│
-├── 📥 Log Collection
-│   ├── Network Logs
-│   ├── System Logs
-│   └── Application Logs
-│
-├── 🧹 Preprocessing
-│   ├── Cleaning
-│   ├── Normalization
-│   └── Feature Preparation
-│
-├── 🤖 Multi-Agent Monitoring
-│   ├── Network Agent
-│   ├── System Agent
-│   └── Application Agent
-│
-├── 🔗 Event Correlation
-│   ├── Event Matching
-│   ├── Temporal Relationships
-│   └── Cross-Source Analysis
-│
-├── 🧠 ML Threat Detection
-│   ├── Anomaly Detection
-│   └── Threat Identification
-│
-├── 🎯 Risk Scoring
-│   ├── Severity
-│   ├── Impact
-│   └── Probability
-│
-├── 🚨 Alert Engine
-│
-├── ⚙️ Automation
-│   └── n8n Workflows
-│
-└── 📋 Incident Storage
-```
-
----
-
-# 🔥 WHAT MAKES THE ARCHITECTURE DIFFERENT?
-
-## 01 — MULTIPLE SECURITY PERSPECTIVES
-
-Instead of treating the environment as a single data source:
-
-```text
-Network + System + Application
-```
-
-each layer gets a specialized monitoring agent.
-
----
-
-## 02 — CONTEXT THROUGH CORRELATION
-
-An individual event can be ambiguous.
-
-Correlated events can provide additional context.
-
-```text
-EVENT A
-   +
-EVENT B
-   +
-EVENT C
-   ↓
-ATTACK CONTEXT
-```
-
----
-
-## 03 — LIGHTWEIGHT INTELLIGENCE
-
-The design emphasizes lightweight ML approaches instead of assuming that every cybersecurity problem requires a large deep-learning model.
-
----
-
-## 04 — DETECTION TO RESPONSE
-
-The architecture does not stop at:
-
-```text
-"Threat detected."
-```
-
-It extends toward:
-
-```text
-Detect
-  ↓
-Correlate
-  ↓
-Prioritize
-  ↓
-Alert
-  ↓
-Automate
-  ↓
-Respond
-```
-
----
-
-# 🌐 REAL-WORLD APPLICATIONS
-
-The architecture can be adapted to environments such as:
-
-### 🏢 Enterprise Networks
-
-Monitor distributed systems and identify suspicious behaviour.
-
-### ☁️ Cloud Environments
-
-Aggregate cloud and application security events.
-
-### 🌐 Web Applications
-
-Detect abnormal access patterns and API misuse.
-
-### 🏭 IoT Environments
-
-Monitor large numbers of connected devices.
-
-### 🖥️ Security Operations
-
-Assist security teams with event correlation and prioritization.
-
----
-
-# 📂 PROJECT STRUCTURE
-
-> The exact repository structure may vary depending on the current implementation. The following represents the logical organization described by the project architecture.
+# 📂 LOGICAL PROJECT STRUCTURE
 
 ```text
 ai-driven-multi-agent-system-for-cyber-threat-detection/
 │
-├── 📁 agents/
-│   ├── network_agent/
-│   ├── system_agent/
-│   └── application_agent/
-│
-├── 📁 data/
+├── agents/
 │   ├── network/
 │   ├── system/
-│   ├── application/
-│   └── datasets/
+│   └── application/
 │
-├── 📁 preprocessing/
+├── preprocessing/
 │
-├── 📁 correlation/
+├── feature_extraction/
 │
-├── 📁 models/
+├── correlation/
 │
-├── 📁 alerting/
+├── models/
 │
-├── 📁 automation/
+├── alerting/
+│
+├── automation/
 │   └── n8n/
 │
-├── 📁 dashboard/
+├── dashboard/
 │
-├── 📁 logs/
+├── data/
 │
-├── 📁 docs/
+├── logs/
+│
+├── docs/
 │
 ├── requirements.txt
 ├── README.md
 └── LICENSE
 ```
 
+> This is a logical representation of the architecture described in the project report. Keep the actual repository tree synchronized with the files present in the implementation.
+
 ---
 
-# 🚀 GETTING STARTED
+# 🚀 SETUP
 
-## 1️⃣ Clone the Repository
+## 1. Clone
 
 ```bash
 git clone https://github.com/Divyaprada-G/ai-driven-multi-agent-system-for-cyber-threat-detection.git
 cd ai-driven-multi-agent-system-for-cyber-threat-detection
 ```
 
----
-
-## 2️⃣ Create a Virtual Environment
+## 2. Create Environment
 
 ```bash
 python -m venv venv
@@ -903,43 +654,30 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
----
-
-## 3️⃣ Install Dependencies
-
-If the repository contains a `requirements.txt` file:
+## 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
+## 4. Configure
 
-## 4️⃣ Configure Security Data Sources
-
-Configure the required sources according to the implementation:
+Configure the security-data sources and services required by the implementation:
 
 ```text
 Suricata
-   ↓
-Network Events
-
-Windows / Linux
-   ↓
-System Events
-
-Web / Application Server
-   ↓
-Application Events
+Windows / Linux Logs
+Application Logs
+ML Model
+n8n
+Dashboard / Storage
 ```
 
----
+## 5. Run
 
-## 5️⃣ Run the Components
+Use the entry point provided by the current repository implementation.
 
-Run the project's available entry points according to the repository implementation.
-
-Examples of possible interfaces described by the architecture include:
+For example, if applicable:
 
 ```bash
 python app.py
@@ -951,142 +689,125 @@ or:
 streamlit run dashboard/app.py
 ```
 
-> Update these commands if the current repository uses different entry-point filenames.
+> These commands are examples only; use the actual entry-point files present in the repository.
 
 ---
 
-# 🔄 END-TO-END WORKFLOW
+# 🔄 COMPLETE ATTACK-TO-RESPONSE FLOW
 
-```text
-                    ┌───────────────┐
-                    │   SECURITY    │
-                    │   ENVIRONMENT │
-                    └───────┬───────┘
-                            │
-            ┌───────────────┼────────────────┐
-            ↓               ↓                ↓
-        NETWORK          SYSTEM         APPLICATION
-          LOGS            LOGS               LOGS
-            │               │                │
-            ↓               ↓                ↓
-       NETWORK          SYSTEM          APPLICATION
-        AGENT            AGENT              AGENT
-            │               │                │
-            └───────────────┼────────────────┘
-                            ↓
-                     EVENT CORRELATION
-                            ↓
-                    ML THREAT DETECTION
-                            ↓
-                       RISK SCORING
-                            ↓
-                         ALERT
-                            ↓
-                      n8n WORKFLOW
-                            ↓
-                  AUTOMATED RESPONSE
-                            ↓
-                    INCIDENT RECORD
+```mermaid
+sequenceDiagram
+
+    participant N as 🌐 Network
+    participant S as 💻 System
+    participant A as 🖥️ Application
+    participant C as 🔗 Correlation Engine
+    participant M as 🧠 ML Detector
+    participant R as 🎯 Risk Engine
+    participant W as ⚙️ n8n
+    participant O as 👤 Administrator
+
+    N->>C: Suspicious network event
+    S->>C: Suspicious system event
+    A->>C: Suspicious application event
+
+    C->>C: Correlate related events
+    C->>M: Correlated event chain
+    M->>R: Threat / anomaly result
+    R->>W: Prioritized threat
+    W->>O: Alert / notification
+    W->>W: Trigger predefined workflow
 ```
 
 ---
 
-# 📈 FUTURE SCOPE
+# 🌍 REAL-WORLD USE CASES
 
-The project report identifies several directions for future enhancement.
+### 🏢 Enterprise Security
 
-## 🧠 Advanced Deep Learning
+Monitor security events across distributed systems.
 
-Potential integration of:
+### ☁️ Cloud Infrastructure
 
-- LSTM
-- Autoencoders
-- Transformer-based methods
+Aggregate security information from cloud and application environments.
 
-## ☁️ Cloud & Enterprise Deployment
+### 🌐 Web Applications
 
-Extend the architecture toward:
+Observe suspicious access, web attacks, and API misuse.
 
-- Cloud environments
-- Enterprise networks
-- Distributed infrastructures
+### 🏭 IoT Environments
 
-## 🌐 IoT Security
+Extend multi-agent monitoring toward connected-device networks.
 
-Adapt the multi-agent architecture for connected-device environments.
+### 🖥️ Security Operations
 
-## 🛰️ Threat Intelligence
+Provide correlated security information for investigation and response.
 
-Integrate external threat-intelligence feeds for additional contextual information.
+---
 
-## 🧬 Zero-Day Detection
+# 🔮 FUTURE ROADMAP
 
-Explore adaptive learning approaches for previously unseen attack behaviour.
-
-## 📊 Advanced Dashboards
-
-Improve visualization of:
-
-- Attack chains
-- Agent activity
-- Risk levels
-- Security events
-- Incident timelines
-
-## 🛡️ SOAR & Firewall Integration
-
-Connect detection results with:
-
-- Security orchestration
-- Firewalls
-- Automated incident response systems
-
-## 📦 Distributed Architecture
-
-Move toward:
+The project report identifies the following future directions:
 
 ```text
-Containerized Agents
-        +
-Distributed Processing
-        +
-Scalable Security Monitoring
+CURRENT FOUNDATION
+        │
+        ├──► 🧠 LSTM
+        │
+        ├──► 🧠 Autoencoders
+        │
+        ├──► 🧠 Transformers
+        │
+        ├──► ☁️ Cloud Deployment
+        │
+        ├──► 🌐 IoT Security
+        │
+        ├──► 🛰️ Threat Intelligence Feeds
+        │
+        ├──► 🧬 Adaptive / Zero-Day Detection
+        │
+        ├──► 📊 Advanced Dashboards
+        │
+        ├──► 🛡️ SOAR Integration
+        │
+        ├──► 🔥 Firewall Integration
+        │
+        └──► 📦 Distributed / Containerized Agents
 ```
 
 ---
 
-# 💡 PROJECT VISION
+# 📈 EVOLUTION OF THE SYSTEM
 
 ```text
-                  CYBER ENVIRONMENT
-                         │
-          ┌──────────────┼──────────────┐
-          ↓              ↓              ↓
-       NETWORK         SYSTEM       APPLICATION
-          │              │              │
-          ▼              ▼              ▼
-       🤖 AGENT        🤖 AGENT       🤖 AGENT
-          │              │              │
-          └──────────────┼──────────────┘
-                         ↓
-                  🧠 CORRELATION
-                         ↓
-                 🔍 THREAT ANALYSIS
-                         ↓
-                   🎯 RISK ENGINE
-                         ↓
-                    🚨 ALERT
-                         ↓
-                  ⚙️ AUTOMATION
-                         ↓
-                  🛡️ RESPONSE
+                ┌─────────────────────┐
+                │   RAW SECURITY DATA │
+                └──────────┬──────────┘
+                           ↓
+                ┌─────────────────────┐
+                │   MULTI-AGENT VIEW  │
+                └──────────┬──────────┘
+                           ↓
+                ┌─────────────────────┐
+                │   CORRELATED VIEW   │
+                └──────────┬──────────┘
+                           ↓
+                ┌─────────────────────┐
+                │   INTELLIGENT VIEW  │
+                └──────────┬──────────┘
+                           ↓
+                ┌─────────────────────┐
+                │   PRIORITIZED VIEW  │
+                └──────────┬──────────┘
+                           ↓
+                ┌─────────────────────┐
+                │   ACTIONABLE VIEW   │
+                └─────────────────────┘
 ```
-
-The vision is to move cybersecurity monitoring from isolated event detection toward **connected, contextual, multi-layer threat intelligence**.
 
 ---
 
-# 🎓 ACADEMIC PROJECT INFORMATION
+# 🎓 ACADEMIC PROJECT
 
 | Field | Details |
 |---|---|
@@ -1096,21 +817,21 @@ The vision is to move cybersecurity monitoring from isolated event detection tow
 | Batch ID | 58 |
 | Institution | Siddaganga Institute of Technology |
 | Department | Computer Science and Engineering |
-| Language | Python |
-| Project Domain | Artificial Intelligence + Cybersecurity |
+| Domain | Artificial Intelligence + Cybersecurity |
+| Primary Language | Python 3.10 |
 
 ---
 
 # 👩‍💻 PROJECT TEAM
 
-| Name | USN |
+| Member | USN |
 |---|---|
 | Chaitra N | 1SI23AD009 |
 | Greeshma S | 1SI23AD013 |
 | PoojaPrakash | 1SI23AD036 |
 | Divyapradha G | 1SI24AD401 |
 
-### Project Guide
+### Guide
 
 **Dr. Sumalatha Aradhya**  
 Associate Professor  
@@ -1120,8 +841,6 @@ Siddaganga Institute of Technology
 ---
 
 # 💰 PROJECT BUDGET
-
-The project report estimates:
 
 | Category | Estimated Cost |
 |---|---:|
@@ -1133,28 +852,7 @@ The project report estimates:
 
 ---
 
-# 📚 REFERENCES & DATA SOURCES
-
-The project report references cybersecurity research and resources involving:
-
-- Multi-agent cybersecurity systems
-- Intrusion detection
-- Security Information and Event Management
-- Log anomaly detection
-- Machine learning for cybersecurity
-- Deep-learning-based intrusion detection
-- Automated security response
-- CICIDS2017
-- UNSW-NB15
-- KDD Cup 99
-- Suricata
-- Wazuh
-- ELK Stack
-- n8n
-
----
-
-# 🔐 RESPONSIBLE SECURITY NOTICE
+# 🔐 RESPONSIBLE SECURITY
 
 This project is intended for:
 
@@ -1163,141 +861,137 @@ This project is intended for:
 - Defensive monitoring
 - Threat-detection experimentation
 - Security analytics
-- Controlled laboratory environments
+- Authorized laboratory environments
 
-Do not use the system to monitor, attack, access, or interfere with systems without proper authorization.
+Use the system only on infrastructure for which you have permission to monitor and test.
 
 ```text
 AUTHORIZED ENVIRONMENT
         ↓
-Security Monitoring
+SECURITY MONITORING
         ↓
-Threat Detection
+THREAT DETECTION
         ↓
-Defensive Response
+DEFENSIVE RESPONSE
 ```
+
+---
+
+# 📚 RESEARCH REFERENCES
+
+The project report's bibliography includes research covering:
+
+- Log-correlation tools for cyberattack detection
+- Online log anomaly detection
+- Machine learning with Wazuh
+- Adaptive AI intrusion detection
+- Lightweight ML-enabled intrusion detection
+- Deep-learning cyberattack event classification
+- Hierarchical real-time intrusion detection
+- Few-shot intrusion detection
+- Cloud-based AI intrusion detection
+- Hierarchical security event correlation
+- Multi-layer SIEM correlation
 
 ---
 
 # ⭐ PROJECT HIGHLIGHTS
 
 ```text
-┌────────────────────────────────────────────────────────┐
-│                 🛡️ SECURITY INTELLIGENCE               │
-├────────────────────────────────────────────────────────┤
-│                                                        │
-│  🌐 Network Agent                                     │
-│  💻 System Agent                                      │
-│  🖥️ Application Agent                                 │
-│                                                        │
-│             ↓                                          │
-│                                                        │
-│  🔗 Cross-Source Event Correlation                    │
-│                                                        │
-│             ↓                                          │
-│                                                        │
-│  🤖 Lightweight ML Threat Detection                   │
-│                                                        │
-│             ↓                                          │
-│                                                        │
-│  🎯 Risk Prioritization                               │
-│                                                        │
-│             ↓                                          │
-│                                                        │
-│  🚨 Real-Time Alerting                                │
-│                                                        │
-│             ↓                                          │
-│                                                        │
-│  ⚙️ n8n Automated Workflows                           │
-│                                                        │
-└────────────────────────────────────────────────────────┘
+╔══════════════════════════════════════════════════════════╗
+║                 🛡️ AI CYBER DEFENSE                     ║
+╠══════════════════════════════════════════════════════════╣
+║                                                          ║
+║   🌐 NETWORK AGENT                                      ║
+║              │                                           ║
+║   💻 SYSTEM AGENT                                       ║
+║              │                                           ║
+║   🖥️ APPLICATION AGENT                                  ║
+║              │                                           ║
+║              ▼                                           ║
+║      🔗 EVENT CORRELATION                               ║
+║              │                                           ║
+║              ▼                                           ║
+║      🧠 ML THREAT DETECTION                             ║
+║              │                                           ║
+║              ▼                                           ║
+║       🎯 RISK ANALYSIS                                  ║
+║              │                                           ║
+║              ▼                                           ║
+║          🚨 ALERT                                       ║
+║              │                                           ║
+║              ▼                                           ║
+║       ⚙️ AUTOMATION                                     ║
+║              │                                           ║
+║              ▼                                           ║
+║          🛡️ RESPONSE                                    ║
+║                                                          ║
+╚══════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-# 🧠 THE BIG IDEA
+# 🧠 THE CORE PRINCIPLE
 
-### Traditional Security Monitoring
-
-```text
-Network Logs ──► Network Detection
-
-System Logs ───► System Detection
-
-Application ───► Application Detection
-```
-
-### This Project's Architecture
+### Don't analyze events only in isolation.
 
 ```text
-Network Logs ──┐
-               │
-System Logs ───┼──► 🤖 Multi-Agent Layer
-               │             │
-Application ───┘             ▼
-                      🔗 Correlation
-                             │
-                             ▼
-                       🧠 ML Detection
-                             │
-                             ▼
-                       🎯 Risk Score
-                             │
-                             ▼
-                        🚨 Alert
-                             │
-                             ▼
-                       ⚙️ Automation
-                             │
-                             ▼
-                        🛡️ Response
+EVENT
+  ↓
+CONTEXT
+  ↓
+RELATIONSHIP
+  ↓
+ATTACK PATTERN
+  ↓
+THREAT
+  ↓
+ACTION
 ```
+
+The project's central concept is:
+
+> **Multiple specialized agents observe different layers. Event correlation connects their observations. Machine learning helps analyze suspicious behaviour. Risk scoring prioritizes it. Automation helps turn detection into response.**
 
 ---
 
 # 🏁 FINAL VISION
 
-> **Don't just detect the event. Understand the chain.**
-
-Cybersecurity is not always about finding one suspicious log.
-
-It is about understanding how multiple seemingly unrelated events connect.
-
-This project explores that idea through:
-
 ```text
-        OBSERVE
-           ↓
-        ANALYZE
-           ↓
-        CORRELATE
-           ↓
-        DETECT
-           ↓
-        PRIORITIZE
-           ↓
-        ALERT
-           ↓
-        RESPOND
+OBSERVE
+   ↓
+UNDERSTAND
+   ↓
+CORRELATE
+   ↓
+DETECT
+   ↓
+PRIORITIZE
+   ↓
+ALERT
+   ↓
+RESPOND
 ```
 
-### 🌐 One Environment  
-### 🤖 Multiple Agents  
+### 🌐 One Environment
+### 🤖 Multiple Specialized Agents
 ### 🔗 One Correlated Security View
+### 🧠 AI-Assisted Threat Detection
+### ⚙️ Automated Response
 
 ---
 
-# ⭐ SUPPORT THE PROJECT
+<p align="center">
 
-If this project is useful for learning, research, or cybersecurity experimentation:
+## 🛡️ AI × MULTI-AGENT SYSTEMS × CYBERSECURITY
 
-```text
-⭐ Star the repository
-🍴 Fork the repository
-🧪 Experiment responsibly
-🐛 Report issues
-💡 Contribute improvements
-```
+### Turning Security Events into Security Intelligence.
+
+</p>
+
+<p align="center">
+Built as an academic cybersecurity project at Siddaganga Institute of Technology.
+</p>
 
 ---
 
@@ -1306,17 +1000,3 @@ If this project is useful for learning, research, or cybersecurity experimentati
 ```text
 https://github.com/Divyaprada-G/ai-driven-multi-agent-system-for-cyber-threat-detection
 ```
-
----
-
-<p align="center">
-
-### 🛡️ AI × MULTI-AGENT SYSTEMS × CYBERSECURITY
-
-**Turning Security Events into Security Intelligence.**
-
-</p>
-
-<p align="center">
-Made for academic cybersecurity research and defensive experimentation.
-</p>
