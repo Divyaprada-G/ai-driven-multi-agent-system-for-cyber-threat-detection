@@ -332,15 +332,18 @@ export const LiveSecurityEventsSection: React.FC<LiveSecurityEventsSectionProps>
                 </tr>
               ) : (
                 filteredEvents.map(evt => {
-                  const agentBadge = getAgentBadge(evt.agentName);
+                  const eventKey = evt.id || evt.eventId || `evt-${Math.random()}`;
+                  const agentName = evt.agentName || evt.agentType || evt.agentId || 'Network Agent';
+                  const agentBadge = getAgentBadge(agentName);
                   const AgentIcon = agentBadge.icon;
-                  const sevBadge = getSeverityBadge(evt.severity);
-                  const detBadge = getDetectionBadge(evt.detectionMethod || 'RULE_BASED');
-                  const srcType = getSourceTypeBadge(evt.sourceType);
+                  const sevBadge = getSeverityBadge(evt.severity || 'LOW');
+                  const detBadge = getDetectionBadge(evt.detectionMethod || (evt.findingId ? 'RULE_BASED' : 'NORMALIZED'));
+                  const srcType = getSourceTypeBadge(evt.sourceType || (evt.isSimulated ? 'SIMULATED' : 'LIVE_INGEST'));
+                  const timeString = evt.timestamp || evt.receivedAt || '';
 
                   return (
                     <tr
-                      key={evt.id}
+                      key={eventKey}
                       onClick={() => {
                         setSelectedDetailEvent(evt);
                         if (onSelectEvent) onSelectEvent(evt);
@@ -351,7 +354,7 @@ export const LiveSecurityEventsSection: React.FC<LiveSecurityEventsSectionProps>
                       <td className="py-2.5 px-4 whitespace-nowrap text-slate-300">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3 h-3 text-slate-500" />
-                          <span>{evt.timestamp.split('T')[1] ? evt.timestamp.split('T')[1].split('.')[0] : evt.timestamp}</span>
+                          <span>{timeString.includes('T') ? timeString.split('T')[1].split('.')[0] : (timeString || 'Just now')}</span>
                         </div>
                       </td>
 
@@ -366,21 +369,21 @@ export const LiveSecurityEventsSection: React.FC<LiveSecurityEventsSectionProps>
                       {/* Event Type */}
                       <td className="py-2.5 px-4 text-white font-semibold">
                         <span className="group-hover:text-cyan-400 transition-colors">
-                          {evt.eventType}
+                          {evt.eventType || 'Security Telemetry'}
                         </span>
                       </td>
 
                       {/* Source */}
                       <td className="py-2.5 px-4 whitespace-nowrap font-mono text-slate-300">
                         <span className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-[11px]">
-                          {evt.source}
+                          {evt.source || 'network'}
                         </span>
                       </td>
 
                       {/* Severity */}
                       <td className="py-2.5 px-4 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded border text-[10px] uppercase ${sevBadge}`}>
-                          {evt.severity}
+                          {evt.severity || 'LOW'}
                         </span>
                       </td>
 
@@ -429,7 +432,7 @@ export const LiveSecurityEventsSection: React.FC<LiveSecurityEventsSectionProps>
                 <Radio className="w-4 h-4 text-cyan-400" />
                 <h3 className="text-sm font-bold text-white">Event Telemetry Details</h3>
                 <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">
-                  {selectedDetailEvent.id}
+                  {selectedDetailEvent.id || selectedDetailEvent.eventId}
                 </span>
               </div>
               <button
@@ -443,12 +446,12 @@ export const LiveSecurityEventsSection: React.FC<LiveSecurityEventsSectionProps>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950 p-3 rounded-lg border border-slate-800">
               <div>
                 <span className="text-[10px] text-slate-500 uppercase block">Agent</span>
-                <span className="text-slate-200 font-bold">{selectedDetailEvent.agentName}</span>
+                <span className="text-slate-200 font-bold">{selectedDetailEvent.agentName || selectedDetailEvent.agentType || selectedDetailEvent.agentId || 'Network Agent'}</span>
               </div>
               <div>
                 <span className="text-[10px] text-slate-500 uppercase block">Severity</span>
-                <span className={`px-1.5 py-0.5 rounded border text-[10px] ${getSeverityBadge(selectedDetailEvent.severity)}`}>
-                  {selectedDetailEvent.severity}
+                <span className={`px-1.5 py-0.5 rounded border text-[10px] ${getSeverityBadge(selectedDetailEvent.severity || 'LOW')}`}>
+                  {selectedDetailEvent.severity || 'LOW'}
                 </span>
               </div>
               <div>

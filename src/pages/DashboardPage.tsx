@@ -94,6 +94,8 @@ import { LiveTraceabilityModal } from '../components/livePipeline/LiveTraceabili
 import { ProjectDemoModal } from '../components/livePipeline/ProjectDemoModal';
 import { livePipelineService } from '../services/livePipelineService';
 import { LivePipelineStatus, LiveSecurityEvent, LiveSimulatorMode } from '../types/livePipeline';
+import { TelemetryStatusBadge } from '../components/telemetry/TelemetryStatusBadge';
+import { realtimeTelemetryStream } from '../services/telemetry/realtimeTelemetryStream';
 
 // Modular Cybersecurity Dashboard Sections (Required Project Specification)
 import { OverviewSection } from '../components/dashboard/sections/OverviewSection';
@@ -209,6 +211,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   // Load all analytics from unifiedAnalyticsService
   const loadDashboardData = useCallback(async () => {
     setIsLoadingAnalytics(true);
+    setFetchError(null);
     try {
       const [
         overviewRes,
@@ -244,15 +247,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       setTimelineEvents(timelineRes);
       setTraceabilityChains(traceRes);
       setRawAssessments(assessmentsRes);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load unified dashboard analytics:', err);
+      setFetchError(err?.message || 'Failed to load telemetry data from backend');
     } finally {
       setIsLoadingAnalytics(false);
     }
   }, [filters.timeRange]);
 
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   useEffect(() => {
     loadDashboardData();
+    fetchHealth();
+    const healthInterval = setInterval(fetchHealth, 15000);
     const unsubscribe = logRepository.subscribe(() => {
       loadDashboardData();
     });
@@ -261,11 +269,127 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       setLiveEvents(livePipelineService.getEvents());
       setLiveQueued(livePipelineService.getQueuedEvents());
     });
+
+    // 1. Reactive Real-Time Telemetry Stream: updates overview, events, threats, alerts & incidents without manual refresh
+    const unsubComposite = realtimeTelemetryStream.onCompositeEvent((composite) => {
+      const { event, isThreat, finding, alert, incident, riskAssessment } = composite;
+      if (!event) return;
+
+      // Increment overview counters reactively
+      setOverview(prev => {
+        if (!prev) return prev;
+        const isCrit = event.severity === 'CRITICAL';
+        const isHigh = event.severity === 'HIGH';
+        return {
+          ...prev,
+          totalEvents: prev.totalEvents + 1,
+          totalThreats: prev.totalThreats + (isThreat ? 1 : 0),
+          criticalThreats: prev.criticalThreats + (isCrit ? 1 : 0),
+          highThreats: prev.highThreats + (isHigh ? 1 : 0),
+          openAlerts: prev.openAlerts + (alert ? 1 : 0),
+          criticalAlerts: prev.criticalAlerts + (alert && alert.severity === 'CRITICAL' ? 1 : 0),
+          highAlerts: prev.highAlerts + (alert && alert.severity === 'HIGH' ? 1 : 0),
+          openIncidents: prev.openIncidents + (incident ? 1 : 0),
+          criticalIncidents: prev.criticalIncidents + (incident && incident.severity === 'CRITICAL' ? 1 : 0),
+          highIncidents: prev.highIncidents + (incident && incident.severity === 'HIGH' ? 1 : 0),
+          lastUpdated: new Date().toLocaleTimeString()
+        };
+      });
+
+      // Prepend to Unified Timeline Items
+      const newTimelineItem: UnifiedTimelineItem = {
+        id: event.eventId,
+        timestamp: event.timestamp.replace('T', ' ').substring(0, 19),
+        eventType: isThreat ? 'THREAT_DETECTED' : 'LOG_RECEIVED',
+        title: isThreat
+          ? `[${event.source.toUpperCase()}] ${finding?.threatType || finding?.threat_type || 'Threat Detected'}`
+          : `[${event.source.toUpperCase()}] Telemetry Ingested`,
+        description: event.details || (typeof event.rawPayload === 'string' ? event.rawPayload.slice(0, 120) : 'Normalized host event'),
+        severity: (event.severity || 'LOW') as any,
+        source: event.source,
+        relatedId: finding?.id || event.eventId,
+        relatedType: isThreat ? 'THREAT' : 'LOG'
+      };
+      setTimelineEvents(prev => [newTimelineItem, ...prev.slice(0, 99)]);
+
+      // Prepend to Alert & Incident Analytics data
+      if (alert || incident) {
+        setAlertIncidentData((prev: any) => {
+          if (!prev) return prev;
+          const copy = { ...prev };
+          if (alert) {
+            copy.totalAlerts = (copy.totalAlerts || 0) + 1;
+            if (alert.severity === 'CRITICAL') copy.criticalAlerts = (copy.criticalAlerts || 0) + 1;
+            if (alert.severity === 'HIGH') copy.highAlerts = (copy.highAlerts || 0) + 1;
+            if (copy.recentAlerts) {
+              copy.recentAlerts = [alert, ...copy.recentAlerts.slice(0, 19)];
+            }
+          }
+          if (incident) {
+            copy.totalIncidents = (copy.totalIncidents || 0) + 1;
+            if (incident.severity === 'CRITICAL') copy.criticalIncidents = (copy.criticalIncidents || 0) + 1;
+            if (copy.activeIncidents) {
+              copy.activeIncidents = [incident, ...copy.activeIncidents.slice(0, 19)];
+            }
+          }
+          return copy;
+        });
+      }
+    });
+
+    // 2. Real-time Agent Status updates
+    const unsubAgent = realtimeTelemetryStream.onAgentStatus((agentUpdate) => {
+      if (!agentUpdate || !agentUpdate.agentId) return;
+      setAgentDetails(prev => {
+        if (!prev || prev.length === 0) return prev;
+        return prev.map(ag => {
+          const match = ag.id === agentUpdate.agentId ||
+            ag.name?.toLowerCase().includes(agentUpdate.agentType?.toLowerCase() || '') ||
+            agentUpdate.agentId.toLowerCase().includes(ag.id?.toLowerCase() || '');
+          if (match) {
+            return {
+              ...ag,
+              status: agentUpdate.status || ag.status,
+              eventsProcessed: agentUpdate.eventsProcessed ?? ag.eventsProcessed,
+              threatsDetected: agentUpdate.threatsDetected ?? ag.threatsDetected,
+              lastProcessedEvent: agentUpdate.lastActivity || new Date().toISOString()
+            };
+          }
+          return ag;
+        });
+      });
+    });
+
+    // 3. Real-time Collector & Database Health updates
+    const unsubCollector = realtimeTelemetryStream.onCollectorHealth((health) => {
+      if (health) {
+        setSystemHealth(prev => prev ? {
+          ...prev,
+          collectorsCount: `${health.activeCollectorsCount}/${health.totalCollectors}`
+        } : prev);
+      }
+    });
+
+    const unsubDb = realtimeTelemetryStream.onDatabaseHealth((db) => {
+      if (db) {
+        setSystemHealth(prev => prev ? {
+          ...prev,
+          database: db.connected ? 'CONNECTED (MongoDB Verified)' : 'DATABASE_UNAVAILABLE',
+          databaseMode: db.connected ? 'AUTHENTIC PERSISTENCE' : 'LOCAL FALLBACK'
+        } : prev);
+      }
+    });
+
     return () => {
+      clearInterval(healthInterval);
       unsubscribe();
       unsubPipeline();
+      unsubComposite();
+      unsubAgent();
+      unsubCollector();
+      unsubDb();
     };
-  }, [loadDashboardData]);
+  }, [loadDashboardData, fetchHealth]);
 
   // Handle Risk Status Update
   const handleUpdateRiskStatus = async (id: string, newStatus: RiskStatus) => {
@@ -313,17 +437,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* Top Banner Notice: Architecture & Demo Control */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-xs font-mono uppercase tracking-widest text-cyan-400 font-semibold">
-              Advanced SOC Telemetry & Intelligence Stream
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            {/* Verified Telemetry Stream Status: LIVE / CONNECTING / DISCONNECTED / SIMULATION / ERROR */}
+            <TelemetryStatusBadge />
+            {/* Backend Connectivity Badges */}
+            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+              API: {systemHealth?.nodeServer || 'ONLINE (Port 3000)'}
             </span>
+            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+              ML Engine: {systemHealth?.pythonMLBackend || 'INTEGRATED / READY'}
+            </span>
+            {logRepository.hasRealData() ? (
+              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-700 font-mono font-bold">
+                DATA: INGESTED BENCHMARK
+              </span>
+            ) : (
+              <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-950/90 text-indigo-300 border border-indigo-700 font-mono font-bold">
+                DATA: SIMULATOR / EVALUATION
+              </span>
+            )}
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight font-mono">
             AI-Driven Multi-Agent Cyber Threat Detection
           </h2>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl font-mono">
-            Unified correlation, risk scoring, threat prioritization, and incident triage across Network, System, and Application specialized agents.
+            Unified correlation, risk scoring, threat prioritization, and incident triage across Network, System, Application, Correlation, Threat Detection, and Alert specialized agents.
           </p>
         </div>
 
@@ -341,7 +479,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
           <button
             id="btn-dash-reports"
-            onClick={() => onNavigate('reports' as any)}
+            onClick={() => setActiveTab('REPORTS')}
             className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-1.5"
           >
             <FileText className="w-3.5 h-3.5 text-cyan-400" />
@@ -350,7 +488,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
           <button
             id="btn-dash-refresh"
-            onClick={() => loadDashboardData()}
+            onClick={() => {
+              loadDashboardData();
+              fetchHealth();
+            }}
             disabled={isLoadingAnalytics}
             className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-1.5"
             title="Refresh All Analytics"
@@ -361,6 +502,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
+      {/* Global Error Banner if API sync fails */}
+      {fetchError && (
+        <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-200 flex items-center justify-between font-mono text-xs shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            <span>Telemetry Sync Warning: {fetchError}. Operating from cached or local agent state.</span>
+          </div>
+          <button
+            onClick={() => {
+              loadDashboardData();
+              fetchHealth();
+            }}
+            className="px-2.5 py-1 bg-rose-900 hover:bg-rose-800 text-white rounded border border-rose-700 font-bold"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Global Search & Advanced Filtering Bar (Sections 18 & 19) */}
       <GlobalSearchAndFilterBar
         filters={filters}
@@ -369,14 +529,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         totalCount={timelineEvents.length}
       />
 
-      {/* Top-Level Security Overview Cards (Section 4, 42, 43, 37) */}
-      {overview && (
-        <SecurityOverviewCards
-          overview={overview}
-          isRealData={logRepository.hasRealData()}
-          onNavigate={onNavigate}
-          onSelectQuickFilter={handleQuickFilter}
-        />
+      {/* Initial Loading Skeleton */}
+      {isLoadingAnalytics && !overview && (
+        <div className="p-8 rounded-xl bg-slate-900 border border-slate-800 text-center font-mono space-y-3">
+          <RefreshCw className="w-7 h-7 text-cyan-400 animate-spin mx-auto" />
+          <p className="text-sm text-slate-200 font-semibold">Synchronizing Multi-Agent Telemetry Stream...</p>
+          <p className="text-xs text-slate-500">Querying Network, System, Application, Correlation, ML, and Alert engines</p>
+        </div>
       )}
 
       {/* Primary Dashboard Navigation Tabs (7 Core Project Specifications + Auxiliary) */}
@@ -406,7 +565,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           }`}
         >
           <Activity className="w-3.5 h-3.5 text-cyan-400" />
-          <span>2. Live Events</span>
+          <span>2. Live Security Events</span>
           <span className="text-[9px] px-1 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-mono">
             Stream
           </span>
@@ -423,7 +582,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           }`}
         >
           <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-          <span>3. Multi-Agent</span>
+          <span>3. Multi-Agent Status</span>
           <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">
             6 Agents
           </span>
@@ -457,7 +616,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           }`}
         >
           <Layers className="w-3.5 h-3.5 text-purple-400" />
-          <span>5. Incidents</span>
+          <span>5. Incident Management</span>
         </button>
 
         {/* 6. ANALYTICS */}

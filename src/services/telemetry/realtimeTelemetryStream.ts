@@ -341,8 +341,10 @@ class RealtimeTelemetryStream {
       this.setStatus('SIMULATION', 'Stream active in simulation mode');
     } else if (data.telemetryState === 'ERROR') {
       this.setStatus('ERROR', 'Collector error detected in backend');
+    } else if (data.telemetryState === 'DISCONNECTED') {
+      this.setStatus('DISCONNECTED', 'No active collectors connected');
     } else {
-      this.setStatus('LIVE', 'Connected to backend telemetry stream');
+      this.setStatus('CONNECTING', 'Connected to backend telemetry stream');
     }
 
     // Cache components

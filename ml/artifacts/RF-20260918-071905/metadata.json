@@ -1,0 +1,288 @@
+{
+  "model_id": "RF-20260918-071905",
+  "model_type": "RANDOM_FOREST",
+  "version": "rf-cyber-20260918",
+  "dataset_name": "test_dataset_cicids2017.csv",
+  "feature_names": [
+    "Destination Port",
+    "Flow Duration",
+    "Total Fwd Packets",
+    "Total Backward Packets",
+    "Total Length of Fwd Packets",
+    "Total Length of Bwd Packets",
+    "Flow Bytes/s",
+    "Flow Packets/s",
+    "Flow IAT Mean",
+    "Fwd IAT Mean",
+    "Bwd IAT Mean",
+    "FIN Flag Count",
+    "SYN Flag Count",
+    "RST Flag Count",
+    "ACK Flag Count",
+    "Down/Up Ratio",
+    "Average Packet Size",
+    "Init_Win_bytes_forward",
+    "Active Mean",
+    "Idle Mean"
+  ],
+  "target_column": "Label",
+  "training_timestamp": "2026-09-18T07:19:05.894855Z",
+  "training_sample_count": 16,
+  "test_sample_count": 6,
+  "classes": [
+    "BENIGN",
+    "DDoS",
+    "PortScan"
+  ],
+  "accuracy": 1.0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1_score": 1.0,
+  "confusion_matrix": {
+    "labels": [
+      "BENIGN",
+      "DDoS",
+      "PortScan"
+    ],
+    "matrix": [
+      [
+        2,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        2
+      ]
+    ],
+    "totalSamples": 6
+  },
+  "training_status": "TEST_DATA_TRAINED",
+  "modelId": "RF-20260918-071905",
+  "modelType": "RANDOM_FOREST",
+  "modelVersion": "rf-cyber-20260918",
+  "datasetName": "test_dataset_cicids2017.csv",
+  "datasetIdentifier": "test_dataset_cicids2017.csv",
+  "datasetRowCount": 22,
+  "featureCount": 20,
+  "selectedFeatures": [
+    "Destination Port",
+    "Flow Duration",
+    "Total Fwd Packets",
+    "Total Backward Packets",
+    "Total Length of Fwd Packets",
+    "Total Length of Bwd Packets",
+    "Flow Bytes/s",
+    "Flow Packets/s",
+    "Flow IAT Mean",
+    "Fwd IAT Mean",
+    "Bwd IAT Mean",
+    "FIN Flag Count",
+    "SYN Flag Count",
+    "RST Flag Count",
+    "ACK Flag Count",
+    "Down/Up Ratio",
+    "Average Packet Size",
+    "Init_Win_bytes_forward",
+    "Active Mean",
+    "Idle Mean"
+  ],
+  "excludedFeatures": [
+    "Timestamp",
+    "Destination IP",
+    "Source IP",
+    "Flow ID",
+    "Label"
+  ],
+  "labelColumn": "Label",
+  "classLabels": [
+    "BENIGN",
+    "DDoS",
+    "PortScan"
+  ],
+  "trainRows": 16,
+  "testRows": 6,
+  "splitRatio": 0.8,
+  "randomSeed": 42,
+  "hyperparameters": {
+    "n_estimators": 30,
+    "max_depth": 8,
+    "min_samples_split": 2,
+    "min_samples_leaf": 1,
+    "class_weight": "balanced",
+    "random_state": 42
+  },
+  "trainingTimestamp": "2026-09-18T07:19:05.894865Z",
+  "trainingDurationSeconds": 0.01,
+  "evaluationMetrics": {
+    "accuracy": 1.0,
+    "macroPrecision": 1.0,
+    "macroRecall": 1.0,
+    "macroF1": 1.0,
+    "weightedPrecision": 1.0,
+    "weightedRecall": 1.0,
+    "weightedF1": 1.0,
+    "confusionMatrix": {
+      "labels": [
+        "BENIGN",
+        "DDoS",
+        "PortScan"
+      ],
+      "matrix": [
+        [
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          2
+        ]
+      ],
+      "totalSamples": 6
+    },
+    "classificationReport": [
+      {
+        "className": "BENIGN",
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1Score": 1.0,
+        "support": 2
+      },
+      {
+        "className": "DDoS",
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1Score": 1.0,
+        "support": 2
+      },
+      {
+        "className": "PortScan",
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1Score": 1.0,
+        "support": 2
+      }
+    ],
+    "featureImportances": [
+      {
+        "feature": "Flow Packets/s",
+        "importance": 0.1397,
+        "rank": 1
+      },
+      {
+        "feature": "Flow Bytes/s",
+        "importance": 0.1343,
+        "rank": 2
+      },
+      {
+        "feature": "Total Length of Bwd Packets",
+        "importance": 0.1301,
+        "rank": 3
+      },
+      {
+        "feature": "Flow Duration",
+        "importance": 0.1144,
+        "rank": 4
+      },
+      {
+        "feature": "Total Length of Fwd Packets",
+        "importance": 0.1077,
+        "rank": 5
+      },
+      {
+        "feature": "Idle Mean",
+        "importance": 0.0819,
+        "rank": 6
+      },
+      {
+        "feature": "RST Flag Count",
+        "importance": 0.0629,
+        "rank": 7
+      },
+      {
+        "feature": "Down/Up Ratio",
+        "importance": 0.0528,
+        "rank": 8
+      },
+      {
+        "feature": "Fwd IAT Mean",
+        "importance": 0.0453,
+        "rank": 9
+      },
+      {
+        "feature": "Flow IAT Mean",
+        "importance": 0.0356,
+        "rank": 10
+      },
+      {
+        "feature": "ACK Flag Count",
+        "importance": 0.0219,
+        "rank": 11
+      },
+      {
+        "feature": "Average Packet Size",
+        "importance": 0.0218,
+        "rank": 12
+      },
+      {
+        "feature": "Init_Win_bytes_forward",
+        "importance": 0.0212,
+        "rank": 13
+      },
+      {
+        "feature": "SYN Flag Count",
+        "importance": 0.0162,
+        "rank": 14
+      },
+      {
+        "feature": "Total Fwd Packets",
+        "importance": 0.0141,
+        "rank": 15
+      },
+      {
+        "feature": "Destination Port",
+        "importance": 0.0,
+        "rank": 16
+      },
+      {
+        "feature": "Total Backward Packets",
+        "importance": 0.0,
+        "rank": 17
+      },
+      {
+        "feature": "Bwd IAT Mean",
+        "importance": 0.0,
+        "rank": 18
+      },
+      {
+        "feature": "FIN Flag Count",
+        "importance": 0.0,
+        "rank": 19
+      },
+      {
+        "feature": "Active Mean",
+        "importance": 0.0,
+        "rank": 20
+      }
+    ],
+    "evaluatedOnTestRows": 6,
+    "evaluatedAt": "2026-09-18T07:19:05.894549Z"
+  },
+  "preprocessingVersion": "leakage-free-v1",
+  "modelStatus": "TEST_DATA_TRAINED",
+  "isTestData": false,
+  "notes": "Trained with 30 trees, verified on 6 held-out samples."
+}

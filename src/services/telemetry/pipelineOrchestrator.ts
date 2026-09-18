@@ -34,6 +34,7 @@ import { performance } from 'perf_hooks';
 import { NetworkDetector } from '../networkDetector';
 import { SystemDetector } from '../systemDetector';
 import { applicationAnomalyDetector } from '../applicationDetector';
+import { applicationFeatureExtractor } from '../applicationFeatureExtractor';
 import { CorrelationEngine } from '../correlationEngine';
 import { SecurityFinding, CorrelatedEvent, CorrelationConfig } from '../../types/correlation';
 import { LogEvent, SeverityLevel, AgentType } from '../../types';
@@ -743,9 +744,10 @@ export class SixAgentPipelineOrchestrator {
     const logEvent: LogEvent = {
       id: eventId,
       timestamp: new Date().toISOString(),
-      raw: rawPayload,
+      rawData: rawPayload,
+      message: rawPayload,
       source: source === 'network' ? 'NETWORK' : source === 'application' ? 'APPLICATION' : 'SYSTEM',
-      level: 'INFO',
+      logType: source === 'network' ? 'NETWORK' : source === 'application' ? 'APPLICATION' : 'SYSTEM',
       metadata: {
         host: indicators.host,
         sourceIp: indicators.sourceIp,
@@ -773,16 +775,16 @@ export class SixAgentPipelineOrchestrator {
             host: indicators.host,
             sourceIp: indicators.sourceIp,
             destinationIp: indicators.destinationIp,
-            eventType: t.anomalyType || 'Network Anomaly',
-            threatType: t.anomalyType || 'Suspicious Network Traffic',
+            eventType: t.threatType || 'Network Anomaly',
+            threatType: t.threatType || 'Suspicious Network Traffic',
             severity: t.severity,
-            confidence: t.confidence / 100,
-            evidence: t.details?.matchedRule ? [t.details.matchedRule, rawPayload] : [rawPayload],
+            confidence: t.confidence <= 1 ? t.confidence : t.confidence / 100,
+            evidence: t.evidence && t.evidence.length > 0 ? t.evidence : [rawPayload],
             indicators: [indicators.sourceIp!, String(indicators.destinationPort || '')].filter(Boolean),
             classification: 'THREAT',
             rawEvent: logEvent
           });
-          if (t.details?.matchedRule) evidence.push(t.details.matchedRule);
+          if (t.evidence) evidence.push(...t.evidence);
         });
 
         return {
@@ -807,10 +809,10 @@ export class SixAgentPipelineOrchestrator {
             host: indicators.host,
             sourceIp: indicators.sourceIp,
             username: indicators.username,
-            eventType: t.anomalyType || 'System Anomaly',
-            threatType: t.anomalyType || 'Host Privilege Violation',
+            eventType: t.threatType || 'System Anomaly',
+            threatType: t.threatType || 'Host Privilege Violation',
             severity: t.severity,
-            confidence: t.confidence / 100,
+            confidence: t.confidence <= 1 ? t.confidence : t.confidence / 100,
             evidence: t.evidence || [rawPayload],
             indicators: [indicators.username || '', indicators.host].filter(Boolean),
             classification: 'THREAT',
@@ -828,7 +830,8 @@ export class SixAgentPipelineOrchestrator {
           executionTimeMs: 0
         };
       } else {
-        const appResults = applicationAnomalyDetector.analyze([logEvent]);
+        const features = applicationFeatureExtractor.extractAggregations([logEvent]);
+        const appResults = applicationAnomalyDetector.detectAnomalies(features);
         const threats = appResults.filter((r) => r.threatDetected);
 
         threats.forEach((t) => {
@@ -840,10 +843,10 @@ export class SixAgentPipelineOrchestrator {
             source: 'Application Monitoring Agent',
             host: indicators.host,
             sourceIp: indicators.sourceIp,
-            eventType: t.anomalyType || 'Application Threat',
-            threatType: t.anomalyType || 'Web Exploit Payload',
+            eventType: t.threatType || 'Application Threat',
+            threatType: t.threatType || 'Web Exploit Payload',
             severity: t.severity,
-            confidence: t.confidence / 100,
+            confidence: t.confidence <= 1 ? t.confidence : t.confidence / 100,
             evidence: t.evidence || [rawPayload],
             indicators: [indicators.httpUri || '', indicators.sourceIp!].filter(Boolean),
             classification: 'THREAT',
@@ -902,14 +905,11 @@ export class SixAgentPipelineOrchestrator {
     }
 
     const config: CorrelationConfig = {
-      timeWindowMinutes: 10,
+      timeWindowSeconds: 600,
       minFindings: 2,
       crossAgentRequired: false,
-      ipMatching: true,
-      hostMatching: true,
-      userMatching: true,
-      sequenceDetection: true,
-      confidenceThreshold: 60
+      minCorrelationStrength: 'LOW',
+      autoCorrelationEnabled: true
     };
 
     const correlatedClusters = CorrelationEngine.correlate(allFindings, config);

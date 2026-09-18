@@ -81,7 +81,9 @@ class LivePipelineService {
 
       const liveEvent: LiveSecurityEvent = {
         eventId: event.eventId,
+        id: event.eventId,
         receivedAt: event.timestamp,
+        timestamp: event.timestamp,
         processedAt: event.timestamp,
         status: 'COMPLETED',
         source: event.source,
@@ -95,6 +97,9 @@ class LivePipelineService {
         collectorState: event.isSimulated ? 'SIMULATED' : 'LIVE',
         agentId: event.agentRouting?.assignedAgentId || `${event.source.toUpperCase()}_AGENT`,
         agentType: event.agentRouting?.assignedAgent || `${event.source.toUpperCase()} Agent`,
+        agentName: event.agentRouting?.assignedAgent || `${event.source.toUpperCase()} Agent`,
+        detectionMethod: finding ? (finding.threatType?.includes('ML') ? 'MACHINE_LEARNING' : 'RULE_BASED') : 'NORMALIZED',
+        sourceType: event.isSimulated ? 'SIMULATED' : 'LIVE_INGEST',
         findingId: finding?.id,
         threatDetectionId: finding?.id,
         riskScore: riskAssessment?.risk_score || (isThreat ? 75 : 20),

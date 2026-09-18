@@ -195,11 +195,116 @@ async function runTests() {
   const cachedMetricsAfterOffline = realtimeTelemetryStream.getMetrics();
   assert.strictEqual(cachedMetricsAfterOffline.totalLiveEvents, cachedMetricsBeforeOffline.totalLiveEvents, 'Metrics must be retained during offline state');
 
+  // TEST 7: Invalid Event Handling (corrupted payloads, bad schemas, malformed JSON)
+  console.log('[Test 7] Testing invalid event handling...');
+  
+  // 7a. Client stream malformed JSON test: should not throw or crash stream
+  let threwException = false;
+  try {
+    (realtimeTelemetryStream as any).handleNewTelemetryEvent('NOT_A_VALID_JSON{:::');
+    (realtimeTelemetryStream as any).handleInitStatus('MALFORMED_INIT_STATUS');
+  } catch (err) {
+    threwException = true;
+  }
+  assert.strictEqual(threwException, false, 'Client stream parser must gracefully handle malformed JSON without throwing unhandled exceptions');
+
+  // 7b. Server ingestion malformed / missing payload test
+  let serverRejectedInvalid = false;
+  try {
+    // Attempt ingesting empty/invalid payload
+    await telemetryManager.ingestExternalTelemetry(null as any);
+  } catch (err: any) {
+    serverRejectedInvalid = true;
+  }
+  assert.strictEqual(serverRejectedInvalid, true, 'Server ingest must reject null/undefined telemetry payloads with validation error');
+
+  // TEST 8: Empty Telemetry State Verification (truthful 0s, no synthetic fake events)
+  console.log('[Test 8] Testing empty telemetry state and metric truthfulness...');
+  // Verify pristine empty state behavior:
+  // Metrics accurately report 0 events when no collectors or demo events have been generated
+  const emptyMetrics = {
+    totalLiveEvents: 0,
+    totalSimulatedEvents: 0,
+    totalThreatsDetected: 0,
+    totalAlertsGenerated: 0,
+    totalIncidentsCreated: 0,
+    currentEps: 0
+  };
+
+  (realtimeTelemetryStream as any).handleInitStatus(JSON.stringify({
+    type: 'INIT_STATUS',
+    sequence: 104,
+    timestamp: new Date().toISOString(),
+    data: {
+      sequence: 104,
+      telemetryState: 'DISCONNECTED',
+      collectorHealth: { overallState: 'DISCONNECTED', activeCollectorsCount: 0, totalCollectors: 3, collectors: [], externalCollectors: [] },
+      databaseHealth: { status: 'ONLINE', connected: true },
+      agentStatuses: [],
+      recentEvents: [],
+      metrics: emptyMetrics
+    }
+  }));
+
+  const metricsInEmptyState = realtimeTelemetryStream.getMetrics();
+  assert.strictEqual(metricsInEmptyState.totalLiveEvents, 0, 'In empty state, live event count must be strictly 0');
+  assert.strictEqual(metricsInEmptyState.currentEps, 0, 'In empty state, EPS must be strictly 0');
+  assert.strictEqual(realtimeTelemetryStream.getStatus(), 'DISCONNECTED', 'Status in empty disconnected state must be DISCONNECTED');
+
+  // TEST 9: Ingestion to Broadcast End-to-End Verification
+  console.log('[Test 9] Testing Ingestion-to-Broadcast End-to-End verification...');
+  let sseMessageReceived: string | null = null;
+  const mockSseRes: any = {
+    write: (chunk: string) => {
+      if (chunk.includes('event: NEW_TELEMETRY_EVENT') || chunk.includes('NEW_TELEMETRY_EVENT')) {
+        sseMessageReceived = chunk;
+      }
+    },
+    on: (_event: string, _cb: any) => {},
+    end: () => {}
+  };
+
+  await telemetryManager.addSseClient(mockSseRes);
+
+  const testEventId = `TEST-E2E-${Date.now()}`;
+  await telemetryManager.ingestExternalTelemetry({
+    source: 'network',
+    host: 'soc-collector-node-01',
+    sourceIp: '192.168.1.150',
+    destinationIp: '10.0.0.5',
+    eventType: 'Port Scan Probe',
+    severity: 'HIGH',
+    isSimulated: false,
+    rawLogs: 'SYN packet to 10.0.0.5:445 from 192.168.1.150'
+  });
+
+  assert(sseMessageReceived !== null, 'SSE broadcast must be sent when telemetry event is ingested');
+  assert(sseMessageReceived!.includes('NEW_TELEMETRY_EVENT'), 'Broadcast event type must be NEW_TELEMETRY_EVENT');
+
+  // Verify client stream processing of the received broadcast
+  const lines = sseMessageReceived!.split('\n');
+  const dataLine = lines.find(l => l.startsWith('data: '));
+  assert(dataLine !== undefined, 'SSE frame must contain data payload line');
+  const jsonPayload = dataLine!.replace(/^data: /, '');
+
+  let compositeEventHandled = false;
+  const unsubComposite = realtimeTelemetryStream.onCompositeEvent((comp) => {
+    if (comp.event && comp.event.host === 'soc-collector-node-01') {
+      compositeEventHandled = true;
+      assert.strictEqual(comp.event.isSimulated, false, 'Event isSimulated flag must strictly be false for live ingestion');
+      assert.strictEqual(comp.event.source, 'network', 'Source must match ingested source');
+    }
+  });
+
+  (realtimeTelemetryStream as any).handleNewTelemetryEvent(jsonPayload);
+  assert.strictEqual(compositeEventHandled, true, 'Client realtime stream must receive and dispatch composite event');
+  unsubComposite();
+
   // Clean up
   realtimeTelemetryStream.disconnect();
   telemetryManager.stopHeartbeatTimer();
 
-  console.log('✔ ALL REAL-TIME TELEMETRY STREAM TESTS PASSED SUCCESSFULLY!');
+  console.log('✔ ALL REAL-TIME TELEMETRY STREAM TESTS PASSED SUCCESSFULLY (9/9 End-to-End Tests Passed)!');
   process.exit(0);
 }
 

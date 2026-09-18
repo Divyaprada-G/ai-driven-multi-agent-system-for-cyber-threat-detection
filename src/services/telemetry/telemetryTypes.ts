@@ -136,6 +136,7 @@ export interface NormalizedTelemetryEvent {
 export interface TelemetryIngestRequest {
   source: 'network' | 'system' | 'application';
   eventType?: string;
+  severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   rawLogs?: string;
   structuredEvents?: Array<Partial<NormalizedTelemetryEvent>>;
   host?: string;
@@ -176,7 +177,7 @@ export interface TelemetryStreamEnvelope<T = any> {
 
 export interface StreamInitPayload {
   sequence: number;
-  telemetryState: 'LIVE' | 'SIMULATION' | 'OFFLINE' | 'PARTIAL' | 'ERROR';
+  telemetryState: 'LIVE' | 'SIMULATION' | 'OFFLINE' | 'PARTIAL' | 'ERROR' | 'DISCONNECTED';
   collectorHealth: {
     overallState: string;
     activeCollectorsCount: number;

@@ -514,8 +514,37 @@ async function startServer() {
     return res.json({ status: 'DEMO_STOPPED' });
   });
 
-  app.post('/api/security-events', (req, res) => {
+  app.post('/api/security-events', async (req, res) => {
     const enqueued = localAnalysisEngine.enqueueSecurityEvent(req.body || {});
+
+    // Also route through telemetryManager so newly collected events stream via SSE to the dashboard
+    try {
+      const isSim = req.body?.isSimulated ?? false;
+      await telemetryManager.ingestExternalTelemetry({
+        source: req.body?.source || 'network',
+        host: req.body?.host || 'soc-monitored-host',
+        sourceIp: req.body?.sourceIp || req.body?.source_ip || '127.0.0.1',
+        destinationIp: req.body?.destinationIp || req.body?.dest_ip || '127.0.0.1',
+        eventType: req.body?.eventType || 'Security Event',
+        severity: req.body?.severity || 'LOW',
+        isSimulated: isSim,
+        structuredEvents: [{
+          eventId: enqueued.eventId,
+          timestamp: enqueued.timestamp || enqueued.receivedAt,
+          source: req.body?.source || 'network',
+          eventType: req.body?.eventType || 'Security Event',
+          sourceIp: req.body?.sourceIp || req.body?.source_ip || '127.0.0.1',
+          destinationIp: req.body?.destinationIp || req.body?.dest_ip || '127.0.0.1',
+          host: req.body?.host || 'soc-monitored-host',
+          severity: req.body?.severity || 'LOW',
+          details: req.body?.details || req.body?.message || 'Ingested security event',
+          rawPayload: typeof req.body?.payload === 'string' ? req.body.payload : JSON.stringify(req.body)
+        }]
+      });
+    } catch (e: any) {
+      console.warn('[Server] Error streaming security event to telemetry manager:', e.message);
+    }
+
     return res.json({
       eventId: enqueued.eventId,
       receivedAt: enqueued.receivedAt,
@@ -1734,6 +1763,38 @@ except Exception as e:
     });
   };
 
+  const runPythonPrediction = (features: Record<string, any>, modelId?: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const predictScript = path.join(process.cwd(), 'ml', 'predict.py');
+      const args = [predictScript, '--features', JSON.stringify(features)];
+      if (modelId) {
+        args.push('--model-id', modelId);
+      }
+      const py = spawn('python3', args);
+      let stdoutData = '';
+      let stderrData = '';
+
+      py.stdout.on('data', (d) => { stdoutData += d.toString(); });
+      py.stderr.on('data', (d) => { stderrData += d.toString(); });
+
+      py.on('close', (code) => {
+        if (code !== 0) {
+          return reject(new Error(`Prediction process exited with code ${code}: ${stderrData || stdoutData}`));
+        }
+        try {
+          const parsed = JSON.parse(stdoutData.trim());
+          resolve(parsed);
+        } catch (e) {
+          reject(new Error(`Failed to parse prediction output: ${stdoutData}`));
+        }
+      });
+
+      py.on('error', (err) => {
+        reject(err);
+      });
+    });
+  };
+
   // POST /api/ml/train/random-forest
   app.post('/api/ml/train/random-forest', async (req, res) => {
     try {
@@ -1962,7 +2023,12 @@ except Exception as e:
     }
 
     if (!data) {
-      data = localAnalysisEngine.predict(features, modelId);
+      try {
+        data = await runPythonPrediction(features, modelId);
+      } catch (pyErr) {
+        console.warn('[Node Server] Python direct prediction fallback to local engine:', pyErr);
+        data = localAnalysisEngine.predict(features, modelId);
+      }
     }
 
     // If successful inference and eventId provided, persist detection in PostgreSQL / localStore

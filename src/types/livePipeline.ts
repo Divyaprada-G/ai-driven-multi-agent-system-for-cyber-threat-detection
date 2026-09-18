@@ -10,6 +10,8 @@ export type LiveSimulatorMode = 'mixed' | 'normal' | 'suspicious' | 'multistage'
 
 export interface LiveSecurityEvent {
   eventId: string;
+  id?: string;
+  timestamp?: string;
   receivedAt: string;
   processedAt?: string;
   status: LiveEventStatus;
@@ -26,6 +28,9 @@ export interface LiveSecurityEvent {
   collectorState?: 'LIVE' | 'SIMULATED' | 'OFFLINE' | 'ERROR';
   agentId: string;
   agentType: string;
+  agentName?: string;
+  detectionMethod?: string;
+  sourceType?: string;
   findingId?: string;
   correlationId?: string;
   threatDetectionId?: string;
