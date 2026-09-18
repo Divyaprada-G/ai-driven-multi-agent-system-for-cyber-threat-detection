@@ -19,6 +19,7 @@ import { auditService } from './src/services/auditService';
 import { runWorkflowTestSuite } from './src/services/alertIncident/workflowTestSuite';
 import { telemetryManager } from './src/services/telemetry/telemetryManager';
 import { sixAgentPipeline } from './src/services/telemetry/pipelineOrchestrator';
+import { runPipelineTestSuite } from './src/tests/pipelineIntegrationTestSuite';
 
 const PORT = config.port;
 const ML_SERVICE_URL = config.mlServiceUrl;
@@ -2375,6 +2376,24 @@ except Exception as e:
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get(['/api/pipeline/verify-suite', '/api/pipeline/test'], async (_req, res) => {
+    try {
+      const summary = await runPipelineTestSuite();
+      return res.status(200).json(summary);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message, status: 'ERROR' });
+    }
+  });
+
+  app.post(['/api/pipeline/verify-suite', '/api/pipeline/test'], async (_req, res) => {
+    try {
+      const summary = await runPipelineTestSuite();
+      return res.status(200).json(summary);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message, status: 'ERROR' });
     }
   });
 

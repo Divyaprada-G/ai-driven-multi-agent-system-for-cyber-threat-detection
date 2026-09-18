@@ -250,7 +250,7 @@ export class SixAgentPipelineOrchestrator {
     // -------------------------------------------------------------
     // STAGE 3: PREPROCESSOR & DEDUPLICATION (Requirement 6)
     // -------------------------------------------------------------
-    const indicators = this.preprocessPayload(rawPayload, validation);
+    const indicators = this.preprocessPayload(rawPayload, validation, rawInput);
     const contentHash = indicators.contentHash;
 
     // Deduplication check
@@ -348,7 +348,7 @@ export class SixAgentPipelineOrchestrator {
     // STAGE 4: CORRECT AGENT ROUTING & RESILIENT EXECUTION (Requirement 1, 3, 8)
     // -------------------------------------------------------------
     const agentStart = performance.now();
-    const routing = this.routeToAgent(validation.source, indicators, rawPayload, eventId);
+    const routing = this.routeToAgent(validation.source, indicators, rawPayload, eventId, rawInput);
     const agentTimeMs = Number((performance.now() - agentStart).toFixed(2));
     routing.executionTimeMs = agentTimeMs;
 
@@ -358,7 +358,7 @@ export class SixAgentPipelineOrchestrator {
       auditService.recordAction({
         action: 'AGENT_ERROR',
         entityType: 'AGENT',
-        entityId: routing.agentName,
+        entityId: eventId,
         actor: 'Pipeline Dispatcher',
         details: `Non-fatal agent failure during execution: ${routing.error}`,
         metadata: { eventId, agent: routing.agentName, error: routing.error }
@@ -464,6 +464,44 @@ export class SixAgentPipelineOrchestrator {
         actor: 'Persistence Stage',
         details: `MongoDB unavailable (${persistence.error || 'Connection unverified'}). Handled with zero data loss.`,
         metadata: { eventId, error: persistence.error }
+      });
+    }
+
+    if (classification.isConfirmedThreat) {
+      auditService.recordAction({
+        action: 'THREAT_DETECTED',
+        entityType: 'THREAT',
+        entityId: eventId,
+        actor: 'Threat Classification Stage',
+        details: `Confirmed threat: ${classification.threatCategories.join(', ') || 'Security Anomaly'} (Severity: ${classification.overallSeverity}, Risk: ${riskAssessment.riskScore})`,
+        metadata: {
+          eventId,
+          severity: classification.overallSeverity,
+          riskScore: riskAssessment.riskScore,
+          categories: classification.threatCategories
+        }
+      });
+    }
+
+    if (alertOutcome.generated) {
+      auditService.recordAction({
+        action: 'ALERT_GENERATED',
+        entityType: 'ALERT',
+        entityId: alertOutcome.alertId || eventId,
+        actor: 'Alert & Response Agent',
+        details: `Security alert generated: ${alertOutcome.title} (${alertOutcome.severity})`,
+        metadata: { eventId, alertId: alertOutcome.alertId, severity: alertOutcome.severity }
+      });
+    }
+
+    if (incidentOutcome.created) {
+      auditService.recordAction({
+        action: 'INCIDENT_CREATED',
+        entityType: 'INCIDENT',
+        entityId: incidentOutcome.incidentId || eventId,
+        actor: 'Alert & Response Agent',
+        details: `Security incident created: ${incidentOutcome.title} (${incidentOutcome.severity})`,
+        metadata: { eventId, incidentId: incidentOutcome.incidentId, severity: incidentOutcome.severity }
       });
     }
 
@@ -617,54 +655,68 @@ export class SixAgentPipelineOrchestrator {
     return 'system';
   }
 
-  private preprocessPayload(rawPayload: string, validation: any): PreprocessorIndicators {
+  private preprocessPayload(rawPayload: string, validation: any, rawInput?: any): PreprocessorIndicators {
     const text = rawPayload;
     const lower = text.toLowerCase();
 
     // Extract IP addresses
     const ipRegex = /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/g;
     const ips = text.match(ipRegex) || [];
-    let sourceIp = ips[0] || '192.168.1.100';
-    let destinationIp = ips[1] || '10.0.0.5';
+    let sourceIp = rawInput?.sourceIp || rawInput?.src_ip || rawInput?.clientIp || ips[0] || '192.168.1.100';
+    let destinationIp = rawInput?.destinationIp || rawInput?.dst_ip || rawInput?.targetIp || ips[1] || '10.0.0.5';
 
-    // Source IP vs Dest IP extraction from key-value pairs
-    const srcMatch = text.match(/(?:src|src_ip|source|client_ip)[=:]\s*([0-9.]+)/i);
-    if (srcMatch) sourceIp = srcMatch[1];
-    const dstMatch = text.match(/(?:dst|dst_ip|dest|target_ip)[=:]\s*([0-9.]+)/i);
-    if (dstMatch) destinationIp = dstMatch[1];
+    // Source IP vs Dest IP extraction from key-value pairs if not explicitly passed
+    if (!rawInput?.sourceIp) {
+      const srcMatch = text.match(/(?:src|src_ip|source|client_ip)[=:]\s*([0-9.]+)/i);
+      if (srcMatch) sourceIp = srcMatch[1];
+    }
+    if (!rawInput?.destinationIp) {
+      const dstMatch = text.match(/(?:dst|dst_ip|dest|target_ip)[=:]\s*([0-9.]+)/i);
+      if (dstMatch) destinationIp = dstMatch[1];
+    }
 
     // Extract Port
-    let destinationPort: number | undefined;
-    const portMatch = text.match(/(?:port|dst_port|dport)[=:]\s*([0-9]+)/i);
-    if (portMatch) destinationPort = parseInt(portMatch[1], 10);
+    let destinationPort: number | undefined = rawInput?.destinationPort || rawInput?.dst_port || rawInput?.port;
+    if (destinationPort === undefined) {
+      const portMatch = text.match(/(?:port|dst_port|dport)[=:]\s*([0-9]+)/i);
+      if (portMatch) destinationPort = parseInt(portMatch[1], 10);
+    }
 
     // Extract Protocol
-    let protocol: string | undefined;
-    const protoMatch = text.match(/(?:proto|protocol)[=:]\s*([A-Za-z0-9]+)/i);
-    if (protoMatch) protocol = protoMatch[1].toUpperCase();
+    let protocol: string | undefined = rawInput?.protocol || rawInput?.proto;
+    if (!protocol) {
+      const protoMatch = text.match(/(?:proto|protocol)[=:]\s*([A-Za-z0-9]+)/i);
+      if (protoMatch) protocol = protoMatch[1].toUpperCase();
+    }
 
     // Extract Host
-    let host = validation.host || 'server01';
-    const hostMatch = text.match(/(?:host|hostname|server)[=:]\s*([A-Za-z0-9._-]+)/i);
-    if (hostMatch) host = hostMatch[1];
+    let host = rawInput?.host || validation.host || 'server01';
+    if (!rawInput?.host) {
+      const hostMatch = text.match(/(?:host|hostname|server)[=:]\s*([A-Za-z0-9._-]+)/i);
+      if (hostMatch) host = hostMatch[1];
+    }
 
     // Extract User
-    let username: string | undefined;
-    const userMatch = text.match(/(?:user|username|for user)[=:\s]+([A-Za-z0-9_-]+)/i);
-    if (userMatch) username = userMatch[1];
+    let username: string | undefined = rawInput?.username || rawInput?.user || rawInput?.account;
+    if (!username) {
+      const userMatch = text.match(/(?:user|username|for user)[=:\s]+([A-Za-z0-9_-]+)/i);
+      if (userMatch) username = userMatch[1];
+    }
 
     // Extract HTTP details
-    let httpMethod: string | undefined;
-    let httpUri: string | undefined;
-    let statusCode: number | undefined;
+    let httpMethod: string | undefined = rawInput?.httpMethod || rawInput?.method;
+    let httpUri: string | undefined = rawInput?.httpUri || rawInput?.endpoint || rawInput?.url || rawInput?.uri;
+    let statusCode: number | undefined = rawInput?.statusCode || rawInput?.status_code;
     const httpMatch = text.match(/\b(GET|POST|PUT|DELETE|PATCH|HEAD)\s+([^\s]+)\s+HTTP/i);
     if (httpMatch) {
-      httpMethod = httpMatch[1].toUpperCase();
-      httpUri = httpMatch[2];
+      if (!httpMethod) httpMethod = httpMatch[1].toUpperCase();
+      if (!httpUri) httpUri = httpMatch[2];
     }
-    const statusMatch = text.match(/\bHTTP\/[0-9.]+\s+([0-9]{3})\b/i) || text.match(/\s([0-9]{3})\s+(?:[0-9]+|text\/|application\/)/i);
-    if (statusMatch) {
-      statusCode = parseInt(statusMatch[1], 10);
+    if (statusCode === undefined) {
+      const statusMatch = text.match(/\bHTTP\/[0-9.]+\s+([0-9]{3})\b/i) || text.match(/\s([0-9]{3})\s+(?:[0-9]+|text\/|application\/)/i);
+      if (statusMatch) {
+        statusCode = parseInt(statusMatch[1], 10);
+      }
     }
 
     // SHA-256 Content Hash for Deduplication (Requirement 6)
@@ -739,7 +791,8 @@ export class SixAgentPipelineOrchestrator {
     source: 'network' | 'system' | 'application',
     indicators: PreprocessorIndicators,
     rawPayload: string,
-    eventId: string
+    eventId: string,
+    rawInput?: any
   ): AgentRoutingResult {
     const logEvent: LogEvent = {
       id: eventId,
@@ -753,7 +806,30 @@ export class SixAgentPipelineOrchestrator {
         sourceIp: indicators.sourceIp,
         destinationIp: indicators.destinationIp,
         destinationPort: indicators.destinationPort,
-        username: indicators.username
+        sourcePort: indicators.sourcePort,
+        protocol: indicators.protocol,
+        username: indicators.username,
+        processName: rawInput?.processName || rawInput?.process_name,
+        commandLine: rawInput?.commandLine || rawInput?.cmd || rawInput?.command,
+        method: indicators.httpMethod,
+        endpoint: indicators.httpUri,
+        statusCode: indicators.statusCode,
+        userAgent: rawInput?.userAgent
+      },
+      normalizedFields: {
+        hostName: indicators.host,
+        sourceIp: indicators.sourceIp,
+        destinationIp: indicators.destinationIp,
+        destinationPort: indicators.destinationPort,
+        sourcePort: indicators.sourcePort,
+        protocol: indicators.protocol,
+        userName: indicators.username,
+        processName: rawInput?.processName || rawInput?.process_name,
+        commandLine: rawInput?.commandLine || rawInput?.cmd || rawInput?.command,
+        httpMethod: indicators.httpMethod,
+        endpoint: indicators.httpUri,
+        statusCode: indicators.statusCode,
+        userAgent: rawInput?.userAgent
       }
     };
 
@@ -761,6 +837,10 @@ export class SixAgentPipelineOrchestrator {
     const findings: SecurityFinding[] = [];
 
     try {
+      if (rawInput?.simulateAgentFailure || rawInput?.failAgent || rawPayload.includes('__SIMULATE_AGENT_FAILURE__')) {
+        throw new Error(`Simulated agent crash in ${source} detector agent (fault injection test)`);
+      }
+
       if (source === 'network') {
         const netResults = this.networkDetector.analyze([logEvent]);
         const threats = netResults.filter((r) => r.threatDetected);

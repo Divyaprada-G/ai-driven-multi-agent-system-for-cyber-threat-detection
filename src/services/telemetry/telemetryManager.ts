@@ -406,19 +406,21 @@ export class TelemetryManager {
   /**
    * Ingests externally submitted raw logs or telemetry packets
    */
-  public async ingestExternalTelemetry(payload: TelemetryIngestRequest): Promise<{
+  public async ingestExternalTelemetry(payload: any): Promise<{
     status: string;
     eventsProcessed: number;
     threatsDetected: number;
     eventIds: string[];
+    results: any[];
   }> {
-    const isSimulated = Boolean(payload.isSimulated);
+    const isSimulated = Boolean(payload?.isSimulated);
     const timestamp = new Date().toISOString();
     const eventIds: string[] = [];
+    const outcomes: any[] = [];
     let threats = 0;
 
-    if (payload.rawLogs) {
-      const lines = payload.rawLogs.split('\n').map(l => l.trim()).filter(Boolean);
+    if (payload?.rawLogs) {
+      const lines = String(payload.rawLogs).split('\n').map(l => l.trim()).filter(Boolean);
       for (const line of lines) {
         const id = `EXT-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`;
         eventIds.push(id);
@@ -445,14 +447,28 @@ export class TelemetryManager {
           }
         };
 
-        await this.processLiveEvent(normalized);
+        const outcome = await this.processLiveEvent(normalized);
+        if (outcome) {
+          outcomes.push(outcome);
+          if (outcome.threatClassification?.isConfirmedThreat) threats++;
+        }
       }
-    } else if (Array.isArray(payload.structuredEvents)) {
-      for (const ev of payload.structuredEvents) {
+    } else {
+      // Gather array of items or single item
+      const items: any[] = [];
+      if (Array.isArray(payload?.structuredEvents)) {
+        items.push(...payload.structuredEvents);
+      } else if (Array.isArray(payload?.events)) {
+        items.push(...payload.events);
+      } else if (payload && typeof payload === 'object' && (payload.eventType || payload.rawPayload || payload.details || payload.message || payload.source)) {
+        items.push(payload);
+      }
+
+      for (const ev of items) {
         const id = ev.eventId || `EXT-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`;
         eventIds.push(id);
 
-        const sm = (ev as any).sourceMetadata;
+        const sm = ev.sourceMetadata;
         if (sm) {
           const key = `${sm.hostname || ev.host || 'unknown'}::${sm.collector_name || 'WindowsCollector'}`;
           const existing = this.externalCollectors.get(key) || {
@@ -469,34 +485,41 @@ export class TelemetryManager {
           this.externalCollectors.set(key, existing);
         }
 
+        const rawStr = ev.rawPayload || ev.message || ev.details || JSON.stringify(ev);
+        const itemIsSimulated = ev.isSimulated !== undefined ? Boolean(ev.isSimulated) : isSimulated;
+
         const normalized: NormalizedTelemetryEvent = {
           eventId: id,
           timestamp: ev.timestamp || timestamp,
-          source: ev.source || payload.source || 'system',
+          source: ev.source || payload?.source || 'system',
           eventType: ev.eventType || 'External Structured Telemetry',
-          sourceIp: ev.sourceIp || payload.sourceIp || '127.0.0.1',
-          destinationIp: ev.destinationIp || payload.destinationIp || '127.0.0.1',
+          sourceIp: ev.sourceIp || payload?.sourceIp || '127.0.0.1',
+          destinationIp: ev.destinationIp || payload?.destinationIp || '127.0.0.1',
           sourcePort: ev.sourcePort,
           destinationPort: ev.destinationPort,
           protocol: ev.protocol,
-          host: ev.host || payload.host || 'external-host',
+          host: ev.host || payload?.host || 'external-host',
           username: ev.username,
           severity: ev.severity || 'LOW',
-          details: ev.details || 'Structured telemetry ingested via REST API.',
-          rawPayload: ev.rawPayload || JSON.stringify(ev),
-          contentHash: ev.contentHash || crypto.createHash('sha256').update(JSON.stringify(ev)).digest('hex'),
-          isSimulated,
-          telemetrySource: isSimulated ? 'SIMULATOR' : 'EXTERNAL_AGENT',
-          collectorState: isSimulated ? 'SIMULATED' : 'LIVE',
+          details: ev.details || ev.message || 'Structured telemetry ingested via REST API.',
+          rawPayload: rawStr,
+          contentHash: ev.contentHash || crypto.createHash('sha256').update(rawStr).digest('hex'),
+          isSimulated: itemIsSimulated,
+          telemetrySource: itemIsSimulated ? 'SIMULATOR' : 'EXTERNAL_AGENT',
+          collectorState: itemIsSimulated ? 'SIMULATED' : 'LIVE',
           features: ev.features || {},
           agentRouting: {
-            assignedAgent: ev.agentRouting?.assignedAgent || 'System Security Agent',
-            assignedAgentId: ev.agentRouting?.assignedAgentId || 'agent-system-1'
+            assignedAgent: ev.agentRouting?.assignedAgent || (ev.source === 'network' ? 'Network Security Agent' : ev.source === 'application' ? 'Application Security Agent' : 'System Security Agent'),
+            assignedAgentId: ev.agentRouting?.assignedAgentId || (ev.source === 'network' ? 'agent-network-1' : ev.source === 'application' ? 'agent-app-1' : 'agent-system-1')
           },
           sourceMetadata: sm
         };
 
-        await this.processLiveEvent(normalized);
+        const outcome = await this.processLiveEvent(normalized);
+        if (outcome) {
+          outcomes.push(outcome);
+          if (outcome.threatClassification?.isConfirmedThreat) threats++;
+        }
       }
     }
 
@@ -504,7 +527,8 @@ export class TelemetryManager {
       status: 'SUCCESS',
       eventsProcessed: eventIds.length,
       threatsDetected: threats,
-      eventIds
+      eventIds,
+      results: outcomes
     };
   }
 
@@ -513,7 +537,7 @@ export class TelemetryManager {
    * Event Normalization -> Deduplication -> Multi-Agent Pipeline -> ML Prediction ->
    * 7-Factor Risk Scoring -> Alert/Incident Creation -> Durable Database Storage -> SSE Broadcast
    */
-  public async processLiveEvent(event: NormalizedTelemetryEvent): Promise<void> {
+  public async processLiveEvent(event: NormalizedTelemetryEvent): Promise<PipelineProcessingResult | null> {
     if (event.isSimulated) {
       this.totalSimulatedEvents++;
     } else {
@@ -565,7 +589,7 @@ export class TelemetryManager {
       pipelineOutcome = await sixAgentPipeline.processEvent(event);
 
       if (pipelineOutcome.status === 'DUPLICATE') {
-        return; // Suppressed duplicate
+        return pipelineOutcome; // Suppressed duplicate
       }
 
       if (pipelineOutcome.threatClassification.isConfirmedThreat) {
@@ -701,6 +725,8 @@ export class TelemetryManager {
       status: 'ACTIVE',
       lastActivity: event.timestamp
     });
+
+    return pipelineOutcome;
   }
 }
 

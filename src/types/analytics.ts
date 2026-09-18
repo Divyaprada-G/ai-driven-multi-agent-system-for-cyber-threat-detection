@@ -18,6 +18,7 @@ export type TimeRangeFilter = '24H' | '7D' | '30D' | 'ALL' | 'CUSTOM';
 
 export type AuditActionType =
   | 'ALERT_CREATED'
+  | 'ALERT_GENERATED'
   | 'ALERT_ACKNOWLEDGED'
   | 'ALERT_STATUS_UPDATED'
   | 'INCIDENT_CREATED'
@@ -42,6 +43,7 @@ export type AuditActionType =
   | 'PREDICTION_EXECUTED'
   | 'TELEMETRY_INGESTED'
   | 'PIPELINE_EXECUTED'
+  | 'THREAT_DETECTED'
   | 'DUPLICATE_DROPPED'
   | 'AGENT_ERROR'
   | 'DATABASE_AUDIT';

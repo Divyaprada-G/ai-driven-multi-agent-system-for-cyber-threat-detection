@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Sliders,
   ShieldAlert,
+  ShieldCheck,
   Radio,
   SlidersHorizontal,
   Flame,
@@ -14,6 +15,7 @@ import {
   Layers
 } from 'lucide-react';
 import { LivePipelineStatus, LiveSimulatorMode } from '../../types/livePipeline';
+import { PipelineVerificationModal } from './PipelineVerificationModal';
 
 interface LivePipelineControlsProps {
   status: LivePipelineStatus;
@@ -38,6 +40,7 @@ export const LivePipelineControls: React.FC<LivePipelineControlsProps> = ({
 }) => {
   const [rate, setRate] = useState<number>(status.simulatorRate || 2);
   const [mode, setMode] = useState<LiveSimulatorMode>(status.simulatorMode || 'mixed');
+  const [showVerificationModal, setShowVerificationModal] = useState<boolean>(false);
 
   const handleToggleSimulator = () => {
     if (status.simulatorActive) {
@@ -71,6 +74,16 @@ export const LivePipelineControls: React.FC<LivePipelineControlsProps> = ({
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>RUN PROJECT DEMO</span>
+          </button>
+
+          {/* Six-Agent Pipeline Verification Suite */}
+          <button
+            onClick={() => setShowVerificationModal(true)}
+            className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer shadow-sm"
+            title="Verify 12-stage multi-agent pipeline, latency, deduplication & audit trail"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>VERIFY PIPELINE</span>
           </button>
 
           {/* Start/Stop Pipeline */}
@@ -198,6 +211,12 @@ export const LivePipelineControls: React.FC<LivePipelineControlsProps> = ({
           <span className="text-emerald-400 font-semibold ml-1">SIMULATION ONLY:</span> Recommended defensive responses are purely informational. Zero real network packets, firewall rules, or host processes are altered.
         </div>
       </div>
+
+      {/* Six-Agent Pipeline Verification Suite Modal */}
+      <PipelineVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+      />
     </div>
   );
 };

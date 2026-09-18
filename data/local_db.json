@@ -1,6 +1,122 @@
 {
   "rawEvents": [
     {
+      "id": "WIN-1789718690135-4625",
+      "source": "system",
+      "eventType": "Windows Logon Failure (Event 4625)",
+      "rawPayload": "EVENT 4625: An account failed to log on. Subject: S-1-0-0 Account: Administrator Failure Reason: Unknown user name or bad password.",
+      "normalizedFields": {
+        "host": "WIN-SRV-2022",
+        "severity": "HIGH",
+        "details": "Structured telemetry ingested via REST API.",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "hostname": "WIN-SRV-2022",
+          "collector_name": "WindowsCollector-Production",
+          "source_type": "windows_security_event_log",
+          "collection_status": "COLLECTED"
+        }
+      },
+      "eventTimestamp": "2026-09-18T08:04:50.135Z",
+      "sourceIp": "192.168.1.189",
+      "destinationIp": "127.0.0.1",
+      "host": "WIN-SRV-2022",
+      "username": "Administrator",
+      "severity": "HIGH",
+      "isTestEvent": false,
+      "contentHash": "393b62084eaf9fac37d8f2752c6cbd99d3e10536f25faf1863abcccbd51e0bc7",
+      "createdAt": "2026-09-18T08:04:50.136Z"
+    },
+    {
+      "id": "WIN-1789718681438-4625",
+      "source": "system",
+      "eventType": "Windows Logon Failure (Event 4625)",
+      "rawPayload": "EVENT 4625: An account failed to log on. Subject: S-1-0-0 Account: Administrator Failure Reason: Unknown user name or bad password.",
+      "normalizedFields": {
+        "host": "WIN-SRV-2022",
+        "severity": "HIGH",
+        "details": "Structured telemetry ingested via REST API.",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "hostname": "WIN-SRV-2022",
+          "collector_name": "WindowsCollector-Production",
+          "source_type": "windows_security_event_log",
+          "collection_status": "COLLECTED"
+        }
+      },
+      "eventTimestamp": "2026-09-18T08:04:41.438Z",
+      "sourceIp": "192.168.1.189",
+      "destinationIp": "127.0.0.1",
+      "host": "WIN-SRV-2022",
+      "username": "Administrator",
+      "severity": "HIGH",
+      "isTestEvent": false,
+      "contentHash": "5aa288943a5337bb3828557b35f06654301ca82913509893be772f5a49a7aa91",
+      "createdAt": "2026-09-18T08:04:41.439Z"
+    },
+    {
+      "id": "WIN-1789718532903-4625",
+      "source": "system",
+      "eventType": "Windows Logon Failure (Event 4625)",
+      "rawPayload": "EVENT 4625: An account failed to log on. Subject: S-1-0-0 Account: Administrator Failure Reason: Unknown user name or bad password.",
+      "normalizedFields": {
+        "host": "WIN-SRV-2022",
+        "severity": "HIGH",
+        "details": "Structured telemetry ingested via REST API.",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "hostname": "WIN-SRV-2022",
+          "collector_name": "WindowsCollector-Production",
+          "source_type": "windows_security_event_log",
+          "collection_status": "COLLECTED"
+        }
+      },
+      "eventTimestamp": "2026-09-18T08:02:12.903Z",
+      "sourceIp": "192.168.1.189",
+      "destinationIp": "127.0.0.1",
+      "host": "WIN-SRV-2022",
+      "username": "Administrator",
+      "severity": "HIGH",
+      "isTestEvent": false,
+      "contentHash": "a2f8674065c4ba39a46a458ec650eabe0af7274b26d945eba1eb045b31a1e52d",
+      "createdAt": "2026-09-18T08:02:12.904Z"
+    },
+    {
+      "id": "WIN-1789718506559-4625",
+      "source": "system",
+      "eventType": "Windows Logon Failure (Event 4625)",
+      "rawPayload": "EVENT 4625: An account failed to log on. Subject: S-1-0-0 Account: Administrator Failure Reason: Unknown user name or bad password.",
+      "normalizedFields": {
+        "host": "WIN-SRV-2022",
+        "severity": "HIGH",
+        "details": "Structured telemetry ingested via REST API.",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "hostname": "WIN-SRV-2022",
+          "collector_name": "WindowsCollector-Production",
+          "source_type": "windows_security_event_log",
+          "collection_status": "COLLECTED"
+        }
+      },
+      "eventTimestamp": "2026-09-18T08:01:46.560Z",
+      "sourceIp": "192.168.1.189",
+      "destinationIp": "127.0.0.1",
+      "host": "WIN-SRV-2022",
+      "username": "Administrator",
+      "severity": "HIGH",
+      "isTestEvent": false,
+      "contentHash": "2a3109226d9c304268c2879cc6e03b66f6be9e32c38652c883d6a11b229ad148",
+      "createdAt": "2026-09-18T08:01:46.561Z"
+    },
+    {
       "id": "EXT-1789717018510-a596",
       "source": "system",
       "eventType": "External Telemetry Ingest",
@@ -5773,7 +5889,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:29:04.648Z",
+      "updatedAt": "2026-09-18T07:56:09.705Z",
       "createdAt": "2026-09-18T07:25:31.997Z"
     },
     {
@@ -5785,7 +5901,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T07:29:04.646Z",
+      "updatedAt": "2026-09-18T07:56:09.704Z",
       "createdAt": "2026-09-18T07:25:31.996Z"
     },
     {
@@ -5833,7 +5949,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T07:29:04.649Z",
+      "updatedAt": "2026-09-18T07:56:09.707Z",
       "createdAt": "2026-09-17T10:19:33.460Z"
     },
     {
@@ -5846,7 +5962,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:29:04.649Z",
+      "updatedAt": "2026-09-18T07:56:09.708Z",
       "createdAt": "2026-09-17T10:19:29.754Z"
     },
     {
@@ -5859,7 +5975,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:29:04.655Z",
+      "updatedAt": "2026-09-18T07:56:09.713Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -5871,7 +5987,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T07:29:04.654Z",
+      "updatedAt": "2026-09-18T07:56:09.712Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -5884,7 +6000,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:29:04.653Z",
+      "updatedAt": "2026-09-18T07:56:09.711Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -5897,7 +6013,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:29:04.652Z",
+      "updatedAt": "2026-09-18T07:56:09.709Z",
       "createdAt": "2026-09-17T10:19:25.997Z"
     },
     {
@@ -5909,7 +6025,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T07:29:04.656Z",
+      "updatedAt": "2026-09-18T07:56:09.715Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     },
     {
@@ -5922,7 +6038,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:29:04.657Z",
+      "updatedAt": "2026-09-18T07:56:09.717Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     }
   ]
