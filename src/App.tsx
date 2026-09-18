@@ -292,6 +292,7 @@ export default function App() {
         <AnalyzeLogsPage
           onNavigate={setCurrentPage}
           onNavigateToIncident={handleNavigateToIncident}
+          onAnalysisComplete={fetchTelemetry}
         />
       )}
 

@@ -87,8 +87,8 @@ class MongoConnectionManager {
         maxPoolSize: 20,
         minPoolSize: 2,
         maxIdleTimeMS: 30000,
-        connectTimeoutMS: 5000,
-        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 1000,
+        serverSelectionTimeoutMS: 1000,
         retryWrites: true,
         w: 'majority'
       };
@@ -194,8 +194,10 @@ class MongoConnectionManager {
    */
   public async checkHealth(): Promise<MongoHealthStatus> {
     const now = Date.now();
-    // Cache health for 2 seconds to prevent spamming the database
-    if (this.lastHealthCheck && now - this.lastHealthCheckTime < 2000) {
+    // Cache health check to prevent spamming unreachable database:
+    // 5 seconds if connected, 15 seconds if disconnected/error.
+    const cacheTtl = this.lastHealthCheck && this.lastHealthCheck.connected ? 5000 : 15000;
+    if (this.lastHealthCheck && (now - this.lastHealthCheckTime < cacheTtl)) {
       return this.lastHealthCheck;
     }
 

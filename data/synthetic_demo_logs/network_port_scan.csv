@@ -1,0 +1,12 @@
+# Synthetic Demo Data - Safe for testing and demonstration purposes
+timestamp,src_ip,dst_ip,src_port,dst_port,protocol,flags,packets,bytes,action,status
+2026-09-17T10:15:01Z,192.168.1.105,10.0.0.5,49152,21,TCP,SYN,1,64,connect,closed
+2026-09-17T10:15:02Z,192.168.1.105,10.0.0.5,49153,22,TCP,SYN,1,64,connect,open
+2026-09-17T10:15:03Z,192.168.1.105,10.0.0.5,49154,23,TCP,SYN,1,64,connect,closed
+2026-09-17T10:15:04Z,192.168.1.105,10.0.0.5,49155,80,TCP,SYN,1,64,connect,open
+2026-09-17T10:15:05Z,192.168.1.105,10.0.0.5,49156,443,TCP,SYN,1,64,connect,open
+2026-09-17T10:15:06Z,192.168.1.105,10.0.0.5,49157,3306,TCP,SYN,1,64,connect,filtered
+2026-09-17T10:15:07Z,192.168.1.105,10.0.0.5,49158,5432,TCP,SYN,1,64,connect,closed
+2026-09-17T10:15:08Z,192.168.1.105,10.0.0.5,49159,8080,TCP,SYN,1,64,connect,open
+2026-09-17T10:15:09Z,192.168.1.105,10.0.0.5,49160,3389,TCP,SYN,1,64,connect,filtered
+2026-09-17T10:15:10Z,192.168.1.105,10.0.0.5,49161,4444,TCP,SYN,1,64,connect,filtered
