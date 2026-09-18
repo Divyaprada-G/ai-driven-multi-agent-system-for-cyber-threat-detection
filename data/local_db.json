@@ -1,6 +1,211 @@
 {
   "rawEvents": [
     {
+      "id": "EXT-1789719486944-5eb2",
+      "source": "NETWORK",
+      "eventType": "External Structured Telemetry",
+      "rawPayload": "{\"source\":\"NETWORK\",\"timestamp\":\"2026-09-18T08:18:10.000Z\",\"event\":{\"sourceIp\":\"192.168.1.150\",\"destinationIp\":\"10.0.0.5\",\"destinationPort\":22,\"protocol\":\"TCP\",\"flag\":\"SYN_FLOOD\",\"host\":\"WIN-SRV-2026\",\"details\":\"High volume SYN flood attempt detected on SSH port\"}}",
+      "normalizedFields": {
+        "host": "external-host",
+        "severity": "LOW",
+        "details": "Structured telemetry ingested via REST API.",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-18T08:18:10.000Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "external-host",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "0ad65b295a2b72c433655f6fa68183bafd3e153b4ba0ac78fb31d617cc6a824d",
+      "createdAt": "2026-09-18T08:18:06.945Z"
+    },
+    {
+      "id": "WIN-1789719220000-4625",
+      "source": "system",
+      "eventType": "Windows Logon Failure (Event 4625)",
+      "rawPayload": "EVENT 4625: An account failed to log on. Subject: S-1-0-0 Account: Administrator Failure Reason: Unknown user name or bad password.",
+      "normalizedFields": {
+        "host": "WIN-SRV-2022",
+        "severity": "HIGH",
+        "details": "Structured telemetry ingested via REST API.",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "hostname": "WIN-SRV-2022",
+          "collector_name": "WindowsCollector-Production",
+          "source_type": "windows_security_event_log",
+          "collection_status": "COLLECTED"
+        }
+      },
+      "eventTimestamp": "2026-09-18T08:13:40.000Z",
+      "sourceIp": "192.168.1.189",
+      "destinationIp": "127.0.0.1",
+      "host": "WIN-SRV-2022",
+      "username": "Administrator",
+      "severity": "HIGH",
+      "isTestEvent": false,
+      "contentHash": "47869ff986327873033e2ff76dee9b97df990aab35305b12271135bb2159c649",
+      "createdAt": "2026-09-18T08:13:40.001Z"
+    },
+    {
+      "id": "EXT-1789718967874-7b1e",
+      "source": "network",
+      "eventType": "Port Scan Probe",
+      "rawPayload": "SYN packet to 10.0.0.5:445 from 192.168.1.150",
+      "normalizedFields": {
+        "host": "soc-collector-node-01",
+        "severity": "LOW",
+        "details": "SYN packet to 10.0.0.5:445 from 192.168.1.150",
+        "features": {},
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT"
+      },
+      "eventTimestamp": "2026-09-18T08:09:27.874Z",
+      "sourceIp": "192.168.1.150",
+      "destinationIp": "10.0.0.5",
+      "host": "soc-collector-node-01",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "51e38659bdd5886030dedc05b975754c7265d7a076e488c251ce624e5df9968a",
+      "createdAt": "2026-09-18T08:09:27.875Z"
+    },
+    {
+      "id": "TEST-SIM-1789718967755-2",
+      "source": "network",
+      "eventType": "[SIMULATED] Network Flow",
+      "rawPayload": "simulated",
+      "normalizedFields": {
+        "host": "TEST-SIM-HOST",
+        "severity": "LOW",
+        "details": "Simulated flow for unit test",
+        "features": {},
+        "isSimulated": true,
+        "telemetrySource": "SIMULATOR"
+      },
+      "eventTimestamp": "2026-09-18T08:09:27.755Z",
+      "sourceIp": "192.168.1.50",
+      "destinationIp": "10.0.0.1",
+      "host": "TEST-SIM-HOST",
+      "severity": "LOW",
+      "isTestEvent": true,
+      "contentHash": "80798f1c7527bb4f10b8f1974b17b5f586b0feeef4dae994fcad4a6358c9f026",
+      "createdAt": "2026-09-18T08:09:27.755Z"
+    },
+    {
+      "id": "TEST-EVT-1789718967738-1",
+      "source": "system",
+      "eventType": "Process Creation Telemetry",
+      "rawPayload": "{\"action\":\"process_start\",\"pid\":1234}",
+      "normalizedFields": {
+        "host": "TEST-HOST",
+        "severity": "LOW",
+        "details": "Verified test host process execution",
+        "features": {
+          "pid": 1234
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-18T08:09:27.738Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "TEST-HOST",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "5539613bb901f7e2a764c1d10e36ef11b884cb9dd60655de24ae457eb1f0a32e",
+      "createdAt": "2026-09-18T08:09:27.740Z"
+    },
+    {
+      "id": "TEST-SIM-1789718948469-2",
+      "source": "network",
+      "eventType": "[SIMULATED] Network Flow",
+      "rawPayload": "simulated",
+      "normalizedFields": {
+        "host": "TEST-SIM-HOST",
+        "severity": "LOW",
+        "details": "Simulated flow for unit test",
+        "features": {},
+        "isSimulated": true,
+        "telemetrySource": "SIMULATOR"
+      },
+      "eventTimestamp": "2026-09-18T08:09:08.469Z",
+      "sourceIp": "192.168.1.50",
+      "destinationIp": "10.0.0.1",
+      "host": "TEST-SIM-HOST",
+      "severity": "LOW",
+      "isTestEvent": true,
+      "contentHash": "142b644384f7efeaa7ce5fc456ad58fbacc0eb155f9a6fbce4aa0ed692110170",
+      "createdAt": "2026-09-18T08:09:08.469Z"
+    },
+    {
+      "id": "TEST-EVT-1789718948454-1",
+      "source": "system",
+      "eventType": "Process Creation Telemetry",
+      "rawPayload": "{\"action\":\"process_start\",\"pid\":1234}",
+      "normalizedFields": {
+        "host": "TEST-HOST",
+        "severity": "LOW",
+        "details": "Verified test host process execution",
+        "features": {
+          "pid": 1234
+        },
+        "isSimulated": false,
+        "telemetrySource": "HOST_SYSTEM"
+      },
+      "eventTimestamp": "2026-09-18T08:09:08.454Z",
+      "sourceIp": "127.0.0.1",
+      "destinationIp": "127.0.0.1",
+      "host": "TEST-HOST",
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "554563111d0c723d30aaaf39535177b58f24ca4d7dabdecd52603fe91329861b",
+      "createdAt": "2026-09-18T08:09:08.455Z"
+    },
+    {
+      "id": "WIN-NET-05a4a588",
+      "source": "network",
+      "eventType": "Network Socket & Interface Telemetry",
+      "rawPayload": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+      "normalizedFields": {
+        "host": "localhost",
+        "severity": "LOW",
+        "details": "Passive socket inspection: 0 active sockets, 0 listening ports.",
+        "features": {
+          "total_sockets": 0,
+          "listening_ports_count": 0,
+          "syn_sent_count": 0,
+          "is_packet_sniffing": false
+        },
+        "isSimulated": false,
+        "telemetrySource": "EXTERNAL_AGENT",
+        "sourceMetadata": {
+          "source_type": "network_telemetry",
+          "hostname": "localhost",
+          "collector_name": "NetworkTelemetryCollector",
+          "event_id": "WIN-NET-05a4a588",
+          "timestamp": "2026-09-18T08:09:02.712677+00:00",
+          "raw_message": "ActiveSockets: 0, ListeningPorts: [], Interfaces: ['169.254.8.1', '127.0.0.1']",
+          "collection_status": "COLLECTED",
+          "telemetry_type": "socket_and_interface_state",
+          "inspection_mode": "passive_local_tables",
+          "interfaces_count": 2
+        }
+      },
+      "eventTimestamp": "2026-09-18T08:09:02.712Z",
+      "sourceIp": "169.254.8.1",
+      "destinationIp": "127.0.0.1",
+      "host": "localhost",
+      "username": null,
+      "severity": "LOW",
+      "isTestEvent": false,
+      "contentHash": "c48db0da482e455b70f98dfdee4c463c974a8a9970e871f179843e81eb1886ae",
+      "createdAt": "2026-09-18T08:09:02.736Z"
+    },
+    {
       "id": "WIN-1789718690135-4625",
       "source": "system",
       "eventType": "Windows Logon Failure (Event 4625)",
@@ -5889,7 +6094,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:56:09.705Z",
+      "updatedAt": "2026-09-18T08:05:38.619Z",
       "createdAt": "2026-09-18T07:25:31.997Z"
     },
     {
@@ -5901,7 +6106,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T07:56:09.704Z",
+      "updatedAt": "2026-09-18T08:05:38.618Z",
       "createdAt": "2026-09-18T07:25:31.996Z"
     },
     {
@@ -5949,7 +6154,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T07:56:09.707Z",
+      "updatedAt": "2026-09-18T08:05:38.620Z",
       "createdAt": "2026-09-17T10:19:33.460Z"
     },
     {
@@ -5962,7 +6167,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:56:09.708Z",
+      "updatedAt": "2026-09-18T08:05:38.621Z",
       "createdAt": "2026-09-17T10:19:29.754Z"
     },
     {
@@ -5975,7 +6180,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:56:09.713Z",
+      "updatedAt": "2026-09-18T08:05:38.625Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -5987,7 +6192,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T07:56:09.712Z",
+      "updatedAt": "2026-09-18T08:05:38.624Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -6000,7 +6205,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:56:09.711Z",
+      "updatedAt": "2026-09-18T08:05:38.623Z",
       "createdAt": "2026-09-17T10:19:25.998Z"
     },
     {
@@ -6013,7 +6218,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:56:09.709Z",
+      "updatedAt": "2026-09-18T08:05:38.622Z",
       "createdAt": "2026-09-17T10:19:25.997Z"
     },
     {
@@ -6025,7 +6230,7 @@
         "BENIGN",
         "ANOMALY"
       ],
-      "updatedAt": "2026-09-18T07:56:09.715Z",
+      "updatedAt": "2026-09-18T08:05:38.626Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     },
     {
@@ -6038,7 +6243,7 @@
         "DDoS",
         "PortScan"
       ],
-      "updatedAt": "2026-09-18T07:56:09.717Z",
+      "updatedAt": "2026-09-18T08:05:38.628Z",
       "createdAt": "2026-09-17T09:57:59.656Z"
     }
   ]

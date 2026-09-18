@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from './components/layout/Layout';
 import { NavPageId } from './components/layout/Sidebar';
 import { DashboardPage } from './pages/DashboardPage';
+import { SystemStatusPage } from './pages/SystemStatusPage';
 import { AnalyzeLogsPage } from './pages/AnalyzeLogsPage';
 import { LivePipelinePage } from './pages/LivePipelinePage';
 import { LogExplorerPage } from './pages/LogExplorerPage';
@@ -271,6 +272,10 @@ export default function App() {
           onNavigate={setCurrentPage}
           onToggleAgentStatus={handleToggleAgentStatus}
         />
+      )}
+
+      {currentPage === 'system-status' && (
+        <SystemStatusPage />
       )}
 
       {currentPage === 'analyze-logs' && (

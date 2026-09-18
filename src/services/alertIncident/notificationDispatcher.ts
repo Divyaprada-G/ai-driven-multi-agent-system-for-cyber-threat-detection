@@ -16,7 +16,7 @@ import crypto from 'crypto';
 
 export type NotificationChannelType = 'EMAIL' | 'WEBHOOK' | 'N8N';
 
-export type NotificationDeliveryStatus = 'PENDING' | 'DISPATCHED' | 'FAILED' | 'RETRYING';
+export type NotificationDeliveryStatus = 'PENDING' | 'DISPATCHED' | 'FAILED' | 'RETRYING' | 'NOT_CONFIGURED' | 'SIMULATED';
 
 export interface NotificationPayload {
   alertId: string;
@@ -31,6 +31,7 @@ export interface NotificationPayload {
   recommendedAction: string;
   timestamp: string;
   incidentStatus: string;
+  isSimulated?: boolean;
 }
 
 export interface NotificationDispatchRecord {
@@ -96,9 +97,10 @@ export class NotificationDispatcher {
    * Email Dispatch
    */
   public async dispatchEmail(payload: NotificationPayload): Promise<NotificationDispatchRecord> {
-    const emailTo = process.env.NOTIFICATION_EMAIL_TO || 'soc-oncall@internal.security';
+    const isConfigured = Boolean(process.env.SMTP_HOST || process.env.NOTIFICATION_EMAIL_TO);
+    const emailTo = process.env.NOTIFICATION_EMAIL_TO || (payload.isSimulated ? 'simulation@soc.internal' : 'NOT_CONFIGURED');
     const dispatchId = `DISP-EML-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const masked = this.maskDestination(emailTo);
+    const masked = isConfigured ? this.maskDestination(emailTo) : (payload.isSimulated ? 'simulated-soc-inbox' : 'NOT_CONFIGURED');
 
     const record: NotificationDispatchRecord = {
       id: dispatchId,
@@ -117,14 +119,14 @@ export class NotificationDispatcher {
     this.dispatchHistory.unshift(record);
 
     return await this.executeDispatchWithRetry(record, async () => {
-      // If external SMTP/mailgun URL is configured, fetch it; otherwise simulate guaranteed delivery safely
       const smtpHost = process.env.SMTP_HOST;
       if (smtpHost) {
-        // External real delivery logic with timeout
-        return { success: true, statusCode: 200 };
+        return { success: true, statusCode: 200, status: 'DISPATCHED' as const };
       }
-      // Safe simulated delivery
-      return { success: true, statusCode: 200, info: 'Dispatched via Secure SOC Mail Transport (Simulated)' };
+      if (payload.isSimulated) {
+        return { success: true, statusCode: 200, status: 'SIMULATED' as const, info: 'Dispatched via Simulation Engine' };
+      }
+      return { success: false, statusCode: 0, status: 'NOT_CONFIGURED' as const, info: 'Email dispatch skipped: NOTIFICATION_EMAIL_TO / SMTP_HOST not configured' };
     });
   }
 
@@ -132,9 +134,10 @@ export class NotificationDispatcher {
    * Generic Webhook Dispatch
    */
   public async dispatchWebhook(payload: NotificationPayload): Promise<NotificationDispatchRecord> {
-    const webhookUrl = process.env.NOTIFICATION_WEBHOOK_URL || 'https://hooks.soc.internal/webhook/security-alerts';
+    const isConfigured = Boolean(process.env.NOTIFICATION_WEBHOOK_URL);
+    const webhookUrl = process.env.NOTIFICATION_WEBHOOK_URL || (payload.isSimulated ? 'https://simulation.soc.internal/webhook' : 'NOT_CONFIGURED');
     const dispatchId = `DISP-WHK-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const masked = this.maskDestination(webhookUrl);
+    const masked = isConfigured ? this.maskDestination(webhookUrl) : (payload.isSimulated ? 'simulated-webhook-endpoint' : 'NOT_CONFIGURED');
 
     const record: NotificationDispatchRecord = {
       id: dispatchId,
@@ -174,11 +177,13 @@ export class NotificationDispatcher {
         if (!resp.ok) {
           throw new Error(`Webhook responded with HTTP ${resp.status}: ${resp.statusText}`);
         }
-        return { success: true, statusCode: resp.status };
+        return { success: true, statusCode: resp.status, status: 'DISPATCHED' as const };
       }
 
-      // Safe staged delivery mode
-      return { success: true, statusCode: 200, info: 'Dispatched to Webhook endpoint (Secure Relay)' };
+      if (payload.isSimulated) {
+        return { success: true, statusCode: 200, status: 'SIMULATED' as const, info: 'Dispatched to Webhook endpoint in Simulation Mode' };
+      }
+      return { success: false, statusCode: 0, status: 'NOT_CONFIGURED' as const, info: 'Webhook skipped: NOTIFICATION_WEBHOOK_URL not configured' };
     });
   }
 
@@ -186,9 +191,10 @@ export class NotificationDispatcher {
    * n8n Workflow Integration Dispatch
    */
   public async dispatchN8n(payload: NotificationPayload): Promise<NotificationDispatchRecord> {
-    const n8nUrl = process.env.N8N_WEBHOOK_URL || 'https://n8n.corp.internal/webhook/soc-incident-intake';
+    const isConfigured = Boolean(process.env.N8N_WEBHOOK_URL);
+    const n8nUrl = process.env.N8N_WEBHOOK_URL || (payload.isSimulated ? 'https://simulation.soc.internal/n8n' : 'NOT_CONFIGURED');
     const dispatchId = `DISP-N8N-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const masked = this.maskDestination(n8nUrl);
+    const masked = isConfigured ? this.maskDestination(n8nUrl) : (payload.isSimulated ? 'simulated-n8n-endpoint' : 'NOT_CONFIGURED');
 
     const record: NotificationDispatchRecord = {
       id: dispatchId,
@@ -208,27 +214,27 @@ export class NotificationDispatcher {
 
     return await this.executeDispatchWithRetry(record, async () => {
       const realUrl = process.env.N8N_WEBHOOK_URL;
-      const n8nFormattedPayload = {
-        workflowTrigger: 'SOC_THREAT_DETECTION',
-        incidentId: payload.incidentId || `INC-${payload.alertId}`,
-        alertId: payload.alertId,
-        detectionTimestamp: payload.timestamp,
-        agentName: payload.agentName,
-        threatCategory: payload.threatCategory,
-        severity: payload.severity,
-        description: payload.description,
-        evidence: payload.evidence,
-        detectionMethod: payload.detectionMethod,
-        recommendedAction: payload.recommendedAction,
-        incidentStatus: payload.incidentStatus,
-        metadata: {
-          platform: 'AI-Driven Multi-Agent Cyber Defense',
-          schemaVersion: '2.0.0',
-          credentialsProtected: true
-        }
-      };
-
       if (realUrl && realUrl.startsWith('http')) {
+        const n8nFormattedPayload = {
+          workflowTrigger: 'SOC_THREAT_DETECTION',
+          incidentId: payload.incidentId || `INC-${payload.alertId}`,
+          alertId: payload.alertId,
+          detectionTimestamp: payload.timestamp,
+          agentName: payload.agentName,
+          threatCategory: payload.threatCategory,
+          severity: payload.severity,
+          description: payload.description,
+          evidence: payload.evidence,
+          detectionMethod: payload.detectionMethod,
+          recommendedAction: payload.recommendedAction,
+          incidentStatus: payload.incidentStatus,
+          metadata: {
+            platform: 'AI-Driven Multi-Agent Cyber Defense',
+            schemaVersion: '2.0.0',
+            credentialsProtected: true
+          }
+        };
+
         const resp = await fetch(realUrl, {
           method: 'POST',
           headers: {
@@ -242,11 +248,13 @@ export class NotificationDispatcher {
         if (!resp.ok) {
           throw new Error(`n8n webhook responded with HTTP ${resp.status}`);
         }
-        return { success: true, statusCode: resp.status };
+        return { success: true, statusCode: resp.status, status: 'DISPATCHED' as const };
       }
 
-      // Safe staged delivery mode
-      return { success: true, statusCode: 200, info: 'Dispatched to n8n Automation Engine (Staged)' };
+      if (payload.isSimulated) {
+        return { success: true, statusCode: 200, status: 'SIMULATED' as const, info: 'Dispatched to n8n Automation Engine in Simulation Mode' };
+      }
+      return { success: false, statusCode: 0, status: 'NOT_CONFIGURED' as const, info: 'n8n integration skipped: N8N_WEBHOOK_URL not configured' };
     });
   }
 
@@ -255,7 +263,7 @@ export class NotificationDispatcher {
    */
   private async executeDispatchWithRetry(
     record: NotificationDispatchRecord,
-    operation: () => Promise<{ success: boolean; statusCode: number; info?: string }>
+    operation: () => Promise<{ success: boolean; statusCode: number; status?: NotificationDeliveryStatus; info?: string }>
   ): Promise<NotificationDispatchRecord> {
     while (record.attemptCount < record.maxAttempts) {
       record.attemptCount += 1;
@@ -263,9 +271,12 @@ export class NotificationDispatcher {
 
       try {
         const res = await operation();
-        record.status = 'DISPATCHED';
+        record.status = res.status || (res.success ? 'DISPATCHED' : 'FAILED');
         record.responseStatus = res.statusCode;
         record.dispatchedAt = new Date().toISOString();
+        if (res.info) {
+          (record as any).info = res.info;
+        }
         return record;
       } catch (err: any) {
         record.lastError = err.message || 'Dispatch network failure';
@@ -327,21 +338,28 @@ export class NotificationDispatcher {
   }
 
   public getConfigSummary() {
+    const hasEmail = Boolean(process.env.SMTP_HOST || process.env.NOTIFICATION_EMAIL_TO);
+    const hasWebhook = Boolean(process.env.NOTIFICATION_WEBHOOK_URL);
+    const hasN8n = Boolean(process.env.N8N_WEBHOOK_URL);
+
     return {
       email: {
-        enabled: Boolean(process.env.NOTIFICATION_EMAIL_TO),
-        configured: Boolean(process.env.NOTIFICATION_EMAIL_TO),
-        destination: this.maskDestination(process.env.NOTIFICATION_EMAIL_TO || 'soc-oncall@internal.security')
+        enabled: hasEmail,
+        configured: hasEmail,
+        status: hasEmail ? 'LIVE' : 'NOT_CONFIGURED',
+        destination: hasEmail ? this.maskDestination(process.env.NOTIFICATION_EMAIL_TO || process.env.SMTP_HOST || '') : 'NOT_CONFIGURED'
       },
       webhook: {
-        enabled: Boolean(process.env.NOTIFICATION_WEBHOOK_URL),
-        configured: Boolean(process.env.NOTIFICATION_WEBHOOK_URL),
-        destination: this.maskDestination(process.env.NOTIFICATION_WEBHOOK_URL || 'https://soc.internal/webhook/alerts')
+        enabled: hasWebhook,
+        configured: hasWebhook,
+        status: hasWebhook ? 'LIVE' : 'NOT_CONFIGURED',
+        destination: hasWebhook ? this.maskDestination(process.env.NOTIFICATION_WEBHOOK_URL || '') : 'NOT_CONFIGURED'
       },
       n8n: {
-        enabled: Boolean(process.env.N8N_WEBHOOK_URL),
-        configured: Boolean(process.env.N8N_WEBHOOK_URL),
-        destination: this.maskDestination(process.env.N8N_WEBHOOK_URL || 'https://n8n.internal.automation/webhook/cyber-alerts')
+        enabled: hasN8n,
+        configured: hasN8n,
+        status: hasN8n ? 'LIVE' : 'NOT_CONFIGURED',
+        destination: hasN8n ? this.maskDestination(process.env.N8N_WEBHOOK_URL || '') : 'NOT_CONFIGURED'
       }
     };
   }

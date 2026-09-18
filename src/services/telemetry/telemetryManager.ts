@@ -413,6 +413,9 @@ export class TelemetryManager {
     eventIds: string[];
     results: any[];
   }> {
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('Invalid telemetry payload: Payload cannot be null or undefined');
+    }
     const isSimulated = Boolean(payload?.isSimulated);
     const timestamp = new Date().toISOString();
     const eventIds: string[] = [];

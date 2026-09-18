@@ -16,13 +16,15 @@ import {
   ChevronRight,
   Database,
   Radio,
-  Search
+  Search,
+  Server
 } from 'lucide-react';
 import { alertManager } from '../../services/alertIncident/alertManager';
 import { incidentManager } from '../../services/alertIncident/incidentManager';
 
 export type NavPageId =
   | 'dashboard'
+  | 'system-status'
   | 'analyze-logs'
   | 'live-pipeline'
   | 'log-explorer'
@@ -79,6 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'system-status', label: 'System Status', icon: Server, badge: 'Health Audit', badgeColor: 'bg-cyan-500/20 text-cyan-300' },
     { id: 'analyze-logs', label: 'Analyze Logs', icon: Search, badge: 'Agent AI', badgeColor: 'bg-cyan-500/20 text-cyan-300' },
     { id: 'live-pipeline', label: 'Live Pipeline', icon: Radio, badge: 'Live API', badgeColor: 'bg-emerald-500/20 text-emerald-300' },
     { id: 'log-explorer', label: 'Log Explorer', icon: FileText, badge: 'Ingest' },

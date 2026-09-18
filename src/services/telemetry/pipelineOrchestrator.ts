@@ -194,6 +194,22 @@ export class SixAgentPipelineOrchestrator {
   private totalEventsProcessed = 0;
   private totalDuplicatesDropped = 0;
   private totalAgentErrors = 0;
+  private lastReceivedEvent: {
+    eventId: string;
+    timestamp: string;
+    source: string;
+    host: string;
+    isSimulated: boolean;
+  } | null = null;
+  private lastProcessedEvent: {
+    eventId: string;
+    timestamp: string;
+    source: string;
+    isConfirmedThreat: boolean;
+    riskScore: number;
+    status: string;
+    latencyMs: number;
+  } | null = null;
 
   // Real-time broadcast hooks
   private broadcastCallbacks: Array<(envelope: any) => void> = [];
@@ -253,11 +269,29 @@ export class SixAgentPipelineOrchestrator {
     const indicators = this.preprocessPayload(rawPayload, validation, rawInput);
     const contentHash = indicators.contentHash;
 
+    this.lastReceivedEvent = {
+      eventId,
+      timestamp: receivedAt,
+      source: validation.source,
+      host: indicators.host,
+      isSimulated
+    };
+
     // Deduplication check
     if (this.isDuplicate(contentHash)) {
       this.totalDuplicatesDropped++;
       const cached = this.deduplicationCache.get(contentHash)!;
       const latencyMs = Number((performance.now() - startTime).toFixed(2));
+
+      this.lastProcessedEvent = {
+        eventId,
+        timestamp: new Date().toISOString(),
+        source: validation.source,
+        isConfirmedThreat: false,
+        riskScore: 0,
+        status: 'DUPLICATE',
+        latencyMs
+      };
 
       auditService.recordAction({
         action: 'DUPLICATE_DROPPED',
@@ -542,6 +576,16 @@ export class SixAgentPipelineOrchestrator {
       incident: incidentOutcome,
       persistence,
       errors
+    };
+
+    this.lastProcessedEvent = {
+      eventId: finalResult.eventId,
+      timestamp: finalResult.processedAt,
+      source: finalResult.source,
+      isConfirmedThreat: finalResult.threatClassification.isConfirmedThreat,
+      riskScore: finalResult.riskAssessment.riskScore,
+      status: finalResult.status,
+      latencyMs: finalResult.totalLatencyMs
     };
 
     // Broadcast live event update
@@ -1437,6 +1481,8 @@ export class SixAgentPipelineOrchestrator {
       dedupCacheSize: this.deduplicationCache.size,
       averageLatencyMs: avgLatency,
       p95LatencyMs: p95Latency,
+      lastReceivedEvent: this.lastReceivedEvent,
+      lastProcessedEvent: this.lastProcessedEvent,
       activeAgents: [
         'Network Monitoring Agent',
         'System Monitoring Agent',
