@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldAlert,
   Flame,
@@ -19,7 +19,10 @@ import {
   Terminal,
   ShieldCheck,
   TrendingUp,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Clock,
+  AlertOctagon,
+  Zap
 } from 'lucide-react';
 import { SecurityOverviewData } from '../../../services/unifiedAnalyticsService';
 import { DashboardMetrics, NavPageId } from '../../../types';
@@ -48,15 +51,63 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
   onNavigate,
   onSelectSection
 }) => {
-  const totalEvents = metrics?.totalEvents ?? overview?.totalEvents ?? 0;
+  const [pipelineStatus, setPipelineStatus] = useState<any>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch('/api/pipeline/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setPipelineStatus(data);
+        }
+      } catch {
+        // Backend offline fallback
+      }
+    };
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const totalEvents = pipelineStatus?.totalEventsProcessed ?? (metrics?.totalEvents ?? overview?.totalEvents ?? 0);
+  const realEventsReceived = pipelineStatus?.realEventsReceived ?? (isRealData ? totalEvents : 0);
+  const threatsDetected = pipelineStatus?.threatsDetected ?? ((overview?.criticalThreats ?? 0) + (overview?.highThreats ?? 0));
+  const alertsGenerated = pipelineStatus?.alertsGenerated ?? (overview?.totalAlerts ?? 0);
+  const avgLatency = pipelineStatus?.averageLatencyMs != null ? Number(pipelineStatus.averageLatencyMs).toFixed(2) : '0.00';
+  const collectionErrors = pipelineStatus?.collectionErrors ?? 0;
+  const lastProcessed = pipelineStatus?.lastProcessedEvent;
+
   const openIncidents = overview?.openIncidents ?? 0;
   const resolvedIncidents = overview?.resolvedIncidents ?? 0;
-  const totalIncidents = openIncidents + resolvedIncidents;
+  const totalIncidents = pipelineStatus?.incidentsCreated ?? (openIncidents + resolvedIncidents);
   const criticalAlerts = overview?.criticalThreats ?? 0;
   const highAlerts = overview?.highThreats ?? 0;
 
   // Derive honest system status
   const getSystemStatus = () => {
+    if (pipelineStatus?.circuitBreakerTripped) {
+      return {
+        label: 'CIRCUIT BREAKER TRIPPED',
+        badge: 'bg-rose-950/80 text-rose-300 border-rose-800',
+        dot: 'bg-rose-500',
+        cardBorder: 'border-rose-900/60 bg-rose-950/10',
+        description: 'Automatic safety circuit breaker activated to protect pipeline stability.'
+      };
+    }
+    if (collectionErrors > 0) {
+      return {
+        label: 'COLLECTION ERRORS DETECTED',
+        badge: 'bg-amber-950/80 text-amber-300 border-amber-800',
+        dot: 'bg-amber-500',
+        cardBorder: 'border-amber-900/60 bg-amber-950/10',
+        description: `${collectionErrors} collection error(s) logged by telemetry ingestion services.`
+      };
+    }
     if (criticalAlerts > 0) {
       return {
         label: 'ACTIVE THREAT DETECTED',
@@ -85,6 +136,28 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
   };
 
   const status = getSystemStatus();
+
+  // Helper for agent status badge
+  const getAgentBadge = (st: string) => {
+    switch (st) {
+      case 'ACTIVE':
+        return { label: 'Active', text: 'text-emerald-400', dot: 'bg-emerald-400 animate-pulse' };
+      case 'PROCESSING':
+        return { label: 'Processing', text: 'text-cyan-400', dot: 'bg-cyan-400 animate-ping' };
+      case 'AVAILABLE':
+        return { label: 'Available', text: 'text-sky-400', dot: 'bg-sky-400' };
+      case 'IDLE':
+        return { label: 'Idle', text: 'text-slate-400', dot: 'bg-slate-400' };
+      case 'ERROR':
+        return { label: 'Error', text: 'text-rose-400', dot: 'bg-rose-500 animate-pulse' };
+      case 'OFFLINE':
+        return { label: 'Offline', text: 'text-zinc-500', dot: 'bg-zinc-500' };
+      case 'NOT_CONFIGURED':
+        return { label: 'Unconfigured', text: 'text-amber-400', dot: 'bg-amber-500' };
+      default:
+        return { label: st || 'Available', text: 'text-slate-400', dot: 'bg-slate-400' };
+    }
+  };
 
   return (
     <div className="space-y-6 font-mono" id="dashboard-section-overview">
@@ -143,7 +216,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
             {totalEvents.toLocaleString()}
           </div>
           <div className="mt-1 text-[10px] text-slate-500 flex items-center justify-between">
-            <span>Telemetries Ingested</span>
+            <span>{realEventsReceived} Real Telemetries</span>
             <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-cyan-400" />
           </div>
         </div>
@@ -245,6 +318,78 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
         </div>
       </div>
 
+      {/* Live Pipeline Telemetry Observability Deck (Required 9 Metrics) */}
+      <div className="p-4 sm:p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <Zap className="w-4 h-4 text-cyan-400" />
+              Live Telemetry Ingestion & Multi-Agent Pipeline Status
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 text-[11px]">
+            <span className="px-2 py-0.5 rounded bg-slate-950 text-slate-300 border border-slate-800">
+              Latency: {avgLatency} ms
+            </span>
+            <span className={`px-2 py-0.5 rounded border font-semibold ${collectionErrors === 0 ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-rose-950/80 text-rose-300 border-rose-800'}`}>
+              Errors: {collectionErrors}
+            </span>
+          </div>
+        </div>
+
+        {/* 4-Column Live Pipeline Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
+            <span className="text-[10px] text-slate-500 uppercase block">Real Events Received</span>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-xl font-bold text-cyan-400 font-mono">
+                {realEventsReceived.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-500">
+                / {totalEvents.toLocaleString()} total
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
+            <span className="text-[10px] text-slate-500 uppercase block">Threats Detected</span>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className={`text-xl font-bold font-mono ${threatsDetected > 0 ? 'text-amber-400' : 'text-slate-300'}`}>
+                {threatsDetected}
+              </span>
+              <span className="text-[10px] text-slate-500">
+                ({alertsGenerated} alerts)
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
+            <span className="text-[10px] text-slate-500 uppercase block">Risk Scoring & P95 Latency</span>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-xl font-bold text-purple-400 font-mono">
+                {lastProcessed?.riskScore != null ? `${lastProcessed.riskScore}/100` : '0/100'}
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono">
+                · {pipelineStatus?.p95LatencyMs != null ? `${pipelineStatus.p95LatencyMs}ms p95` : `${avgLatency}ms`}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
+            <span className="text-[10px] text-slate-500 uppercase block">Last Processed Event</span>
+            <div className="mt-1">
+              <span className="text-xs font-semibold text-slate-200 truncate block">
+                {lastProcessed ? `${lastProcessed.eventId}` : 'Awaiting incoming telemetry...'}
+              </span>
+              <span className="text-[10px] text-slate-500 block truncate">
+                {lastProcessed ? `Source: ${lastProcessed.source} · Stage ${lastProcessed.stageReached}/12` : 'Pipeline ready for event ingestion'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* 3. Defensive Multi-Agent Cooperative Architecture Summary */}
       <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
@@ -307,7 +452,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
               border: 'border-indigo-500/20'
             },
             {
-              id: 'THREAT_DETECTION',
+              id: 'THREAT_DETECTION_AGENT',
               name: 'Threat Agent',
               role: 'Random Forest + Isolation Forest ML',
               icon: ShieldAlert,
@@ -316,7 +461,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
               border: 'border-rose-500/20'
             },
             {
-              id: 'ALERT_AGENT',
+              id: 'ALERT_RESPONSE_AGENT',
               name: 'Alert Agent',
               role: 'Incident Lifecycle & Triage Escalation',
               icon: Bell,
@@ -326,6 +471,10 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
             }
           ].map(agent => {
             const Icon = agent.icon;
+            const liveState = pipelineStatus?.agentStates?.[agent.id];
+            const agentStatus = liveState?.status || (isRealData && totalEvents > 0 ? 'ACTIVE' : 'AVAILABLE');
+            const badge = getAgentBadge(agentStatus);
+
             return (
               <div
                 key={agent.id}
@@ -340,9 +489,9 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
                   {agent.role}
                 </p>
                 <div className="mt-2 text-[10px] text-slate-500 flex items-center justify-between">
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Active
+                  <span className={`${badge.text} flex items-center gap-1 font-semibold`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                    {badge.label}
                   </span>
                   <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-slate-300" />
                 </div>

@@ -176,6 +176,39 @@ export interface PipelineProcessingResult {
   errors: string[];
 }
 
+export type AgentLifecycleStatus =
+  | 'AVAILABLE'
+  | 'PROCESSING'
+  | 'IDLE'
+  | 'ERROR'
+  | 'OFFLINE'
+  | 'NOT_CONFIGURED'
+  | 'ACTIVE';
+
+export interface AgentOperationalState {
+  agentId: string;
+  name: string;
+  type: 'system' | 'application' | 'network' | 'correlation' | 'threat_detection' | 'alert_response';
+  role: string;
+  status: AgentLifecycleStatus;
+  hasProcessedRealEvent: boolean;
+  realEventsProcessed: number;
+  simulatedEventsProcessed: number;
+  totalEventsProcessed: number;
+  threatsDetected: number;
+  alertsGenerated?: number;
+  incidentsCreated?: number;
+  errorCount: number;
+  lastError: string | null;
+  lastActivity: string | null;
+  lastProcessedEventId: string | null;
+  detectionConfidence: number;
+  description: string;
+  activeRulesCount: number;
+  configuredSource: string;
+  capabilities: string[];
+}
+
 export class SixAgentPipelineOrchestrator {
   private networkDetector = new NetworkDetector();
   private systemDetector = new SystemDetector();
@@ -189,11 +222,183 @@ export class SixAgentPipelineOrchestrator {
   private recentFindings: SecurityFinding[] = [];
   private readonly MAX_FINDINGS_HISTORY = 300;
 
-  // Latency tracking metrics
+  // Latency & Pipeline Metrics
   private latencyHistory: number[] = [];
+  private totalEventsReceived = 0;
+  private realEventsReceived = 0;
+  private simulatedEventsReceived = 0;
   private totalEventsProcessed = 0;
+  private realEventsProcessed = 0;
+  private simulatedEventsProcessed = 0;
   private totalDuplicatesDropped = 0;
+  private totalThreatsDetected = 0;
+  private totalAlertsGenerated = 0;
+  private totalIncidentsCreated = 0;
   private totalAgentErrors = 0;
+  private collectionErrors = 0;
+
+  // Dedicated 6-Agent Operational State Registry
+  private agentStates: Map<string, AgentOperationalState> = new Map([
+    ['SYSTEM_AGENT', {
+      agentId: 'SYSTEM_AGENT',
+      name: 'System Monitoring Agent',
+      type: 'system',
+      role: 'Windows Event Logs, Security Audit & Host Surveillance',
+      status: 'AVAILABLE',
+      hasProcessedRealEvent: false,
+      realEventsProcessed: 0,
+      simulatedEventsProcessed: 0,
+      totalEventsProcessed: 0,
+      threatsDetected: 0,
+      errorCount: 0,
+      lastError: null,
+      lastActivity: null,
+      lastProcessedEventId: null,
+      detectionConfidence: 95.0,
+      description: 'Monitors Windows Event Logs (System, Security, Application) and host audit events for privilege escalation, credential dumping, and suspicious execution.',
+      activeRulesCount: 48,
+      configuredSource: 'win_event_log',
+      capabilities: [
+        'Windows Event Log 4625 failed logon surveillance',
+        'Process creation 4688 tracking & command-line audit',
+        'LSASS credential dumping (Mimikatz) detection',
+        'Privilege escalation & token manipulation detection'
+      ]
+    }],
+    ['APPLICATION_AGENT', {
+      agentId: 'APPLICATION_AGENT',
+      name: 'Application Monitoring Agent',
+      type: 'application',
+      role: 'Web Application & Service Log Gateway',
+      status: 'AVAILABLE',
+      hasProcessedRealEvent: false,
+      realEventsProcessed: 0,
+      simulatedEventsProcessed: 0,
+      totalEventsProcessed: 0,
+      threatsDetected: 0,
+      errorCount: 0,
+      lastError: null,
+      lastActivity: null,
+      lastProcessedEventId: null,
+      detectionConfidence: 94.5,
+      description: 'Parses web server logs (IIS, Nginx, Apache), HTTP requests, and application text logs for injection attacks and anomaly bursts.',
+      activeRulesCount: 36,
+      configuredSource: 'app_files',
+      capabilities: [
+        'SQL injection syntax parsing & pattern matching',
+        'Cross-Site Scripting (XSS) payload interception',
+        'Directory traversal & path escape detection',
+        'HTTP 4xx/5xx burst anomaly scoring'
+      ]
+    }],
+    ['NETWORK_AGENT', {
+      agentId: 'NETWORK_AGENT',
+      name: 'Network Monitoring Agent',
+      type: 'network',
+      role: 'Network Flow & Socket Connection Inspection',
+      status: 'AVAILABLE',
+      hasProcessedRealEvent: false,
+      realEventsProcessed: 0,
+      simulatedEventsProcessed: 0,
+      totalEventsProcessed: 0,
+      threatsDetected: 0,
+      errorCount: 0,
+      lastError: null,
+      lastActivity: null,
+      lastProcessedEventId: null,
+      detectionConfidence: 96.0,
+      description: 'Inspects network telemetry, active TCP/UDP socket connections from Windows netstat/psutil, and flow captures for port sweeps, C2 beaconing, and volumetric floods.',
+      activeRulesCount: 42,
+      configuredSource: 'network',
+      capabilities: [
+        'Active socket table connection monitoring',
+        'SYN flood & UDP volumetric attack detection',
+        'Port sweep and reconnaissance detection',
+        'Suspicious external IP beaconing tracking'
+      ]
+    }],
+    ['CORRELATION_AGENT', {
+      agentId: 'CORRELATION_AGENT',
+      name: 'Event Correlation Agent',
+      type: 'correlation',
+      role: 'Temporal Sliding-Window Cross-Agent Graph Engine',
+      status: 'AVAILABLE',
+      hasProcessedRealEvent: false,
+      realEventsProcessed: 0,
+      simulatedEventsProcessed: 0,
+      totalEventsProcessed: 0,
+      threatsDetected: 0,
+      errorCount: 0,
+      lastError: null,
+      lastActivity: null,
+      lastProcessedEventId: null,
+      detectionConfidence: 93.0,
+      description: 'Aggregates signals across network, system, and application agents within a sliding temporal window to discover multi-stage attack chains.',
+      activeRulesCount: 28,
+      configuredSource: 'multi_agent_stream',
+      capabilities: [
+        'Multi-source sliding window aggregation (300s)',
+        'Entity pivot cross-matching (IP, Host, User)',
+        'MITRE ATT&CK kill-chain progression discovery',
+        'Confidence-weighted correlation scoring'
+      ]
+    }],
+    ['THREAT_DETECTION_AGENT', {
+      agentId: 'THREAT_DETECTION_AGENT',
+      name: 'Threat Detection Agent',
+      type: 'threat_detection',
+      role: 'Hybrid Random Forest & Isolation Forest ML Engine',
+      status: 'AVAILABLE',
+      hasProcessedRealEvent: false,
+      realEventsProcessed: 0,
+      simulatedEventsProcessed: 0,
+      totalEventsProcessed: 0,
+      threatsDetected: 0,
+      errorCount: 0,
+      lastError: null,
+      lastActivity: null,
+      lastProcessedEventId: null,
+      detectionConfidence: 97.2,
+      description: 'Runs Scikit-Learn Random Forest classification (model RF-20260916-105303) and Isolation Forest unsupervised anomaly detection alongside heuristic signatures.',
+      activeRulesCount: 64,
+      configuredSource: 'ml_engine',
+      capabilities: [
+        'Supervised Random Forest threat classification',
+        'Unsupervised Isolation Forest anomaly scoring',
+        'Feature importance & explainability factors',
+        'Dual-layer heuristic and ML consensus evaluation'
+      ]
+    }],
+    ['ALERT_RESPONSE_AGENT', {
+      agentId: 'ALERT_RESPONSE_AGENT',
+      name: 'Alert and Response Agent',
+      type: 'alert_response',
+      role: '7-Factor Risk Scoring, Alert Generation & Incident Escalation',
+      status: 'AVAILABLE',
+      hasProcessedRealEvent: false,
+      realEventsProcessed: 0,
+      simulatedEventsProcessed: 0,
+      totalEventsProcessed: 0,
+      threatsDetected: 0,
+      alertsGenerated: 0,
+      incidentsCreated: 0,
+      errorCount: 0,
+      lastError: null,
+      lastActivity: null,
+      lastProcessedEventId: null,
+      detectionConfidence: 98.5,
+      description: 'Calculates mathematical 7-factor risk scores, generates deduplicated security alerts, and escalates critical findings to incident tickets.',
+      activeRulesCount: 30,
+      configuredSource: 'risk_incident_module',
+      capabilities: [
+        'Mathematical 7-factor evidence-based risk scoring (0-100)',
+        'Heuristic alert deduplication and suppression',
+        'Automated incident ticket creation with containment actions',
+        'Full SOC audit logging and traceability tracking'
+      ]
+    }]
+  ]);
+
   private lastReceivedEvent: {
     eventId: string;
     timestamp: string;
@@ -262,6 +467,13 @@ export class SixAgentPipelineOrchestrator {
     const eventId = validation.normalizedEventId;
     const isSimulated = Boolean(validation.isSimulated);
     const rawPayload = validation.rawPayload;
+
+    this.totalEventsReceived++;
+    if (!isSimulated) {
+      this.realEventsReceived++;
+    } else {
+      this.simulatedEventsReceived++;
+    }
 
     // -------------------------------------------------------------
     // STAGE 3: PREPROCESSOR & DEDUPLICATION (Requirement 6)
@@ -386,6 +598,32 @@ export class SixAgentPipelineOrchestrator {
     const agentTimeMs = Number((performance.now() - agentStart).toFixed(2));
     routing.executionTimeMs = agentTimeMs;
 
+    const targetAgentId = routing.assignedAgent;
+    const targetAgent = this.agentStates.get(targetAgentId);
+    if (targetAgent) {
+      if (routing.status === 'FAILED') {
+        targetAgent.status = 'ERROR';
+        targetAgent.errorCount++;
+        targetAgent.lastError = routing.error || 'Agent routing execution failed';
+        this.totalAgentErrors++;
+      } else {
+        targetAgent.totalEventsProcessed++;
+        targetAgent.lastActivity = receivedAt;
+        targetAgent.lastProcessedEventId = eventId;
+        if (!isSimulated) {
+          targetAgent.hasProcessedRealEvent = true;
+          targetAgent.realEventsProcessed++;
+          targetAgent.status = 'ACTIVE';
+        } else {
+          targetAgent.simulatedEventsProcessed++;
+          targetAgent.status = targetAgent.hasProcessedRealEvent ? 'ACTIVE' : 'AVAILABLE';
+        }
+        if (routing.findings && routing.findings.length > 0) {
+          targetAgent.threatsDetected += routing.findings.length;
+        }
+      }
+    }
+
     if (routing.status === 'FAILED') {
       this.totalAgentErrors++;
       errors.push(`Agent routing error (${routing.agentName}): ${routing.error}`);
@@ -410,6 +648,20 @@ export class SixAgentPipelineOrchestrator {
     // -------------------------------------------------------------
     // STAGE 5: EVENT CORRELATION AGENT
     // -------------------------------------------------------------
+    const corrAgent = this.agentStates.get('CORRELATION_AGENT');
+    if (corrAgent) {
+      corrAgent.totalEventsProcessed++;
+      corrAgent.lastActivity = receivedAt;
+      corrAgent.lastProcessedEventId = eventId;
+      if (!isSimulated) {
+        corrAgent.hasProcessedRealEvent = true;
+        corrAgent.realEventsProcessed++;
+        corrAgent.status = 'ACTIVE';
+      } else {
+        corrAgent.simulatedEventsProcessed++;
+        corrAgent.status = corrAgent.hasProcessedRealEvent ? 'ACTIVE' : 'AVAILABLE';
+      }
+    }
     const correlationResult = this.correlateEvents(routing.findings, indicators);
 
     // -------------------------------------------------------------
@@ -420,6 +672,21 @@ export class SixAgentPipelineOrchestrator {
     // -------------------------------------------------------------
     // STAGE 7: THREAT CLASSIFICATION (Requirement 9, 11)
     // -------------------------------------------------------------
+    const threatAgent = this.agentStates.get('THREAT_DETECTION_AGENT');
+    if (threatAgent) {
+      threatAgent.totalEventsProcessed++;
+      threatAgent.lastActivity = receivedAt;
+      threatAgent.lastProcessedEventId = eventId;
+      if (!isSimulated) {
+        threatAgent.hasProcessedRealEvent = true;
+        threatAgent.realEventsProcessed++;
+        threatAgent.status = 'ACTIVE';
+      } else {
+        threatAgent.simulatedEventsProcessed++;
+        threatAgent.status = threatAgent.hasProcessedRealEvent ? 'ACTIVE' : 'AVAILABLE';
+      }
+    }
+
     const classification = this.classifyThreat(
       routing.findings,
       mlResult,
@@ -427,6 +694,13 @@ export class SixAgentPipelineOrchestrator {
       isSimulated,
       indicators
     );
+
+    if (classification.isConfirmedThreat) {
+      this.totalThreatsDetected++;
+      if (threatAgent) {
+        threatAgent.threatsDetected++;
+      }
+    }
 
     // -------------------------------------------------------------
     // STAGE 8: 7-FACTOR RISK ASSESSMENT (Requirement 10)
@@ -442,6 +716,21 @@ export class SixAgentPipelineOrchestrator {
     // -------------------------------------------------------------
     // STAGE 9: ALERT GENERATION (Alert & Response Agent)
     // -------------------------------------------------------------
+    const alertAgent = this.agentStates.get('ALERT_RESPONSE_AGENT');
+    if (alertAgent) {
+      alertAgent.totalEventsProcessed++;
+      alertAgent.lastActivity = receivedAt;
+      alertAgent.lastProcessedEventId = eventId;
+      if (!isSimulated) {
+        alertAgent.hasProcessedRealEvent = true;
+        alertAgent.realEventsProcessed++;
+        alertAgent.status = 'ACTIVE';
+      } else {
+        alertAgent.simulatedEventsProcessed++;
+        alertAgent.status = alertAgent.hasProcessedRealEvent ? 'ACTIVE' : 'AVAILABLE';
+      }
+    }
+
     let alertOutcome: PipelineProcessingResult['alert'] = { generated: false };
     if (classification.isConfirmedThreat && (riskAssessment.riskScore >= 45 || classification.overallSeverity === 'HIGH' || classification.overallSeverity === 'CRITICAL')) {
       alertOutcome = this.generateAlert(
@@ -453,6 +742,12 @@ export class SixAgentPipelineOrchestrator {
         routing.evidence,
         isSimulated
       );
+      if (alertOutcome.generated) {
+        this.totalAlertsGenerated++;
+        if (alertAgent) {
+          alertAgent.alertsGenerated = (alertAgent.alertsGenerated || 0) + 1;
+        }
+      }
     }
 
     // -------------------------------------------------------------
@@ -470,6 +765,12 @@ export class SixAgentPipelineOrchestrator {
         routing.evidence,
         isSimulated
       );
+      if (incidentOutcome.created) {
+        this.totalIncidentsCreated++;
+        if (alertAgent) {
+          alertAgent.incidentsCreated = (alertAgent.incidentsCreated || 0) + 1;
+        }
+      }
     }
 
     // -------------------------------------------------------------
@@ -544,6 +845,11 @@ export class SixAgentPipelineOrchestrator {
     // -------------------------------------------------------------
     const totalLatencyMs = Number((performance.now() - startTime).toFixed(2));
     this.totalEventsProcessed++;
+    if (!isSimulated) {
+      this.realEventsProcessed++;
+    } else {
+      this.simulatedEventsProcessed++;
+    }
     this.latencyHistory.push(totalLatencyMs);
     if (this.latencyHistory.length > 500) {
       this.latencyHistory.shift();
@@ -1466,6 +1772,29 @@ export class SixAgentPipelineOrchestrator {
   // STATUS & METRICS
   // =============================================================
 
+  public recordCollectionError(): void {
+    this.collectionErrors++;
+  }
+
+  public getAgentStatuses(): AgentOperationalState[] {
+    return Array.from(this.agentStates.values());
+  }
+
+  public getAgentStatus(agentId: string): AgentOperationalState | undefined {
+    return this.agentStates.get(agentId);
+  }
+
+  public setAgentLifecycle(agentId: string, status: AgentLifecycleStatus, errorMsg?: string): boolean {
+    const agent = this.agentStates.get(agentId);
+    if (!agent) return false;
+    agent.status = status;
+    if (errorMsg) {
+      agent.lastError = errorMsg;
+      agent.errorCount++;
+    }
+    return true;
+  }
+
   public getPipelineStatus(): any {
     const latencies = this.latencyHistory;
     const avgLatency = latencies.length > 0 ? Number((latencies.reduce((a, b) => a + b, 0) / latencies.length).toFixed(2)) : 0;
@@ -1475,7 +1804,16 @@ export class SixAgentPipelineOrchestrator {
 
     return {
       status: 'LIVE_OPERATIONAL',
+      totalEventsReceived: this.totalEventsReceived,
+      realEventsReceived: this.realEventsReceived,
+      simulatedEventsReceived: this.simulatedEventsReceived,
       totalEventsProcessed: this.totalEventsProcessed,
+      realEventsProcessed: this.realEventsProcessed,
+      simulatedEventsProcessed: this.simulatedEventsProcessed,
+      threatsDetected: this.totalThreatsDetected,
+      alertsGenerated: this.totalAlertsGenerated,
+      incidentsCreated: this.totalIncidentsCreated,
+      collectionErrors: this.collectionErrors,
       totalDuplicatesDropped: this.totalDuplicatesDropped,
       totalAgentErrors: this.totalAgentErrors,
       dedupCacheSize: this.deduplicationCache.size,
@@ -1490,7 +1828,8 @@ export class SixAgentPipelineOrchestrator {
         'Event Correlation Agent',
         'Threat Detection Agent (Random Forest & Isolation Forest)',
         'Alert and Response Agent'
-      ]
+      ],
+      agents: this.getAgentStatuses()
     };
   }
 }

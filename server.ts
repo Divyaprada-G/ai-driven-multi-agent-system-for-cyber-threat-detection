@@ -2490,6 +2490,7 @@ except Exception as e:
         const authHeader = (req.headers['x-api-key'] || req.headers['authorization']) as string | undefined;
         const providedKey = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : undefined;
         if (!providedKey || providedKey !== configuredKey) {
+          sixAgentPipeline.recordCollectionError();
           return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key for telemetry ingestion' });
         }
       }
@@ -2498,6 +2499,7 @@ except Exception as e:
       const result = await telemetryManager.ingestExternalTelemetry(payload);
       return res.status(200).json(result);
     } catch (err: any) {
+      sixAgentPipeline.recordCollectionError();
       return res.status(400).json({ error: err.message || 'Failed ingesting telemetry' });
     }
   });
@@ -2559,6 +2561,19 @@ except Exception as e:
     try {
       const status = sixAgentPipeline.getPipelineStatus();
       return res.status(200).json(status);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get(['/api/pipeline/agents', '/api/telemetry/agents', '/api/agents/status'], (_req, res) => {
+    try {
+      const agents = sixAgentPipeline.getAgentStatuses();
+      return res.status(200).json({
+        success: true,
+        count: agents.length,
+        agents
+      });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
