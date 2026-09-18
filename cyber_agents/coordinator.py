@@ -138,7 +138,13 @@ class MultiAgentCoordinator:
             "correlations": correlation_result.get("correlations", []),
             "attack_chain_detected": correlation_result.get("attack_chain_detected", False),
             "threat_detection": threat_eval,
+            "threat_detected": threat_eval.get("threat_detected", len(all_detected_events) > 0),
+            "risk_assessment": threat_eval.get("risk_assessment", {
+                "composite_risk_score": 85 if threat_eval.get("overall_severity") in ["CRITICAL", "HIGH"] else (55 if threat_eval.get("threat_detected") else 15),
+                "risk_level": threat_eval.get("overall_severity", "LOW")
+            }),
             "alerts_generated": alerts,
             "incident": incident,
-            "active_agents": sorted(list(set(agents_executed)))
+            "active_agents": sorted(list(set(agents_executed))),
+            "agents_executed": sorted(list(set(agents_executed)))
         }

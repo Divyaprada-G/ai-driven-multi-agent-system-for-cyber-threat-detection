@@ -19,13 +19,26 @@ export class NetworkFeatureExtractor {
     flowDuration?: number;
     isFailed?: boolean;
   } {
-    const nf = event.normalizedFields || {};
+    const nf = (event.normalizedFields || {}) as Record<string, any>;
+    const anyEvt = event as Record<string, any>;
 
-    const sourceIp = nf.sourceIp || undefined;
-    const destinationIp = nf.destinationIp || undefined;
-    const sourcePort = typeof nf.sourcePort === 'number' ? nf.sourcePort : undefined;
-    const destinationPort = typeof nf.destinationPort === 'number' ? nf.destinationPort : undefined;
-    const protocol = nf.protocol ? String(nf.protocol).toUpperCase() : undefined;
+    const sourceIp = (nf.sourceIp || nf.local_ip || anyEvt.sourceIp || anyEvt.local_ip || undefined) as string | undefined;
+    const destinationIp = (nf.destinationIp || nf.remote_ip || anyEvt.destinationIp || anyEvt.remote_ip || undefined) as string | undefined;
+    
+    let sourcePort: number | undefined;
+    if (typeof nf.sourcePort === 'number') sourcePort = nf.sourcePort;
+    else if (typeof nf.local_port === 'number') sourcePort = nf.local_port;
+    else if (typeof anyEvt.sourcePort === 'number') sourcePort = anyEvt.sourcePort;
+    else if (typeof anyEvt.local_port === 'number') sourcePort = anyEvt.local_port;
+
+    let destinationPort: number | undefined;
+    if (typeof nf.destinationPort === 'number') destinationPort = nf.destinationPort;
+    else if (typeof nf.remote_port === 'number') destinationPort = nf.remote_port;
+    else if (typeof anyEvt.destinationPort === 'number') destinationPort = anyEvt.destinationPort;
+    else if (typeof anyEvt.remote_port === 'number') destinationPort = anyEvt.remote_port;
+
+    const rawProto = nf.protocol || anyEvt.protocol;
+    const protocol = rawProto ? String(rawProto).toUpperCase() : undefined;
     const packetSize = typeof nf.packetSize === 'number' ? nf.packetSize : undefined;
     const flowDuration = typeof nf.flowDuration === 'number' ? nf.flowDuration : undefined;
 

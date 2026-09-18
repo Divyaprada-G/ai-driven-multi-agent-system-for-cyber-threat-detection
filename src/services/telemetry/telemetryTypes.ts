@@ -65,6 +65,16 @@ export interface NetworkMetricsPacket {
   bytesReceived: number;
   bytesSent: number;
   packetsPerSecond: number;
+  activeConnections?: Array<{
+    protocol: string;
+    localIp: string;
+    localPort: number;
+    remoteIp: string;
+    remotePort: number;
+    state: string;
+    pid?: string;
+    processName?: string;
+  }>;
   suspiciousConnections: Array<{
     remoteIp: string;
     port: number;
@@ -131,6 +141,19 @@ export interface NormalizedTelemetryEvent {
     assignedAgentId: string;
   };
   sourceMetadata?: SourceMetadata;
+
+  // Exact Upgrade 5 Normalized Event Schema fields
+  event_id?: string;
+  source_type?: string;
+  hostname?: string;
+  local_ip?: string;
+  remote_ip?: string;
+  local_port?: number;
+  remote_port?: number;
+  connection_state?: string;
+  process_name?: string | null;
+  collector_name?: string;
+  collection_status?: string;
 }
 
 export interface TelemetryIngestRequest {
