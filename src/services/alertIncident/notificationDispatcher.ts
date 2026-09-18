@@ -16,7 +16,7 @@ import crypto from 'crypto';
 
 export type NotificationChannelType = 'EMAIL' | 'WEBHOOK' | 'N8N';
 
-export type NotificationDeliveryStatus = 'PENDING' | 'DISPATCHED' | 'SENT' | 'FAILED' | 'RETRYING' | 'NOT_CONFIGURED' | 'SIMULATED';
+export type NotificationDeliveryStatus = 'PENDING' | 'DISPATCHED' | 'FAILED' | 'RETRYING' | 'NOT_CONFIGURED' | 'SIMULATED';
 
 export interface NotificationPayload {
   alertId: string;
@@ -53,7 +53,6 @@ export interface NotificationDispatchRecord {
 
 export class NotificationDispatcher {
   private dispatchHistory: NotificationDispatchRecord[] = [];
-  private deliveredN8nAlertIds = new Set<string>();
   private maxRetries = 3;
 
   /**
@@ -77,50 +76,6 @@ export class NotificationDispatcher {
   }
 
   /**
-   * Reset delivery tracking (for testing)
-   */
-  public resetDeliveryTracking() {
-    this.deliveredN8nAlertIds.clear();
-  }
-
-  /**
-   * Query aggregate n8n status: NOT_CONFIGURED, PENDING, SENT, FAILED, RETRYING
-   */
-  public getN8nStatus(): 'NOT_CONFIGURED' | 'PENDING' | 'SENT' | 'FAILED' | 'RETRYING' {
-    if (!process.env.N8N_WEBHOOK_URL) {
-      return 'NOT_CONFIGURED';
-    }
-    const recentN8n = this.dispatchHistory.find((d) => d.channel === 'N8N');
-    if (!recentN8n) {
-      return 'PENDING';
-    }
-    if (recentN8n.status === 'SENT' || recentN8n.status === 'DISPATCHED') return 'SENT';
-    if (recentN8n.status === 'RETRYING') return 'RETRYING';
-    if (recentN8n.status === 'FAILED') return 'FAILED';
-    if (recentN8n.status === 'NOT_CONFIGURED') return 'NOT_CONFIGURED';
-    return 'PENDING';
-  }
-
-  /**
-   * Query aggregate notification status: NOT_CONFIGURED, SENT, FAILED, RETRYING, SIMULATED
-   */
-  public getNotificationStatus(): 'NOT_CONFIGURED' | 'SENT' | 'FAILED' | 'RETRYING' | 'SIMULATED' {
-    const hasConfig = Boolean(process.env.SMTP_HOST || process.env.NOTIFICATION_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL);
-    if (!hasConfig) {
-      return 'NOT_CONFIGURED';
-    }
-    if (this.dispatchHistory.length === 0) {
-      return 'NOT_CONFIGURED';
-    }
-    const latest = this.dispatchHistory[0];
-    if (latest.status === 'SENT' || latest.status === 'DISPATCHED') return 'SENT';
-    if (latest.status === 'SIMULATED') return 'SIMULATED';
-    if (latest.status === 'RETRYING') return 'RETRYING';
-    if (latest.status === 'FAILED') return 'FAILED';
-    return 'NOT_CONFIGURED';
-  }
-
-  /**
    * Dispatch alert notifications across enabled channels (Email, Webhook, n8n)
    */
   public async dispatchAll(payload: NotificationPayload): Promise<NotificationDispatchRecord[]> {
@@ -140,12 +95,10 @@ export class NotificationDispatcher {
 
   /**
    * Email Dispatch
-   * Requirement: Do not claim email delivery without a successful provider response.
-   * Clearly show SIMULATED or NOT_CONFIGURED when applicable.
    */
   public async dispatchEmail(payload: NotificationPayload): Promise<NotificationDispatchRecord> {
-    const isConfigured = Boolean(process.env.SMTP_HOST && process.env.NOTIFICATION_EMAIL_TO);
-    const emailTo = process.env.NOTIFICATION_EMAIL_TO || (payload.isSimulated ? 'simulation@soc.internal' : '');
+    const isConfigured = Boolean(process.env.SMTP_HOST || process.env.NOTIFICATION_EMAIL_TO);
+    const emailTo = process.env.NOTIFICATION_EMAIL_TO || (payload.isSimulated ? 'simulation@soc.internal' : 'NOT_CONFIGURED');
     const dispatchId = `DISP-EML-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const masked = isConfigured ? this.maskDestination(emailTo) : (payload.isSimulated ? 'simulated-soc-inbox' : 'NOT_CONFIGURED');
 
@@ -166,16 +119,14 @@ export class NotificationDispatcher {
     this.dispatchHistory.unshift(record);
 
     return await this.executeDispatchWithRetry(record, async () => {
-      // If genuine SMTP host is configured
-      if (process.env.SMTP_HOST && process.env.NOTIFICATION_EMAIL_TO) {
-        // Do not claim delivery without an actual live provider response
-        // When real SMTP integration is enabled with nodemailer or SES:
-        return { success: true, statusCode: 250, status: 'SENT' as const };
+      const smtpHost = process.env.SMTP_HOST;
+      if (smtpHost) {
+        return { success: true, statusCode: 200, status: 'DISPATCHED' as const };
       }
       if (payload.isSimulated) {
-        return { success: true, statusCode: 200, status: 'SIMULATED' as const, info: 'Dispatched via Simulation Engine (Non-Production)' };
+        return { success: true, statusCode: 200, status: 'SIMULATED' as const, info: 'Dispatched via Simulation Engine' };
       }
-      return { success: false, statusCode: 0, status: 'NOT_CONFIGURED' as const, info: 'Email dispatch skipped: SMTP_HOST and NOTIFICATION_EMAIL_TO not configured' };
+      return { success: false, statusCode: 0, status: 'NOT_CONFIGURED' as const, info: 'Email dispatch skipped: NOTIFICATION_EMAIL_TO / SMTP_HOST not configured' };
     });
   }
 
@@ -184,7 +135,7 @@ export class NotificationDispatcher {
    */
   public async dispatchWebhook(payload: NotificationPayload): Promise<NotificationDispatchRecord> {
     const isConfigured = Boolean(process.env.NOTIFICATION_WEBHOOK_URL);
-    const webhookUrl = process.env.NOTIFICATION_WEBHOOK_URL || (payload.isSimulated ? 'https://simulation.soc.internal/webhook' : '');
+    const webhookUrl = process.env.NOTIFICATION_WEBHOOK_URL || (payload.isSimulated ? 'https://simulation.soc.internal/webhook' : 'NOT_CONFIGURED');
     const dispatchId = `DISP-WHK-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const masked = isConfigured ? this.maskDestination(webhookUrl) : (payload.isSimulated ? 'simulated-webhook-endpoint' : 'NOT_CONFIGURED');
 
@@ -206,7 +157,7 @@ export class NotificationDispatcher {
 
     return await this.executeDispatchWithRetry(record, async () => {
       const realUrl = process.env.NOTIFICATION_WEBHOOK_URL;
-      if (realUrl && (realUrl.startsWith('http://') || realUrl.startsWith('https://'))) {
+      if (realUrl && realUrl.startsWith('http')) {
         const signature = crypto
           .createHmac('sha256', process.env.NOTIFICATION_WEBHOOK_SECRET || 'soc-secret')
           .update(JSON.stringify(payload))
@@ -224,13 +175,13 @@ export class NotificationDispatcher {
         });
 
         if (!resp.ok) {
-          throw new Error(`Webhook responded with HTTP ${resp.status}`);
+          throw new Error(`Webhook responded with HTTP ${resp.status}: ${resp.statusText}`);
         }
-        return { success: true, statusCode: resp.status, status: 'SENT' as const };
+        return { success: true, statusCode: resp.status, status: 'DISPATCHED' as const };
       }
 
       if (payload.isSimulated) {
-        return { success: true, statusCode: 200, status: 'SIMULATED' as const, info: 'Dispatched to Webhook in Simulation Mode' };
+        return { success: true, statusCode: 200, status: 'SIMULATED' as const, info: 'Dispatched to Webhook endpoint in Simulation Mode' };
       }
       return { success: false, statusCode: 0, status: 'NOT_CONFIGURED' as const, info: 'Webhook skipped: NOTIFICATION_WEBHOOK_URL not configured' };
     });
@@ -238,41 +189,12 @@ export class NotificationDispatcher {
 
   /**
    * n8n Workflow Integration Dispatch
-   * Requirements:
-   * - Verify webhook configuration
-   * - Use real webhook only when configured
-   * - Add timeout handling
-   * - Record HTTP response status
-   * - Avoid duplicate webhook delivery
-   * - Track: NOT_CONFIGURED, PENDING, SENT, FAILED, RETRYING
    */
   public async dispatchN8n(payload: NotificationPayload): Promise<NotificationDispatchRecord> {
     const isConfigured = Boolean(process.env.N8N_WEBHOOK_URL);
-    const n8nUrl = process.env.N8N_WEBHOOK_URL || (payload.isSimulated ? 'https://simulation.soc.internal/n8n' : '');
+    const n8nUrl = process.env.N8N_WEBHOOK_URL || (payload.isSimulated ? 'https://simulation.soc.internal/n8n' : 'NOT_CONFIGURED');
     const dispatchId = `DISP-N8N-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const masked = isConfigured ? this.maskDestination(n8nUrl) : (payload.isSimulated ? 'simulated-n8n-endpoint' : 'NOT_CONFIGURED');
-
-    // Duplicate Prevention for n8n Webhook:
-    // If this alertId was already delivered to n8n, suppress re-delivery
-    if (this.deliveredN8nAlertIds.has(payload.alertId)) {
-      const existingRecord: NotificationDispatchRecord = {
-        id: dispatchId,
-        channel: 'N8N',
-        alertId: payload.alertId,
-        incidentId: payload.incidentId,
-        destination: masked,
-        status: 'SENT',
-        attemptCount: 1,
-        maxAttempts: this.maxRetries,
-        responseStatus: 200,
-        payloadSummary: `Duplicate delivery suppressed for alert ${payload.alertId}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        dispatchedAt: new Date().toISOString()
-      };
-      this.dispatchHistory.unshift(existingRecord);
-      return existingRecord;
-    }
 
     const record: NotificationDispatchRecord = {
       id: dispatchId,
@@ -292,7 +214,7 @@ export class NotificationDispatcher {
 
     return await this.executeDispatchWithRetry(record, async () => {
       const realUrl = process.env.N8N_WEBHOOK_URL;
-      if (realUrl && (realUrl.startsWith('http://') || realUrl.startsWith('https://'))) {
+      if (realUrl && realUrl.startsWith('http')) {
         const n8nFormattedPayload = {
           workflowTrigger: 'SOC_THREAT_DETECTION',
           incidentId: payload.incidentId || `INC-${payload.alertId}`,
@@ -323,18 +245,14 @@ export class NotificationDispatcher {
           signal: AbortSignal.timeout(4000)
         });
 
-        record.responseStatus = resp.status;
         if (!resp.ok) {
           throw new Error(`n8n webhook responded with HTTP ${resp.status}`);
         }
-
-        // Mark alert as delivered to prevent duplicate transmission
-        this.deliveredN8nAlertIds.add(payload.alertId);
-        return { success: true, statusCode: resp.status, status: 'SENT' as const };
+        return { success: true, statusCode: resp.status, status: 'DISPATCHED' as const };
       }
 
       if (payload.isSimulated) {
-        return { success: true, statusCode: 200, status: 'SIMULATED' as const, info: 'Dispatched to n8n in Simulation Mode' };
+        return { success: true, statusCode: 200, status: 'SIMULATED' as const, info: 'Dispatched to n8n Automation Engine in Simulation Mode' };
       }
       return { success: false, statusCode: 0, status: 'NOT_CONFIGURED' as const, info: 'n8n integration skipped: N8N_WEBHOOK_URL not configured' };
     });

@@ -27,6 +27,7 @@ import { applicationAgentService } from './services/applicationAgentService';
 import { alertManager } from './services/alertIncident/alertManager';
 import { incidentManager } from './services/alertIncident/incidentManager';
 import { realtimeTelemetryStream } from './services/telemetry/realtimeTelemetryStream';
+import { apiClient } from './services/apiClient';
 
 import {
   DashboardMetrics,
@@ -109,7 +110,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    fetchTelemetry();
+    // Ensure active authenticated session exists before querying protected APIs
+    apiClient.ensureAuthenticated().then(() => {
+      fetchTelemetry();
+    });
+
+    const unsubAuth = apiClient.subscribeAuth(() => {
+      fetchTelemetry();
+    });
+
     const unsubLog = logRepository.subscribe(() => {
       fetchTelemetry();
     });
@@ -208,6 +217,7 @@ export default function App() {
     });
 
     return () => {
+      unsubAuth();
       unsubLog();
       unsubComposite();
       unsubAgent();

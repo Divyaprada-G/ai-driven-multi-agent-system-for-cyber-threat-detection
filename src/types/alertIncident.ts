@@ -150,11 +150,6 @@ export interface SecurityAlert {
   detectionMethod?: string;
   incidentStatus?: IncidentLifecycleStatus;
 
-  // Database persistence status tracking (Upgrade 6)
-  databasePersistenceStatus?: 'PERSISTED' | 'FAILED' | 'RETRYING' | 'DATABASE_UNAVAILABLE' | 'DUPLICATE_SKIPPED';
-  databasePersistenceError?: string;
-  databaseStoredAt?: string;
-
   // Notification and dispatch attributes
   notificationStatus: NotificationStatus;
   targetChannels: string[];
@@ -178,11 +173,6 @@ export interface SecurityIncident {
   priority?: PriorityLevel;
   riskScore: number;
   status: IncidentLifecycleStatus;
-
-  // Database persistence status tracking (Upgrade 6)
-  databasePersistenceStatus?: 'PERSISTED' | 'FAILED' | 'RETRYING' | 'DATABASE_UNAVAILABLE' | 'DUPLICATE_SKIPPED';
-  databasePersistenceError?: string;
-  databaseStoredAt?: string;
 
   alertIds?: string[];
   correlationIds?: string[];

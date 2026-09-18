@@ -20,6 +20,19 @@ import { runWorkflowTestSuite } from './src/services/alertIncident/workflowTestS
 import { telemetryManager } from './src/services/telemetry/telemetryManager';
 import { sixAgentPipeline } from './src/services/telemetry/pipelineOrchestrator';
 import { runPipelineTestSuite } from './src/tests/pipelineIntegrationTestSuite';
+import { applySecurityHeaders } from './src/security/securityHeaders';
+import { secureCorsMiddleware } from './src/security/corsConfig';
+import { authRateLimiter, apiRateLimiter, collectorRateLimiter } from './src/security/rateLimiter';
+import { noSqlSanitizationMiddleware, sanitizePagination, isValidId } from './src/security/requestValidator';
+import {
+  requireAuth,
+  requireRole,
+  authenticateCollectorOrRole,
+  attachUserIfAuthenticated,
+  extractToken,
+  AuthenticatedRequest
+} from './src/security/authMiddleware';
+import { authService } from './src/services/auth/authService';
 
 const PORT = config.port;
 const ML_SERVICE_URL = config.mlServiceUrl;
@@ -51,9 +64,25 @@ async function checkExternalMlService() {
 
 async function startServer() {
   const app = express();
-  app.use(express.json({ limit: '15mb' }));
-  app.use(express.text({ limit: '15mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+
+  // Apply Defense-in-Depth Security Headers (CSP, HSTS, X-Content-Type-Options, etc.)
+  app.use(applySecurityHeaders);
+
+  // Apply Strict Dynamic CORS Validation
+  app.use(secureCorsMiddleware);
+
+  app.use(express.json({ limit: config.requestBodyLimit }));
+  app.use(express.text({ limit: config.requestBodyLimit }));
+  app.use(express.urlencoded({ extended: true, limit: config.requestBodyLimit }));
+
+  // Sanitize all incoming request bodies and queries against NoSQL injection operators ($gt, $where, etc.)
+  app.use(noSqlSanitizationMiddleware);
+
+  // Apply sliding-window rate limiting on all API routes
+  app.use('/api/', apiRateLimiter.middleware());
+
+  // Attach session user context to request if valid token provided
+  app.use(attachUserIfAuthenticated);
 
   // Real-Time Application Telemetry Interceptor
   app.use((req, res, next) => {
@@ -286,7 +315,6 @@ async function startServer() {
         connected: dbHealth.connected,
         mode: dbHealth.mode || 'MongoDB',
         fallbackStore: 'LOCAL_JSON_FALLBACK',
-        persistenceMetrics: mongoService.getPersistenceMetrics(),
         details: dbHealth.details || (dbHealth.connected ? 'MongoDB production replica active' : 'MongoDB unconfigured or unreachable. Zero data loss local fallback active.')
       },
       mlServiceStatus: {
@@ -379,6 +407,65 @@ async function startServer() {
         simulatorActive: pipelineStatus.simulatorActive
       }
     });
+  });
+
+  // -------------------------------------------------------------
+  // SECURE AUTHENTICATION & ACCESS CONTROL ENDPOINTS
+  // -------------------------------------------------------------
+  app.post('/api/auth/login', authRateLimiter.middleware(), async (req, res) => {
+    try {
+      const { username, password } = req.body || {};
+      if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'Username and password are required and must be valid strings.',
+          code: 'INVALID_CREDENTIALS_PAYLOAD'
+        });
+      }
+
+      const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+      const userAgent = req.headers['user-agent'];
+
+      const result = await authService.authenticate(username, password, clientIp, userAgent);
+      if (!result.success) {
+        const statusCode = result.code === 'ACCOUNT_LOCKED' ? 423 : 401;
+        return res.status(statusCode).json(result);
+      }
+
+      if (result.token) {
+        res.setHeader('Set-Cookie', `soc_session_token=${result.token}; Path=/; SameSite=Lax; Max-Age=86400`);
+      }
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: 'Authentication processing failure', code: 'AUTH_ERROR' });
+    }
+  });
+
+  app.post('/api/auth/logout', requireAuth, (req: any, res) => {
+    const token = extractToken(req);
+    if (token) {
+      authService.revokeSession(token, req.user?.displayName || 'User');
+    }
+    res.setHeader('Set-Cookie', 'soc_session_token=; Path=/; SameSite=Lax; Max-Age=0');
+    return res.status(200).json({ success: true, message: 'Session successfully revoked and logged out.' });
+  });
+
+  app.get('/api/auth/session', (req: any, res) => {
+    const token = extractToken(req);
+    if (!token) {
+      return res.status(200).json({ authenticated: false, user: null });
+    }
+    const session = authService.validateSession(token);
+    if (!session) {
+      return res.status(200).json({ authenticated: false, user: null, reason: 'EXPIRED_OR_INVALID' });
+    }
+    const user = authService.getUser(session.username);
+    return res.status(200).json({ authenticated: true, session, user });
+  });
+
+  app.get('/api/auth/users', requireAuth, requireRole(['ADMIN']), (_req, res) => {
+    const users = authService.listUsers();
+    return res.status(200).json({ success: true, count: users.length, users });
   });
 
   // -------------------------------------------------------------
@@ -588,19 +675,27 @@ async function startServer() {
     }
   };
 
-  app.get('/api/dashboard/stats', handleAggregatedStats);
-  app.get('/api/stats', handleAggregatedStats);
+  app.get('/api/dashboard/stats', requireAuth, handleAggregatedStats);
+  app.get('/api/stats', requireAuth, handleAggregatedStats);
 
   // -------------------------------------------------------------
   // DEMO SCENARIOS & EXECUTION
   // -------------------------------------------------------------
-  app.get('/api/demo/scenarios', async (_req, res) => {
+  app.get('/api/demo/scenarios', requireAuth, async (_req, res) => {
     return res.status(200).json(DEMO_SCENARIOS);
   });
 
-  app.post('/api/demo', async (req, res) => {
+  app.post('/api/demo', requireAuth, requireRole(['ADMIN']), async (req: any, res) => {
     const { scenario } = req.body || {};
     const scenarioKey = scenario || 'mixed_attack';
+
+    auditService.recordAction({
+      action: 'DEMO_SCENARIO_STARTED',
+      entityType: 'DEMO',
+      entityId: scenarioKey,
+      actor: `${req.user.displayName} (${req.user.role})`,
+      details: `Executed attack scenario demonstration: ${scenarioKey}`
+    });
 
     let result: any = null;
     if (isPythonBackendOnline) {
@@ -662,35 +757,77 @@ async function startServer() {
   });
 
   // -------------------------------------------------------------
-  // PIPELINE & SIMULATOR CONTROL ENDPOINTS
+  // PIPELINE & SIMULATOR CONTROL ENDPOINTS (ADMIN-PROTECTED)
   // -------------------------------------------------------------
-  app.get('/api/pipeline/status', (_req, res) => {
+  app.get('/api/pipeline/status', requireAuth, (_req, res) => {
     return res.json(localAnalysisEngine.getPipelineStatus());
   });
 
-  app.post('/api/pipeline/start', (_req, res) => {
+  app.post('/api/pipeline/start', requireAuth, requireRole(['ADMIN']), (req: any, res) => {
+    auditService.recordAction({
+      action: 'PIPELINE_EXECUTED',
+      entityType: 'PIPELINE',
+      entityId: 'LOCAL_PIPELINE',
+      actor: `${req.user.displayName} (${req.user.role})`,
+      details: 'Started multi-agent threat detection pipeline.'
+    });
     return res.json(localAnalysisEngine.startPipeline());
   });
 
-  app.post('/api/pipeline/stop', (_req, res) => {
+  app.post('/api/pipeline/stop', requireAuth, requireRole(['ADMIN']), (req: any, res) => {
+    auditService.recordAction({
+      action: 'STATUS_CHANGED',
+      entityType: 'PIPELINE',
+      entityId: 'LOCAL_PIPELINE',
+      actor: `${req.user.displayName} (${req.user.role})`,
+      details: 'Stopped multi-agent threat detection pipeline.'
+    });
     return res.json(localAnalysisEngine.stopPipeline());
   });
 
-  app.post('/api/pipeline/clear', (_req, res) => {
+  app.post('/api/pipeline/clear', requireAuth, requireRole(['ADMIN']), (req: any, res) => {
+    auditService.recordAction({
+      action: 'DEMO_SCENARIO_RESET',
+      entityType: 'PIPELINE',
+      entityId: 'LOCAL_PIPELINE',
+      actor: `${req.user.displayName} (${req.user.role})`,
+      details: 'Cleared pipeline state and event buffers.'
+    });
     return res.json(localAnalysisEngine.clearPipeline());
   });
 
-  app.post('/api/simulator/start', (req, res) => {
+  app.post('/api/simulator/start', requireAuth, requireRole(['ADMIN']), (req: any, res) => {
     const { eventRate, mode } = req.body || {};
+    auditService.recordAction({
+      action: 'SIMULATION_EXECUTED',
+      entityType: 'SYSTEM',
+      entityId: 'SIMULATOR',
+      actor: `${req.user.displayName} (${req.user.role})`,
+      details: `Started event simulator (rate: ${eventRate || 2} eps, mode: ${mode || 'mixed'})`
+    });
     return res.json(localAnalysisEngine.startSimulator(eventRate || 2, mode || 'mixed'));
   });
 
-  app.post('/api/simulator/stop', (_req, res) => {
+  app.post('/api/simulator/stop', requireAuth, requireRole(['ADMIN']), (req: any, res) => {
+    auditService.recordAction({
+      action: 'STATUS_CHANGED',
+      entityType: 'SYSTEM',
+      entityId: 'SIMULATOR',
+      actor: `${req.user.displayName} (${req.user.role})`,
+      details: 'Stopped event simulator'
+    });
     return res.json(localAnalysisEngine.stopSimulator());
   });
 
-  app.post('/api/demo/start', (_req, res) => {
+  app.post('/api/demo/start', requireAuth, requireRole(['ADMIN']), (req: any, res) => {
     localAnalysisEngine.startSimulator(2, 'mixed');
+    auditService.recordAction({
+      action: 'DEMO_SCENARIO_STARTED',
+      entityType: 'DEMO',
+      entityId: 'GUIDED_PROJECT_DEMO',
+      actor: `${req.user.displayName} (${req.user.role})`,
+      details: 'Started guided project demonstration.'
+    });
     return res.json({
       status: 'DEMO_STARTED',
       activeModel: 'RF-20260916-105303',
@@ -698,12 +835,19 @@ async function startServer() {
     });
   });
 
-  app.post('/api/demo/stop', (_req, res) => {
+  app.post('/api/demo/stop', requireAuth, requireRole(['ADMIN']), (req: any, res) => {
     localAnalysisEngine.stopSimulator();
+    auditService.recordAction({
+      action: 'DEMO_SCENARIO_RESET',
+      entityType: 'DEMO',
+      entityId: 'GUIDED_PROJECT_DEMO',
+      actor: `${req.user.displayName} (${req.user.role})`,
+      details: 'Stopped guided project demonstration.'
+    });
     return res.json({ status: 'DEMO_STOPPED' });
   });
 
-  app.post('/api/security-events', async (req, res) => {
+  app.post('/api/security-events', authenticateCollectorOrRole(['ADMIN', 'ANALYST']), async (req, res) => {
     const enqueued = localAnalysisEngine.enqueueSecurityEvent(req.body || {});
 
     // Also route through telemetryManager so newly collected events stream via SSE to the dashboard
@@ -744,7 +888,7 @@ async function startServer() {
     });
   });
 
-  app.get('/api/security-events', (req, res) => {
+  app.get('/api/security-events', requireAuth, (req, res) => {
     const limit = parseInt(req.query.limit as string, 10) || 100;
     return res.json(localAnalysisEngine.getSecurityEvents(limit));
   });
@@ -784,7 +928,7 @@ async function startServer() {
   });
 
   // 1. Security Events: POST, GET, GET by ID
-  app.post('/api/mongo/events', async (req, res) => {
+  app.post('/api/mongo/events', authenticateCollectorOrRole(['ADMIN', 'ANALYST']), async (req, res) => {
     try {
       const result = await mongoService.createSecurityEvent(req.body);
       return res.status(result.isDuplicate ? 200 : 201).json({
@@ -797,7 +941,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/mongo/events', async (req, res) => {
+  app.get('/api/mongo/events', requireAuth, async (req, res) => {
     try {
       const { severity, source, eventType, sourceIp, host, search, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
       const result = await mongoService.getSecurityEvents(
@@ -825,7 +969,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/mongo/events/:id', async (req, res) => {
+  app.get('/api/mongo/events/:id', requireAuth, async (req, res) => {
     try {
       const event = await mongoService.getSecurityEventById(req.params.id);
       if (!event) {
@@ -838,7 +982,7 @@ async function startServer() {
   });
 
   // 2. Incidents: POST, GET, GET by ID, PATCH status, POST notes
-  app.post('/api/mongo/incidents', async (req, res) => {
+  app.post('/api/mongo/incidents', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const incident = await mongoService.createIncident(req.body);
       return res.status(201).json({ success: true, incident });
@@ -847,7 +991,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/mongo/incidents', async (req, res) => {
+  app.get('/api/mongo/incidents', requireAuth, async (req, res) => {
     try {
       const { status, severity, priority, assignee, search, minRisk, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
       const result = await mongoService.getIncidents(
@@ -875,7 +1019,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/mongo/incidents/:id', async (req, res) => {
+  app.get('/api/mongo/incidents/:id', requireAuth, async (req, res) => {
     try {
       const incident = await mongoService.getIncidentById(req.params.id);
       if (!incident) {
@@ -887,7 +1031,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/mongo/incidents/:id/status', async (req, res) => {
+  app.patch('/api/mongo/incidents/:id/status', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const { status, actor, reason } = req.body || {};
       if (!status) {
@@ -903,7 +1047,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/mongo/incidents/:id/notes', async (req, res) => {
+  app.post('/api/mongo/incidents/:id/notes', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const { note, author } = req.body || {};
       if (!note) {
@@ -920,7 +1064,7 @@ async function startServer() {
   });
 
   // 3. Threat Detections: POST, GET
-  app.post('/api/mongo/detections', async (req, res) => {
+  app.post('/api/mongo/detections', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const detection = await mongoService.createThreatDetection(req.body);
       return res.status(201).json({ success: true, detection });
@@ -929,7 +1073,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/mongo/detections', async (req, res) => {
+  app.get('/api/mongo/detections', requireAuth, async (req, res) => {
     try {
       const { threatType, severity, detectionEngine, eventId, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
       const result = await mongoService.getThreatDetections(
@@ -956,7 +1100,7 @@ async function startServer() {
   });
 
   // 4. Alert Records: POST, GET, PATCH status
-  app.post('/api/mongo/alerts', async (req, res) => {
+  app.post('/api/mongo/alerts', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const alert = await mongoService.createAlert(req.body);
       return res.status(201).json({ success: true, alert });
@@ -965,7 +1109,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/mongo/alerts', async (req, res) => {
+  app.get('/api/mongo/alerts', requireAuth, async (req, res) => {
     try {
       const { status, severity, priority, incidentId, alertType, search, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
       const result = await mongoService.getAlerts(
@@ -993,7 +1137,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/mongo/alerts/:id/status', async (req, res) => {
+  app.patch('/api/mongo/alerts/:id/status', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const { status, actor } = req.body || {};
       if (!status) {
@@ -1010,7 +1154,7 @@ async function startServer() {
   });
 
   // 5. Agent Execution Logs: POST, GET
-  app.post('/api/mongo/logs', async (req, res) => {
+  app.post('/api/mongo/logs', authenticateCollectorOrRole(['ADMIN', 'ANALYST']), async (req, res) => {
     try {
       const log = await mongoService.createAgentLog(req.body);
       return res.status(201).json({ success: true, log });
@@ -1019,7 +1163,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/mongo/logs', async (req, res) => {
+  app.get('/api/mongo/logs', requireAuth, async (req, res) => {
     try {
       const { agentId, level, action, startTime, endTime, limit, offset, page, sortBy, sortOrder } = req.query;
       const result = await mongoService.getAgentLogs(
@@ -1045,7 +1189,7 @@ async function startServer() {
   });
 
   // 6. Model Metadata: POST, GET, GET by ID
-  app.post('/api/mongo/models', async (req, res) => {
+  app.post('/api/mongo/models', requireAuth, requireRole(['ADMIN']), async (req, res) => {
     try {
       const model = await mongoService.createOrUpdateModelMetadata(req.body);
       return res.status(200).json({ success: true, model });
@@ -1054,7 +1198,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/mongo/models', async (req, res) => {
+  app.get('/api/mongo/models', requireAuth, async (req, res) => {
     try {
       const { status, algorithm, limit, offset, page } = req.query;
       const result = await mongoService.listModelMetadata(
@@ -1074,7 +1218,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/mongo/models/:id', async (req, res) => {
+  app.get('/api/mongo/models/:id', requireAuth, async (req, res) => {
     try {
       const model = await mongoService.getModelMetadata(req.params.id);
       if (!model) {
@@ -1087,7 +1231,7 @@ async function startServer() {
   });
 
   // 7. Dashboard Statistics: GET
-  app.get('/api/mongo/stats', async (_req, res) => {
+  app.get('/api/mongo/stats', requireAuth, async (_req, res) => {
     try {
       const stats = await mongoService.getDashboardStatistics();
       return res.status(200).json(stats);
@@ -1097,35 +1241,10 @@ async function startServer() {
   });
 
   // 8. Test Suite Execution: POST
-  app.post('/api/mongo/test-suite', async (_req, res) => {
+  app.post('/api/mongo/test-suite', requireAuth, requireRole(['ADMIN']), async (_req, res) => {
     try {
       const suiteResults = await runMongoTestSuite();
       return res.status(200).json(suiteResults);
-    } catch (err: any) {
-      return res.status(500).json({ error: err.message });
-    }
-  });
-
-  // 9. Database Persistence Metrics: GET
-  app.get('/api/mongo/persistence-metrics', async (_req, res) => {
-    try {
-      const metrics = mongoService.getPersistenceMetrics();
-      const health = await mongoConnection.checkHealth();
-      return res.status(200).json({
-        ...metrics,
-        databaseConnected: health.connected,
-        databaseStatus: health.status
-      });
-    } catch (err: any) {
-      return res.status(500).json({ error: err.message });
-    }
-  });
-
-  // 10. Reset Database Persistence Metrics: POST
-  app.post('/api/mongo/persistence-metrics/reset', async (_req, res) => {
-    try {
-      mongoService.resetMetrics();
-      return res.status(200).json({ success: true, metrics: mongoService.getPersistenceMetrics() });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -1136,7 +1255,7 @@ async function startServer() {
   // =============================================================
 
   // 1. When a threat is detected: Full 7-step orchestrated pipeline
-  app.post('/api/workflow/threat-detected', async (req, res) => {
+  app.post('/api/workflow/threat-detected', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const {
         threatCategory,
@@ -1309,7 +1428,7 @@ async function startServer() {
   });
 
   // 2. Retrieve transparent severity rules
-  app.get('/api/workflow/severity-rules', (_req, res) => {
+  app.get('/api/workflow/severity-rules', requireAuth, (_req, res) => {
     res.json({
       rules: severityRuleEngine.getAllRules(),
       explanation: 'Transparent rule-based severity assignment mapping threat metrics, multi-agent correlations, and impact to severity levels (Informational, Low, Medium, High, Critical).'
@@ -1317,7 +1436,7 @@ async function startServer() {
   });
 
   // 3. Test/Evaluate transparent severity for any telemetry payload
-  app.post('/api/workflow/evaluate-severity', (req, res) => {
+  app.post('/api/workflow/evaluate-severity', requireAuth, requireRole(['ANALYST', 'ADMIN']), (req, res) => {
     try {
       const evaluation = severityRuleEngine.evaluateSeverity(req.body);
       return res.json(evaluation);
@@ -1327,7 +1446,7 @@ async function startServer() {
   });
 
   // 4. Human-In-The-Loop Authorized Response Execution (Strict Safety Requirements)
-  app.post('/api/workflow/authorize-response', (req, res) => {
+  app.post('/api/workflow/authorize-response', requireAuth, requireRole(['ANALYST', 'ADMIN']), (req, res) => {
     try {
       const decision = responseAuthorizationGuard.evaluateAuthorization(req.body);
       if (!decision.allowed) {
@@ -1371,14 +1490,14 @@ async function startServer() {
   });
 
   // 5. Notification Dispatch History & Safe Retries
-  app.get('/api/workflow/notifications', (_req, res) => {
+  app.get('/api/workflow/notifications', requireAuth, requireRole(['ANALYST', 'ADMIN']), (_req, res) => {
     res.json({
       dispatches: notificationDispatcher.getDispatches(),
       channels: notificationDispatcher.getConfigSummary()
     });
   });
 
-  app.post('/api/workflow/notifications/:id/retry', async (req, res) => {
+  app.post('/api/workflow/notifications/:id/retry', requireAuth, requireRole(['ADMIN']), async (req, res) => {
     try {
       const result = await notificationDispatcher.retryDispatch(req.params.id);
       if (!result) {
@@ -1391,7 +1510,7 @@ async function startServer() {
   });
 
   // 6. Audit Logs Retrieval
-  app.get('/api/workflow/audit-logs', (_req, res) => {
+  app.get('/api/workflow/audit-logs', requireAuth, requireRole(['ANALYST', 'ADMIN']), (_req, res) => {
     const logs = auditService.getAuditLogs();
     res.json({
       total: logs.length,
@@ -1400,7 +1519,7 @@ async function startServer() {
   });
 
   // 7. Workflow Comprehensive Verification Test Suite
-  app.all('/api/workflow/test-suite', async (_req, res) => {
+  app.all('/api/workflow/test-suite', requireAuth, requireRole(['ADMIN']), async (_req, res) => {
     try {
       const summary = await runWorkflowTestSuite();
       return res.status(200).json(summary);
@@ -1416,7 +1535,7 @@ async function startServer() {
   // GET /api/events
   // GET /api/events/:id
   // -------------------------------------------------------------
-  app.post('/api/events', async (req, res) => {
+  app.post('/api/events', authenticateCollectorOrRole(['ADMIN', 'ANALYST']), async (req, res) => {
     const { source, eventType, rawPayload, normalizedFields, eventTimestamp, sourceIp, destinationIp, host, username, severity, batchId, isTestEvent } = req.body || {};
 
     if (!source || !eventType || rawPayload === undefined) {
@@ -1452,7 +1571,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/events', async (req, res) => {
+  app.get('/api/events', requireAuth, async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
     const offset = parseInt(req.query.offset as string) || 0;
     try {
@@ -1464,7 +1583,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/events/:id', async (req, res) => {
+  app.get('/api/events/:id', requireAuth, async (req, res) => {
     try {
       const event = await databaseService.getEventById(req.params.id);
       if (!event) {
@@ -1481,7 +1600,7 @@ async function startServer() {
   // TASK 5: AGENT FINDINGS PERSISTENCE
   // POST /api/findings
   // -------------------------------------------------------------
-  app.post('/api/findings', async (req, res) => {
+  app.post('/api/findings', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     const { eventId, agentType, threatType, severity, confidence, evidence, indicators, mitreTechnique, mitreTactic, timestamp, metadata } = req.body || {};
 
     if (!eventId || !agentType || !threatType || severity === undefined || confidence === undefined) {
@@ -1516,7 +1635,7 @@ async function startServer() {
   // POST /api/detections
   // GET /api/detections
   // -------------------------------------------------------------
-  app.post('/api/detections', async (req, res) => {
+  app.post('/api/detections', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     const {
       eventId,
       modelId,
@@ -1564,7 +1683,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/detections', async (req, res) => {
+  app.get('/api/detections', requireAuth, async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
     const offset = parseInt(req.query.offset as string) || 0;
     try {
@@ -1581,7 +1700,7 @@ async function startServer() {
   // POST /api/correlations
   // POST /api/risk-assessments
   // -------------------------------------------------------------
-  app.post('/api/correlations', async (req, res) => {
+  app.post('/api/correlations', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const corr = await databaseService.insertCorrelation(req.body);
       return res.status(201).json(corr);
@@ -1590,7 +1709,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/risk-assessments', async (req, res) => {
+  app.post('/api/risk-assessments', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const risk = await databaseService.insertRiskAssessment(req.body);
       return res.status(201).json(risk);
@@ -1605,7 +1724,7 @@ async function startServer() {
   // POST /api/alerts
   // PATCH /api/alerts/:id
   // -------------------------------------------------------------
-  app.get('/api/alerts', async (req, res) => {
+  app.get('/api/alerts', requireAuth, async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
     const offset = parseInt(req.query.offset as string) || 0;
     try {
@@ -1617,7 +1736,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/alerts', async (req, res) => {
+  app.post('/api/alerts', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const created = await databaseService.insertAlert(req.body);
       return res.status(201).json(created);
@@ -1627,7 +1746,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/alerts/:id', async (req, res) => {
+  app.get('/api/alerts/:id', requireAuth, async (req, res) => {
     try {
       const alert = await databaseService.getAlertById(req.params.id);
       if (!alert) {
@@ -1639,7 +1758,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/alerts/:id', async (req, res) => {
+  app.patch('/api/alerts/:id', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     const { status, actor, reason } = req.body || {};
     if (!status) {
       return res.status(400).json({ error: "Missing required 'status' field." });
@@ -1680,7 +1799,7 @@ async function startServer() {
   // GET /api/incidents/:id
   // PATCH /api/incidents/:id
   // -------------------------------------------------------------
-  app.get('/api/incidents', async (req, res) => {
+  app.get('/api/incidents', requireAuth, async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
     const offset = parseInt(req.query.offset as string) || 0;
     try {
@@ -1692,7 +1811,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/incidents', async (req, res) => {
+  app.post('/api/incidents', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const inc = await databaseService.insertIncident(req.body);
       return res.status(201).json(inc);
@@ -1702,7 +1821,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/incidents/:id', async (req, res) => {
+  app.get('/api/incidents/:id', requireAuth, async (req, res) => {
     try {
       const inc = await databaseService.getIncidentById(req.params.id);
       if (!inc) {
@@ -1769,14 +1888,14 @@ async function startServer() {
     }
   };
 
-  app.patch('/api/incidents/:id', handleIncidentUpdate);
-  app.patch('/api/incidents/:id/status', handleIncidentUpdate);
+  app.patch('/api/incidents/:id', requireAuth, requireRole(['ANALYST', 'ADMIN']), handleIncidentUpdate);
+  app.patch('/api/incidents/:id/status', requireAuth, requireRole(['ANALYST', 'ADMIN']), handleIncidentUpdate);
 
   // -------------------------------------------------------------
   // TASK 11: AUDIT APIS
   // GET /api/audit
   // -------------------------------------------------------------
-  app.get('/api/audit', async (req, res) => {
+  app.get('/api/audit', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
     const offset = parseInt(req.query.offset as string) || 0;
     try {
@@ -1793,7 +1912,7 @@ async function startServer() {
   // POST /api/reports
   // GET /api/reports
   // -------------------------------------------------------------
-  app.post('/api/reports', async (req, res) => {
+  app.post('/api/reports', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const rep = await databaseService.insertReport(req.body);
       return res.status(201).json(rep);
@@ -1802,7 +1921,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/reports', async (_req, res) => {
+  app.get('/api/reports', requireAuth, async (_req, res) => {
     try {
       const reps = await databaseService.getReports();
       return res.json(reps);
@@ -2020,7 +2139,7 @@ except Exception as e:
   };
 
   // POST /api/ml/train/random-forest
-  app.post('/api/ml/train/random-forest', async (req, res) => {
+  app.post('/api/ml/train/random-forest', requireAuth, requireRole(['ADMIN']), async (req, res) => {
     try {
       const {
         datasetId,
@@ -2069,6 +2188,15 @@ except Exception as e:
         status: 'READY'
       }).catch((err) => console.warn('[ModelSync] Error syncing RF model:', err));
 
+      auditService.recordAction({
+        action: 'MODEL_TRAINED',
+        entityType: 'MODEL',
+        entityId: artifact.modelId,
+        actor: (req as any).user?.displayName || 'Admin',
+        details: `Trained Random Forest model ${artifact.modelId} on ${artifact.datasetName}`,
+        metadata: { algorithm: 'RANDOM_FOREST', metrics: artifact.evaluationMetrics }
+      });
+
       return res.status(200).json(artifact);
     } catch (err: any) {
       console.error('[ML Train Error]:', err);
@@ -2080,7 +2208,7 @@ except Exception as e:
   });
 
   // POST /api/ml/train/isolation-forest
-  app.post('/api/ml/train/isolation-forest', async (req, res) => {
+  app.post('/api/ml/train/isolation-forest', requireAuth, requireRole(['ADMIN']), async (req, res) => {
     try {
       const {
         datasetId,
@@ -2126,6 +2254,15 @@ except Exception as e:
         status: 'READY'
       }).catch((err) => console.warn('[ModelSync] Error syncing IF model:', err));
 
+      auditService.recordAction({
+        action: 'MODEL_TRAINED',
+        entityType: 'MODEL',
+        entityId: artifact.modelId,
+        actor: (req as any).user?.displayName || 'Admin',
+        details: `Trained Isolation Forest model ${artifact.modelId} on ${artifact.datasetName}`,
+        metadata: { algorithm: 'ISOLATION_FOREST', contamination: artifact.anomalyThreshold }
+      });
+
       return res.status(200).json(artifact);
     } catch (err: any) {
       console.error('[ML Train Error]:', err);
@@ -2137,7 +2274,7 @@ except Exception as e:
   });
 
   // POST /api/datasets/validate
-  app.post('/api/datasets/validate', async (req, res) => {
+  app.post('/api/datasets/validate', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const { datasetPath, rawCsv } = req.body || {};
       const target = rawCsv || datasetPath || path.join(process.cwd(), 'data', 'test_dataset_cicids2017.csv');
@@ -2150,7 +2287,7 @@ except Exception as e:
   });
 
   // POST /api/datasets/upload (Safe CSV Upload with Validation)
-  app.post('/api/datasets/upload', async (req, res) => {
+  app.post('/api/datasets/upload', requireAuth, requireRole(['ANALYST', 'ADMIN']), async (req, res) => {
     try {
       const { filename, csvContent } = req.body || {};
       if (!filename || typeof filename !== 'string') {
@@ -2187,6 +2324,15 @@ except Exception as e:
       // Validate schema
       const validation = await runPythonValidation(destPath, false);
 
+      auditService.recordAction({
+        action: 'DATASET_UPLOADED',
+        entityType: 'DATASET',
+        entityId: sanitizedName,
+        actor: (req as any).user?.displayName || 'Analyst',
+        details: `Dataset uploaded and validated: ${sanitizedName} (${csvContent.length} bytes)`,
+        metadata: { filename: sanitizedName, valid: validation.valid }
+      });
+
       return res.status(200).json({
         success: true,
         filename: sanitizedName,
@@ -2199,7 +2345,7 @@ except Exception as e:
   });
 
   // GET /api/datasets/sample
-  app.get('/api/datasets/sample', async (_req, res) => {
+  app.get('/api/datasets/sample', requireAuth, async (_req, res) => {
     try {
       const samplePath = path.join(process.cwd(), 'data', 'test_dataset_cicids2017.csv');
       if (fs.existsSync(samplePath)) {
@@ -2278,8 +2424,8 @@ except Exception as e:
     return res.status(200).json(data);
   };
 
-  app.post('/api/ml/predict', handlePredict);
-  app.post('/api/predict', handlePredict);
+  app.post('/api/ml/predict', requireAuth, handlePredict);
+  app.post('/api/predict', requireAuth, handlePredict);
 
   const handleBatchPredict = async (req: express.Request, res: express.Response) => {
     const { records, modelId } = req.body || {};
@@ -2327,11 +2473,11 @@ except Exception as e:
     });
   };
 
-  app.post('/api/ml/predict/batch', handleBatchPredict);
-  app.post('/api/predict/batch', handleBatchPredict);
+  app.post('/api/ml/predict/batch', requireAuth, handleBatchPredict);
+  app.post('/api/predict/batch', requireAuth, handleBatchPredict);
 
   // General Python status endpoints
-  app.get('/api/ml/model-status', async (_req, res) => {
+  app.get('/api/ml/model-status', requireAuth, async (_req, res) => {
     if (isPythonBackendOnline) {
       try {
         const resp = await fetch(`${ML_SERVICE_URL}/api/ml/model-status`, { signal: AbortSignal.timeout(600) });
@@ -2365,7 +2511,7 @@ except Exception as e:
   // POST /api/agents/threat-detect - Trigger Threat Detection Agent (Rule + ML)
   // POST /api/agents/alerts  - Trigger Alert and Response Agent
   // -------------------------------------------------------------
-  app.post('/api/agents/process', (req, res) => {
+  app.post('/api/agents/process', requireAuth, requireRole(['ANALYST', 'ADMIN']), (req, res) => {
     try {
       const { network_logs, system_logs, application_logs, logs, source_label } = req.body || {};
       let netLogs = Array.isArray(network_logs) ? network_logs : [];
@@ -2441,7 +2587,7 @@ except Exception as e:
   // Event Normalization -> Preprocessing -> Multi-Agents -> Threat Detection ->
   // 7-Factor Risk Scoring -> Alert/Incident Management -> Database -> Dashboard
   // -------------------------------------------------------------
-  app.get('/api/telemetry/status', (_req, res) => {
+  app.get('/api/telemetry/status', requireAuth, (_req, res) => {
     try {
       const status = telemetryManager.getStatus();
       return res.status(200).json(status);
@@ -2450,7 +2596,7 @@ except Exception as e:
     }
   });
 
-  app.get('/api/telemetry/events', (req, res) => {
+  app.get('/api/telemetry/events', requireAuth, (req, res) => {
     try {
       const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 200);
       const events = telemetryManager.getRecentEvents(limit);
@@ -2463,12 +2609,22 @@ except Exception as e:
     }
   });
 
-  app.post('/api/telemetry/collectors/:type/start', (req, res) => {
+  app.post('/api/telemetry/collectors/:type/start', requireAuth, requireRole(['ADMIN']), (req, res) => {
     const rawType = (req.params.type || '').toUpperCase();
     if (!['SYSTEM', 'NETWORK', 'APPLICATION'].includes(rawType)) {
       return res.status(400).json({ error: `Invalid collector type '${req.params.type}'. Must be SYSTEM, NETWORK, or APPLICATION.` });
     }
     const started = telemetryManager.startCollector(rawType as any);
+
+    auditService.recordAction({
+      action: 'TELEMETRY_COLLECTOR_STATE_CHANGED',
+      entityType: 'COLLECTOR',
+      entityId: rawType,
+      actor: (req as any).user?.displayName || 'Admin',
+      details: `Telemetry collector ${rawType} started`,
+      metadata: { collector: rawType, state: 'LIVE' }
+    });
+
     return res.status(200).json({
       success: started,
       collector: rawType,
@@ -2477,12 +2633,22 @@ except Exception as e:
     });
   });
 
-  app.post('/api/telemetry/collectors/:type/stop', (req, res) => {
+  app.post('/api/telemetry/collectors/:type/stop', requireAuth, requireRole(['ADMIN']), (req, res) => {
     const rawType = (req.params.type || '').toUpperCase();
     if (!['SYSTEM', 'NETWORK', 'APPLICATION'].includes(rawType)) {
       return res.status(400).json({ error: `Invalid collector type '${req.params.type}'. Must be SYSTEM, NETWORK, or APPLICATION.` });
     }
     telemetryManager.stopCollector(rawType as any);
+
+    auditService.recordAction({
+      action: 'TELEMETRY_COLLECTOR_STATE_CHANGED',
+      entityType: 'COLLECTOR',
+      entityId: rawType,
+      actor: (req as any).user?.displayName || 'Admin',
+      details: `Telemetry collector ${rawType} stopped`,
+      metadata: { collector: rawType, state: 'OFFLINE' }
+    });
+
     return res.status(200).json({
       success: true,
       collector: rawType,
@@ -2491,8 +2657,18 @@ except Exception as e:
     });
   });
 
-  app.post('/api/telemetry/collectors/start-all', (_req, res) => {
+  app.post('/api/telemetry/collectors/start-all', requireAuth, requireRole(['ADMIN']), (req, res) => {
     telemetryManager.startAll();
+
+    auditService.recordAction({
+      action: 'TELEMETRY_COLLECTOR_STATE_CHANGED',
+      entityType: 'COLLECTOR',
+      entityId: 'ALL',
+      actor: (req as any).user?.displayName || 'Admin',
+      details: 'All telemetry collectors started',
+      metadata: { action: 'START_ALL' }
+    });
+
     return res.status(200).json({
       success: true,
       state: 'LIVE',
@@ -2500,8 +2676,18 @@ except Exception as e:
     });
   });
 
-  app.post('/api/telemetry/collectors/stop-all', (_req, res) => {
+  app.post('/api/telemetry/collectors/stop-all', requireAuth, requireRole(['ADMIN']), (req, res) => {
     telemetryManager.stopAll();
+
+    auditService.recordAction({
+      action: 'TELEMETRY_COLLECTOR_STATE_CHANGED',
+      entityType: 'COLLECTOR',
+      entityId: 'ALL',
+      actor: (req as any).user?.displayName || 'Admin',
+      details: 'All telemetry collectors stopped',
+      metadata: { action: 'STOP_ALL' }
+    });
+
     return res.status(200).json({
       success: true,
       state: 'OFFLINE',
@@ -2509,18 +2695,8 @@ except Exception as e:
     });
   });
 
-  app.post('/api/telemetry/ingest', async (req, res) => {
+  app.post('/api/telemetry/ingest', authenticateCollectorOrRole(['ADMIN', 'ANALYST']), async (req, res) => {
     try {
-      const configuredKey = process.env.BACKEND_API_KEY;
-      if (configuredKey) {
-        const authHeader = (req.headers['x-api-key'] || req.headers['authorization']) as string | undefined;
-        const providedKey = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : undefined;
-        if (!providedKey || providedKey !== configuredKey) {
-          sixAgentPipeline.recordCollectionError();
-          return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key for telemetry ingestion' });
-        }
-      }
-
       const payload = req.body || {};
       const result = await telemetryManager.ingestExternalTelemetry(payload);
       return res.status(200).json(result);
@@ -2530,7 +2706,7 @@ except Exception as e:
     }
   });
 
-  app.get('/api/telemetry/windows-collector/status', (_req, res) => {
+  app.get('/api/telemetry/windows-collector/status', requireAuth, (_req, res) => {
     try {
       const status = telemetryManager.getStatus();
       return res.status(200).json({
@@ -2552,7 +2728,7 @@ except Exception as e:
   // Threat Classification -> Risk Assessment -> Alert Generation -> Incident Management ->
   // MongoDB Persistence (Verified) -> Dashboard Streaming
   // -------------------------------------------------------------
-  app.post('/api/pipeline/process', async (req, res) => {
+  app.post('/api/pipeline/process', authenticateCollectorOrRole(['ADMIN', 'ANALYST']), async (req, res) => {
     try {
       const payload = req.body;
       if (!payload) {
@@ -2583,7 +2759,7 @@ except Exception as e:
     }
   });
 
-  app.get('/api/pipeline/status', (_req, res) => {
+  app.get('/api/pipeline/status', requireAuth, (_req, res) => {
     try {
       const status = sixAgentPipeline.getPipelineStatus();
       return res.status(200).json(status);
@@ -2592,7 +2768,7 @@ except Exception as e:
     }
   });
 
-  app.get(['/api/pipeline/agents', '/api/telemetry/agents', '/api/agents/status'], (_req, res) => {
+  app.get(['/api/pipeline/agents', '/api/telemetry/agents', '/api/agents/status'], requireAuth, (_req, res) => {
     try {
       const agents = sixAgentPipeline.getAgentStatuses();
       return res.status(200).json({
@@ -2605,7 +2781,7 @@ except Exception as e:
     }
   });
 
-  app.get('/api/pipeline/audit', (_req, res) => {
+  app.get('/api/pipeline/audit', requireAuth, requireRole(['ANALYST', 'ADMIN']), (_req, res) => {
     try {
       const logs = auditService.getAuditLogs();
       return res.status(200).json({
@@ -2617,7 +2793,7 @@ except Exception as e:
     }
   });
 
-  app.get(['/api/pipeline/verify-suite', '/api/pipeline/test'], async (_req, res) => {
+  app.get(['/api/pipeline/verify-suite', '/api/pipeline/test'], requireAuth, requireRole(['ADMIN']), async (_req, res) => {
     try {
       const summary = await runPipelineTestSuite();
       return res.status(200).json(summary);
@@ -2626,7 +2802,7 @@ except Exception as e:
     }
   });
 
-  app.post(['/api/pipeline/verify-suite', '/api/pipeline/test'], async (_req, res) => {
+  app.post(['/api/pipeline/verify-suite', '/api/pipeline/test'], requireAuth, requireRole(['ADMIN']), async (_req, res) => {
     try {
       const summary = await runPipelineTestSuite();
       return res.status(200).json(summary);
@@ -2651,7 +2827,7 @@ except Exception as e:
   });
 
   // -------------------------------------------------------------
-  // STRUCTURED ERROR HANDLING MIDDLEWARE
+  // STRUCTURED & SANITIZED ERROR HANDLING MIDDLEWARE
   // -------------------------------------------------------------
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (
@@ -2661,21 +2837,40 @@ except Exception as e:
       err?.message?.includes('buffering timed out') ||
       err?.message?.includes('ECONNREFUSED')
     ) {
-      logger.warn('[AI Studio] Database offline — returning mock/fallback response');
+      logger.warn('[AI Studio] Database offline — returning fallback response');
       if (req.method === 'GET') {
         return res.json(req.path.endsWith('s') || req.path.endsWith('s/') ? [] : {});
       }
-      return res.status(503).json({ error: 'Service temporarily unavailable (database offline)' });
+      return res.status(503).json({
+        success: false,
+        error: 'Service temporarily unavailable (database offline)',
+        code: 'DATABASE_UNAVAILABLE'
+      });
     }
-    logger.error(`Unhandled API Error on ${req.method} ${req.path}`, err);
+
+    // Log full error details securely on the server side
+    logger.error(`[API Error] ${req.method} ${req.path}:`, {
+      message: err.message,
+      code: err.code,
+      status: err.status,
+      stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined
+    });
+
     if (res.headersSent) {
       return next(err);
     }
-    return res.status(err.status || 500).json({
-      status: 'error',
-      error: err.message || 'Internal Server Error',
-      path: req.path,
-      method: req.method,
+
+    const statusCode = typeof err.status === 'number' && err.status >= 400 && err.status < 600 ? err.status : 500;
+
+    // Sanitize response: do not leak stack traces or internal secrets to the client
+    const safeMessage = statusCode >= 500
+      ? 'An internal server error occurred while processing the request.'
+      : (err.message || 'Request could not be processed.');
+
+    return res.status(statusCode).json({
+      success: false,
+      error: safeMessage,
+      code: err.code || (statusCode >= 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST'),
       timestamp: new Date().toISOString()
     });
   });

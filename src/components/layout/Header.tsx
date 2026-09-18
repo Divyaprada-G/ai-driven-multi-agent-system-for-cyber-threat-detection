@@ -5,6 +5,7 @@ import { NotificationCenterDropdown } from '../alerts/NotificationCenterDropdown
 import { SecurityAlert } from '../../types/alertIncident';
 import { TelemetryStatusBadge } from '../telemetry/TelemetryStatusBadge';
 import { realtimeTelemetryStream } from '../../services/telemetry/realtimeTelemetryStream';
+import { UserRoleDropdown } from './UserRoleDropdown';
 
 interface HeaderProps {
   onOpenMobileMenu: () => void;
@@ -65,8 +66,11 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Verified Telemetry Status Badge & Collectors Status */}
+        {/* Right: Verified Telemetry Status Badge, RBAC User, & Collectors Status */}
         <div className="flex items-center gap-2.5 sm:gap-4">
+          {/* User Role & Session Selector */}
+          <UserRoleDropdown />
+
           {/* Notification Center */}
           <NotificationCenterDropdown
             onSelectAlert={onSelectAlert}

@@ -182,86 +182,17 @@ class MongoConnectionManager {
       await modelsCol.createIndex({ algorithm: 1 });
       await modelsCol.createIndex({ trainedAt: -1 });
 
-      // -------------------------------------------------------------
-      // UPGRADE 6: UNIQUE INDEXES & DEDUPLICATION SAFEGUARDS
-      // -------------------------------------------------------------
-      // 7. Raw Events (unique event_id)
-      const rawEventsCol = db.collection('raw_events');
-      await rawEventsCol.createIndex({ event_id: 1 }, { unique: true });
-      await rawEventsCol.createIndex({ received_at: -1 });
-      await rawEventsCol.createIndex({ stored_at: -1 });
-
-      // 8. Normalized Events (unique event_id)
-      const normalizedEventsCol = db.collection('normalized_events');
-      await normalizedEventsCol.createIndex({ event_id: 1 }, { unique: true });
-      await normalizedEventsCol.createIndex({ source_type: 1 });
-      await normalizedEventsCol.createIndex({ hostname: 1 });
-      await normalizedEventsCol.createIndex({ stored_at: -1 });
-
-      // 9. Validation Results (unique event_id)
-      const validationCol = db.collection('validation_results');
-      await validationCol.createIndex({ event_id: 1 }, { unique: true });
-      await validationCol.createIndex({ is_valid: 1 });
-      await validationCol.createIndex({ stored_at: -1 });
-
-      // 10. Agent Processing Results (unique event_id + agent_name)
-      const agentResultsCol = db.collection('agent_processing_results');
-      await agentResultsCol.createIndex({ event_id: 1, agent_name: 1 }, { unique: true });
-      await agentResultsCol.createIndex({ status: 1 });
-      await agentResultsCol.createIndex({ stored_at: -1 });
-
-      // 11. Correlations (unique correlation_id)
-      const correlationsCol = db.collection('correlations');
-      await correlationsCol.createIndex({ correlation_id: 1 }, { unique: true });
-      await correlationsCol.createIndex({ attack_chain_detected: 1 });
-      await correlationsCol.createIndex({ stored_at: -1 });
-
-      // 12. Risk Scores (unique event_id)
-      const riskScoresCol = db.collection('risk_scores');
-      await riskScoresCol.createIndex({ event_id: 1 }, { unique: true });
-      await riskScoresCol.createIndex({ risk_band: 1 });
-      await riskScoresCol.createIndex({ priority: 1 });
-      await riskScoresCol.createIndex({ stored_at: -1 });
-
-      // 13. Audit Logs (unique id)
-      const auditLogsCol = db.collection('audit_logs');
-      await auditLogsCol.createIndex({ id: 1 }, { unique: true });
-      await auditLogsCol.createIndex({ action: 1 });
-      await auditLogsCol.createIndex({ timestamp: -1 });
-
       this.indexesCreated = true;
-      logger.info('[MongoDB] Verified collection indexes (events, incidents, detections, alerts, logs, models, raw_events, normalized_events, validation, agent_processing, correlations, risk_scores, audit_logs)');
+      logger.info('[MongoDB] Verified collection indexes (events, incidents, detections, alerts, logs, models)');
     } catch (err: any) {
       logger.warn(`[MongoDB] Error configuring indexes: ${err.message}`);
     }
   }
 
   /**
-   * Verified database getter:
-   * Guarantees active connectivity with a live ping before returning Db.
-   * If MongoDB is unconfigured or unreachable, returns null.
-   */
-  public async getVerifiedDatabase(): Promise<Db | null> {
-    if (!this.isConfigured()) {
-      return null;
-    }
-    const db = await this.getDatabase();
-    if (!db) {
-      return null;
-    }
-    try {
-      await db.command({ ping: 1 });
-      return db;
-    } catch (err: any) {
-      logger.warn(`[MongoDB] Verification ping failed: ${err.message}`);
-      return null;
-    }
-  }
-
-  /**
    * Health check for MongoDB connection and collection metrics.
    */
-  public async checkHealth(): Promise<MongoHealthStatus & { latencyMs?: number }> {
+  public async checkHealth(): Promise<MongoHealthStatus> {
     const now = Date.now();
     // Cache health for 2 seconds to prevent spamming the database
     if (this.lastHealthCheck && now - this.lastHealthCheckTime < 2000) {
@@ -269,10 +200,10 @@ class MongoConnectionManager {
     }
 
     if (!this.isConfigured()) {
-      const res: MongoHealthStatus & { latencyMs?: number } = {
+      const res: MongoHealthStatus = {
         status: 'UNCONFIGURED',
         connected: false,
-        details: 'MONGODB_URI environment variable is not set. Real MongoDB required for durable persistence.'
+        details: 'MONGODB_URI environment variable is not set. Using secure local fallback store.'
       };
       this.lastHealthCheck = res;
       this.lastHealthCheckTime = now;
@@ -280,10 +211,9 @@ class MongoConnectionManager {
     }
 
     try {
-      const pingStart = Date.now();
       const db = await this.getDatabase();
       if (!db) {
-        const res: MongoHealthStatus & { latencyMs?: number } = {
+        const res: MongoHealthStatus = {
           status: 'DISCONNECTED',
           connected: false,
           database: this.getDbName(),
@@ -297,27 +227,23 @@ class MongoConnectionManager {
 
       // Ping the server to verify active connection
       await db.command({ ping: 1 });
-      const latencyMs = Date.now() - pingStart;
 
-      const [eventsCount, incidentsCount, detectionsCount, alertsCount, logsCount, modelsCount, rawCount, normCount] = await Promise.all([
+      const [eventsCount, incidentsCount, detectionsCount, alertsCount, logsCount, modelsCount] = await Promise.all([
         db.collection('security_events').estimatedDocumentCount().catch(() => 0),
         db.collection('incidents').estimatedDocumentCount().catch(() => 0),
         db.collection('threat_detections').estimatedDocumentCount().catch(() => 0),
         db.collection('alerts').estimatedDocumentCount().catch(() => 0),
         db.collection('agent_logs').estimatedDocumentCount().catch(() => 0),
-        db.collection('model_metadata').estimatedDocumentCount().catch(() => 0),
-        db.collection('raw_events').estimatedDocumentCount().catch(() => 0),
-        db.collection('normalized_events').estimatedDocumentCount().catch(() => 0)
+        db.collection('model_metadata').estimatedDocumentCount().catch(() => 0)
       ]);
 
-      const res: MongoHealthStatus & { latencyMs?: number } = {
+      const res: MongoHealthStatus = {
         status: 'CONNECTED',
         connected: true,
         database: this.getDbName(),
         host: this.getMaskedUri(),
-        latencyMs,
         collections: {
-          securityEvents: eventsCount + normCount,
+          securityEvents: eventsCount,
           incidents: incidentsCount,
           threatDetections: detectionsCount,
           alerts: alertsCount,
@@ -330,7 +256,7 @@ class MongoConnectionManager {
       this.lastHealthCheckTime = now;
       return res;
     } catch (err: any) {
-      const res: MongoHealthStatus & { latencyMs?: number } = {
+      const res: MongoHealthStatus = {
         status: 'ERROR',
         connected: false,
         database: this.getDbName(),

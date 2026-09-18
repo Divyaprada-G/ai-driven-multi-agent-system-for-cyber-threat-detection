@@ -46,13 +46,25 @@ export type AuditActionType =
   | 'THREAT_DETECTED'
   | 'DUPLICATE_DROPPED'
   | 'AGENT_ERROR'
-  | 'DATABASE_AUDIT';
+  | 'DATABASE_AUDIT'
+  | 'LOGIN_SUCCESS'
+  | 'AUTHENTICATION_FAILURE'
+  | 'ACCOUNT_LOCKED'
+  | 'LOGOUT'
+  | 'UNAUTHORIZED_ACCESS_ATTEMPT'
+  | 'RATE_LIMIT_EXCEEDED'
+  | 'COLLECTOR_STARTED'
+  | 'COLLECTOR_STOPPED'
+  | 'TELEMETRY_COLLECTOR_STATE_CHANGED'
+  | 'MODEL_TRAINED'
+  | 'DATASET_UPLOADED'
+  | 'SECURITY_HEADER_VIOLATION';
 
 export interface AuditLogEntry {
   id: string;
   timestamp: string;
   action: AuditActionType;
-  entityType: 'ALERT' | 'INCIDENT' | 'RISK' | 'THREAT' | 'SYSTEM' | 'DEMO' | 'CONFIG' | 'MODEL' | 'DATASET' | 'PIPELINE' | 'DATABASE' | 'AGENT' | 'EVENT';
+  entityType: 'ALERT' | 'INCIDENT' | 'RISK' | 'THREAT' | 'SYSTEM' | 'DEMO' | 'CONFIG' | 'MODEL' | 'DATASET' | 'PIPELINE' | 'DATABASE' | 'AGENT' | 'EVENT' | 'USER' | 'SESSION' | 'ENDPOINT' | 'COLLECTOR';
   entityId: string;
   actor: string;
   details: string;
